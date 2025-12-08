@@ -1,135 +1,232 @@
-# Turborepo starter
+# Movie Recommendr 🎬
 
-This Turborepo starter is maintained by the Turborepo core team.
+> AI-powered movie recommendation system with RAG, embeddings, and personalized suggestions
 
-## Using this example
+[![TypeScript](https://img.shields.io/badge/TypeScript-5.9-blue)](https://www.typescriptlang.org/)
+[![NestJS](https://img.shields.io/badge/NestJS-11.1-red)](https://nestjs.com/)
+[![Next.js](https://img.shields.io/badge/Next.js-14-black)](https://nextjs.org/)
+[![Supabase](https://img.shields.io/badge/Supabase-Postgres-green)](https://supabase.com/)
+[![OpenAI](https://img.shields.io/badge/OpenAI-GPT--4-purple)](https://openai.com/)
 
-Run the following command:
+## About
 
-```sh
-npx create-turbo@latest
-```
+Movie Recommendr is a portfolio project built to master AI integration and modern web technologies:
 
-## What's inside?
+- **RAG (Retrieval-Augmented Generation)** for intelligent recommendations
+- **Vector Embeddings** for similarity search
+- **User Profile Embeddings** for personalization
+- **LLM Router** (small → big) for cost optimization
+- **Natural Language Queries** - ask for movies in plain English
+- **Mobile-friendly UI** built with Next.js + Tailwind
 
-This Turborepo includes the following packages/apps:
+### Key Features
 
-### Apps and Packages
+- 🔍 **Smart Search** - find movies with intelligent suggestions
+- 📝 **Watchlist** - plan what to watch next
+- ✅ **Watched Tracking** - mark watched movies with ratings
+- 🤖 **AI Recommendations** - personalized suggestions based on your taste
+- 💬 **Natural Language** - "Find something like Inception but lighter"
+- 📊 **Profile Analysis** - system learns your preferences over time
 
-- `docs`: a [Next.js](https://nextjs.org/) app
-- `web`: another [Next.js](https://nextjs.org/) app
-- `@repo/ui`: a stub React component library shared by both `web` and `docs` applications
-- `@repo/eslint-config`: `eslint` configurations (includes `eslint-config-next` and `eslint-config-prettier`)
-- `@repo/typescript-config`: `tsconfig.json`s used throughout the monorepo
+---
 
-Each package/app is 100% [TypeScript](https://www.typescriptlang.org/).
-
-### Utilities
-
-This Turborepo has some additional tools already setup for you:
-
-- [TypeScript](https://www.typescriptlang.org/) for static type checking
-- [ESLint](https://eslint.org/) for code linting
-- [Prettier](https://prettier.io) for code formatting
-
-### Build
-
-To build all apps and packages, run the following command:
+## Architecture
 
 ```
-cd my-turborepo
-
-# With [global `turbo`](https://turborepo.com/docs/getting-started/installation#global-installation) installed (recommended)
-turbo build
-
-# Without [global `turbo`](https://turborepo.com/docs/getting-started/installation#global-installation), use your package manager
-npx turbo build
-yarn dlx turbo build
-pnpm exec turbo build
+┌─────────────────────────────────────────────────────┐
+│              Mobile / Web (Next.js)                 │
+│                                                     │
+│  Frontend: discovery, watchlist, watched            │
+│  Auth: Supabase Auth                               │
+└─────────────────┬───────────────────────────────────┘
+                  │
+                  ↓
+┌─────────────────────────────────────────────────────┐
+│              Backend API (NestJS)                   │
+│                                                     │
+│  • Auth & Users                                    │
+│  • Ingest (TMDB / Trakt sync)                      │
+│  • Documents / Metadata store                      │
+│  • Embedding pipeline                              │
+│  • Recommender service (hybrid)                    │
+│  • RAG endpoint (complex queries)                  │
+│  • Jobs queue (BullMQ)                             │
+└────┬────────┬──────────┬────────────┬──────────────┘
+     │        │          │            │
+     ↓        ↓          ↓            ↓
+┌─────────┬──────────┬────────┬─────────────────┐
+│ Postgres│ pgvector │ Redis  │ OpenAI / LLMs   │
+│(Supabase)│ (search) │(Upstash)│(embeddings)    │
+│         │          │        │                 │
+│ users   │          │        │ TMDB API        │
+│ movies  │          │        │ Trakt API       │
+│ watches │          │        │                 │
+└─────────┴──────────┴────────┴─────────────────┘
 ```
 
-You can build a specific package by using a [filter](https://turborepo.com/docs/crafting-your-repository/running-tasks#using-filters):
+---
 
-```
-# With [global `turbo`](https://turborepo.com/docs/getting-started/installation#global-installation) installed (recommended)
-turbo build --filter=docs
+## Tech Stack
 
-# Without [global `turbo`](https://turborepo.com/docs/getting-started/installation#global-installation), use your package manager
-npx turbo build --filter=docs
-yarn exec turbo build --filter=docs
-pnpm exec turbo build --filter=docs
-```
+### Frontend
+- **Framework:** Next.js 14 (App Router)
+- **Styling:** Tailwind CSS
+- **Auth:** Supabase Auth (client-side)
+- **State:** React Context + hooks
 
-### Develop
+### Backend
+- **Framework:** NestJS
+- **Database:** PostgreSQL (Supabase)
+- **Vector Search:** pgvector extension
+- **Cache:** Redis (Upstash)
+- **Queue:** BullMQ
 
-To develop all apps and packages, run the following command:
+### AI/ML
+- **Embeddings:** OpenAI text-embedding-3-small (1536 dimensions)
+- **LLM:** GPT-4 Turbo / GPT-4.1-mini
+- **RAG:** Custom pipeline with citation support
+- **Vector DB:** pgvector (in Postgres)
 
-```
-cd my-turborepo
+### External APIs
+- **TMDB:** Movie metadata, search, details
+- **Trakt:** (optional) Watch history sync
 
-# With [global `turbo`](https://turborepo.com/docs/getting-started/installation#global-installation) installed (recommended)
-turbo dev
+### Monorepo
+- **Tool:** Turborepo
+- **Package Manager:** pnpm
+- **Language:** TypeScript (strict mode)
 
-# Without [global `turbo`](https://turborepo.com/docs/getting-started/installation#global-installation), use your package manager
-npx turbo dev
-yarn exec turbo dev
-pnpm exec turbo dev
-```
+---
 
-You can develop a specific package by using a [filter](https://turborepo.com/docs/crafting-your-repository/running-tasks#using-filters):
+## Getting Started
 
-```
-# With [global `turbo`](https://turborepo.com/docs/getting-started/installation#global-installation) installed (recommended)
-turbo dev --filter=web
+### Prerequisites
 
-# Without [global `turbo`](https://turborepo.com/docs/getting-started/installation#global-installation), use your package manager
-npx turbo dev --filter=web
-yarn exec turbo dev --filter=web
-pnpm exec turbo dev --filter=web
-```
+- Node.js >= 18
+- pnpm >= 9.0
+- Supabase account
+- TMDB API key
+- OpenAI API key
 
-### Remote Caching
+### 1. Install Dependencies
 
-> [!TIP]
-> Vercel Remote Cache is free for all plans. Get started today at [vercel.com](https://vercel.com/signup?/signup?utm_source=remote-cache-sdk&utm_campaign=free_remote_cache).
+```bash
+# Clone repository
+git clone <your-repo-url>
+cd movie-recommendr
 
-Turborepo can use a technique known as [Remote Caching](https://turborepo.com/docs/core-concepts/remote-caching) to share cache artifacts across machines, enabling you to share build caches with your team and CI/CD pipelines.
-
-By default, Turborepo will cache locally. To enable Remote Caching you will need an account with Vercel. If you don't have an account you can [create one](https://vercel.com/signup?utm_source=turborepo-examples), then enter the following commands:
-
-```
-cd my-turborepo
-
-# With [global `turbo`](https://turborepo.com/docs/getting-started/installation#global-installation) installed (recommended)
-turbo login
-
-# Without [global `turbo`](https://turborepo.com/docs/getting-started/installation#global-installation), use your package manager
-npx turbo login
-yarn exec turbo login
-pnpm exec turbo login
+# Install dependencies
+pnpm install
 ```
 
-This will authenticate the Turborepo CLI with your [Vercel account](https://vercel.com/docs/concepts/personal-accounts/overview).
+### 2. Configure Environment Variables
 
-Next, you can link your Turborepo to your Remote Cache by running the following command from the root of your Turborepo:
+```bash
+# Copy template
+cp .env.example .env
 
+# Edit .env and fill in:
+# - SUPABASE_URL, SUPABASE_SERVICE_KEY, SUPABASE_ANON_KEY
+# - TMDB_API_KEY
+# - OPENAI_API_KEY
+# - REDIS_URL (optional, for production)
 ```
-# With [global `turbo`](https://turborepo.com/docs/getting-started/installation#global-installation) installed (recommended)
-turbo link
 
-# Without [global `turbo`](https://turborepo.com/docs/getting-started/installation#global-installation), use your package manager
-npx turbo link
-yarn exec turbo link
-pnpm exec turbo link
+### 3. Setup Supabase
+
+```bash
+# Install Supabase CLI (if not installed)
+npm install -g supabase
+
+# Initialize
+supabase init
+
+# Apply migrations (when created)
+supabase db push
 ```
 
-## Useful Links
+### 4. Run Development Server
 
-Learn more about the power of Turborepo:
+```bash
+# Run all apps
+pnpm dev
 
-- [Tasks](https://turborepo.com/docs/crafting-your-repository/running-tasks)
-- [Caching](https://turborepo.com/docs/crafting-your-repository/caching)
-- [Remote Caching](https://turborepo.com/docs/core-concepts/remote-caching)
-- [Filtering](https://turborepo.com/docs/crafting-your-repository/running-tasks#using-filters)
-- [Configuration Options](https://turborepo.com/docs/reference/configuration)
-- [CLI Usage](https://turborepo.com/docs/reference/command-line-reference)
+# Or separately:
+pnpm --filter api dev      # API at http://localhost:3001
+pnpm --filter web dev      # Web at http://localhost:3000
+```
+
+---
+
+## Development Workflow
+
+### Turborepo Commands
+
+```bash
+# Development
+pnpm dev                    # Run all apps in dev mode
+pnpm --filter api dev       # API only
+pnpm --filter web dev       # Frontend only
+
+# Build
+pnpm build                  # Build all apps
+
+# Lint & Type Check
+pnpm lint                   # Lint all code
+pnpm check-types            # TypeScript type checking
+
+# Format
+pnpm format                 # Prettier format all files
+```
+
+---
+
+## Roadmap
+
+Project follows a detailed 14-day development plan. See [ROADMAP.md](./ROADMAP.md)
+
+### Current Progress
+
+- ✅ **Day 0:** Monorepo setup, project structure, documentation
+- ⏳ **Day 1:** Database setup, tables, TMDB integration
+- 🔲 **Day 2-14:** See ROADMAP.md
+
+Full progress: [CURRENT_STATUS.md](./CURRENT_STATUS.md)
+
+---
+
+## Learning Goals
+
+This project is built to learn:
+
+- ✅ **Monorepo architecture** with Turborepo
+- 🧠 **Vector embeddings** and similarity search
+- 🤖 **RAG** (Retrieval-Augmented Generation)
+- 🔌 **LLM integration** (OpenAI API)
+- 🗄️ **Vector databases** (pgvector)
+- 🏗️ **NestJS** modular architecture
+- ⚛️ **Next.js 14** App Router
+- 🔐 **Supabase** Auth + Database
+- 📊 **BullMQ** job queues
+- 🎨 **Tailwind CSS** responsive UI
+
+---
+
+## License
+
+MIT
+
+---
+
+## Acknowledgments
+
+- [TMDB API](https://www.themoviedb.org/) for movie data
+- [OpenAI](https://openai.com/) for embeddings and LLM API
+- [Supabase](https://supabase.com/) for Postgres + Auth
+- [Vercel](https://vercel.com/) for Turborepo
+
+---
+
+**Project Status:** 🚧 In Development (Day 0 completed)
+
+See [CURRENT_STATUS.md](./CURRENT_STATUS.md) for detailed progress.
