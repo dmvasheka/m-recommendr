@@ -1,232 +1,177 @@
-# Movie Recommendr 🎬
+# Supabase CLI
 
-> AI-powered movie recommendation system with RAG, embeddings, and personalized suggestions
+[![Coverage Status](https://coveralls.io/repos/github/supabase/cli/badge.svg?branch=main)](https://coveralls.io/github/supabase/cli?branch=main) [![Bitbucket Pipelines](https://img.shields.io/bitbucket/pipelines/supabase-cli/setup-cli/master?style=flat-square&label=Bitbucket%20Canary)](https://bitbucket.org/supabase-cli/setup-cli/pipelines) [![Gitlab Pipeline Status](https://img.shields.io/gitlab/pipeline-status/sweatybridge%2Fsetup-cli?label=Gitlab%20Canary)
+](https://gitlab.com/sweatybridge/setup-cli/-/pipelines)
 
-[![TypeScript](https://img.shields.io/badge/TypeScript-5.9-blue)](https://www.typescriptlang.org/)
-[![NestJS](https://img.shields.io/badge/NestJS-11.1-red)](https://nestjs.com/)
-[![Next.js](https://img.shields.io/badge/Next.js-14-black)](https://nextjs.org/)
-[![Supabase](https://img.shields.io/badge/Supabase-Postgres-green)](https://supabase.com/)
-[![OpenAI](https://img.shields.io/badge/OpenAI-GPT--4-purple)](https://openai.com/)
+[Supabase](https://supabase.io) is an open source Firebase alternative. We're building the features of Firebase using enterprise-grade open source tools.
 
-## About
+This repository contains all the functionality for Supabase CLI.
 
-Movie Recommendr is a portfolio project built to master AI integration and modern web technologies:
+- [x] Running Supabase locally
+- [x] Managing database migrations
+- [x] Creating and deploying Supabase Functions
+- [x] Generating types directly from your database schema
+- [x] Making authenticated HTTP requests to [Management API](https://supabase.com/docs/reference/api/introduction)
 
-- **RAG (Retrieval-Augmented Generation)** for intelligent recommendations
-- **Vector Embeddings** for similarity search
-- **User Profile Embeddings** for personalization
-- **LLM Router** (small → big) for cost optimization
-- **Natural Language Queries** - ask for movies in plain English
-- **Mobile-friendly UI** built with Next.js + Tailwind
+## Getting started
 
-### Key Features
+### Install the CLI
 
-- 🔍 **Smart Search** - find movies with intelligent suggestions
-- 📝 **Watchlist** - plan what to watch next
-- ✅ **Watched Tracking** - mark watched movies with ratings
-- 🤖 **AI Recommendations** - personalized suggestions based on your taste
-- 💬 **Natural Language** - "Find something like Inception but lighter"
-- 📊 **Profile Analysis** - system learns your preferences over time
-
----
-
-## Architecture
-
-```
-┌─────────────────────────────────────────────────────┐
-│              Mobile / Web (Next.js)                 │
-│                                                     │
-│  Frontend: discovery, watchlist, watched            │
-│  Auth: Supabase Auth                               │
-└─────────────────┬───────────────────────────────────┘
-                  │
-                  ↓
-┌─────────────────────────────────────────────────────┐
-│              Backend API (NestJS)                   │
-│                                                     │
-│  • Auth & Users                                    │
-│  • Ingest (TMDB / Trakt sync)                      │
-│  • Documents / Metadata store                      │
-│  • Embedding pipeline                              │
-│  • Recommender service (hybrid)                    │
-│  • RAG endpoint (complex queries)                  │
-│  • Jobs queue (BullMQ)                             │
-└────┬────────┬──────────┬────────────┬──────────────┘
-     │        │          │            │
-     ↓        ↓          ↓            ↓
-┌─────────┬──────────┬────────┬─────────────────┐
-│ Postgres│ pgvector │ Redis  │ OpenAI / LLMs   │
-│(Supabase)│ (search) │(Upstash)│(embeddings)    │
-│         │          │        │                 │
-│ users   │          │        │ TMDB API        │
-│ movies  │          │        │ Trakt API       │
-│ watches │          │        │                 │
-└─────────┴──────────┴────────┴─────────────────┘
-```
-
----
-
-## Tech Stack
-
-### Frontend
-- **Framework:** Next.js 14 (App Router)
-- **Styling:** Tailwind CSS
-- **Auth:** Supabase Auth (client-side)
-- **State:** React Context + hooks
-
-### Backend
-- **Framework:** NestJS
-- **Database:** PostgreSQL (Supabase)
-- **Vector Search:** pgvector extension
-- **Cache:** Redis (Upstash)
-- **Queue:** BullMQ
-
-### AI/ML
-- **Embeddings:** OpenAI text-embedding-3-small (1536 dimensions)
-- **LLM:** GPT-4 Turbo / GPT-4.1-mini
-- **RAG:** Custom pipeline with citation support
-- **Vector DB:** pgvector (in Postgres)
-
-### External APIs
-- **TMDB:** Movie metadata, search, details
-- **Trakt:** (optional) Watch history sync
-
-### Monorepo
-- **Tool:** Turborepo
-- **Package Manager:** pnpm
-- **Language:** TypeScript (strict mode)
-
----
-
-## Getting Started
-
-### Prerequisites
-
-- Node.js >= 18
-- pnpm >= 9.0
-- Supabase account
-- TMDB API key
-- OpenAI API key
-
-### 1. Install Dependencies
+Available via [NPM](https://www.npmjs.com) as dev dependency. To install:
 
 ```bash
-# Clone repository
-git clone <your-repo-url>
-cd movie-recommendr
-
-# Install dependencies
-pnpm install
+npm i supabase --save-dev
 ```
 
-### 2. Configure Environment Variables
+When installing with yarn 4, you need to disable experimental fetch with the following nodejs config.
+
+```
+NODE_OPTIONS=--no-experimental-fetch yarn add supabase
+```
+
+> **Note**
+For Bun versions below v1.0.17, you must add `supabase` as a [trusted dependency](https://bun.sh/guides/install/trusted) before running `bun add -D supabase`.
+
+<details>
+  <summary><b>macOS</b></summary>
+
+  Available via [Homebrew](https://brew.sh). To install:
+
+  ```sh
+  brew install supabase/tap/supabase
+  ```
+
+  To install the beta release channel:
+  
+  ```sh
+  brew install supabase/tap/supabase-beta
+  brew link --overwrite supabase-beta
+  ```
+  
+  To upgrade:
+
+  ```sh
+  brew upgrade supabase
+  ```
+</details>
+
+<details>
+  <summary><b>Windows</b></summary>
+
+  Available via [Scoop](https://scoop.sh). To install:
+
+  ```powershell
+  scoop bucket add supabase https://github.com/supabase/scoop-bucket.git
+  scoop install supabase
+  ```
+
+  To upgrade:
+
+  ```powershell
+  scoop update supabase
+  ```
+</details>
+
+<details>
+  <summary><b>Linux</b></summary>
+
+  Available via [Homebrew](https://brew.sh) and Linux packages.
+
+  #### via Homebrew
+
+  To install:
+
+  ```sh
+  brew install supabase/tap/supabase
+  ```
+
+  To upgrade:
+
+  ```sh
+  brew upgrade supabase
+  ```
+
+  #### via Linux packages
+
+  Linux packages are provided in [Releases](https://github.com/supabase/cli/releases). To install, download the `.apk`/`.deb`/`.rpm`/`.pkg.tar.zst` file depending on your package manager and run the respective commands.
+
+  ```sh
+  sudo apk add --allow-untrusted <...>.apk
+  ```
+
+  ```sh
+  sudo dpkg -i <...>.deb
+  ```
+
+  ```sh
+  sudo rpm -i <...>.rpm
+  ```
+
+  ```sh
+  sudo pacman -U <...>.pkg.tar.zst
+  ```
+</details>
+
+<details>
+  <summary><b>Other Platforms</b></summary>
+
+  You can also install the CLI via [go modules](https://go.dev/ref/mod#go-install) without the help of package managers.
+
+  ```sh
+  go install github.com/supabase/cli@latest
+  ```
+
+  Add a symlink to the binary in `$PATH` for easier access:
+
+  ```sh
+  ln -s "$(go env GOPATH)/bin/cli" /usr/bin/supabase
+  ```
+
+  This works on other non-standard Linux distros.
+</details>
+
+<details>
+  <summary><b>Community Maintained Packages</b></summary>
+
+  Available via [pkgx](https://pkgx.sh/). Package script [here](https://github.com/pkgxdev/pantry/blob/main/projects/supabase.com/cli/package.yml).
+  To install in your working directory:
+
+  ```bash
+  pkgx install supabase
+  ```
+
+  Available via [Nixpkgs](https://nixos.org/). Package script [here](https://github.com/NixOS/nixpkgs/blob/master/pkgs/development/tools/supabase-cli/default.nix).
+</details>
+
+### Run the CLI
 
 ```bash
-# Copy template
-cp .env.example .env
-
-# Edit .env and fill in:
-# - SUPABASE_URL, SUPABASE_SERVICE_KEY, SUPABASE_ANON_KEY
-# - TMDB_API_KEY
-# - OPENAI_API_KEY
-# - REDIS_URL (optional, for production)
+supabase bootstrap
 ```
 
-### 3. Setup Supabase
+Or using npx:
 
 ```bash
-# Install Supabase CLI (if not installed)
-npm install -g supabase
-
-# Initialize
-supabase init
-
-# Apply migrations (when created)
-supabase db push
+npx supabase bootstrap
 ```
 
-### 4. Run Development Server
+The bootstrap command will guide you through the process of setting up a Supabase project using one of the [starter](https://github.com/supabase-community/supabase-samples/blob/main/samples.json) templates.
 
-```bash
-# Run all apps
-pnpm dev
+## Docs
 
-# Or separately:
-pnpm --filter api dev      # API at http://localhost:3001
-pnpm --filter web dev      # Web at http://localhost:3000
+Command & config reference can be found [here](https://supabase.com/docs/reference/cli/about).
+
+## Breaking changes
+
+We follow semantic versioning for changes that directly impact CLI commands, flags, and configurations.
+
+However, due to dependencies on other service images, we cannot guarantee that schema migrations, seed.sql, and generated types will always work for the same CLI major version. If you need such guarantees, we encourage you to pin a specific version of CLI in package.json.
+
+## Developing
+
+To run from source:
+
+```sh
+# Go >= 1.22
+go run . help
 ```
-
----
-
-## Development Workflow
-
-### Turborepo Commands
-
-```bash
-# Development
-pnpm dev                    # Run all apps in dev mode
-pnpm --filter api dev       # API only
-pnpm --filter web dev       # Frontend only
-
-# Build
-pnpm build                  # Build all apps
-
-# Lint & Type Check
-pnpm lint                   # Lint all code
-pnpm check-types            # TypeScript type checking
-
-# Format
-pnpm format                 # Prettier format all files
-```
-
----
-
-## Roadmap
-
-Project follows a detailed 14-day development plan. See [ROADMAP.md](./ROADMAP.md)
-
-### Current Progress
-
-- ✅ **Day 0:** Monorepo setup, project structure, documentation
-- ⏳ **Day 1:** Database setup, tables, TMDB integration
-- 🔲 **Day 2-14:** See ROADMAP.md
-
-Full progress: [CURRENT_STATUS.md](./CURRENT_STATUS.md)
-
----
-
-## Learning Goals
-
-This project is built to learn:
-
-- ✅ **Monorepo architecture** with Turborepo
-- 🧠 **Vector embeddings** and similarity search
-- 🤖 **RAG** (Retrieval-Augmented Generation)
-- 🔌 **LLM integration** (OpenAI API)
-- 🗄️ **Vector databases** (pgvector)
-- 🏗️ **NestJS** modular architecture
-- ⚛️ **Next.js 14** App Router
-- 🔐 **Supabase** Auth + Database
-- 📊 **BullMQ** job queues
-- 🎨 **Tailwind CSS** responsive UI
-
----
-
-## License
-
-MIT
-
----
-
-## Acknowledgments
-
-- [TMDB API](https://www.themoviedb.org/) for movie data
-- [OpenAI](https://openai.com/) for embeddings and LLM API
-- [Supabase](https://supabase.com/) for Postgres + Auth
-- [Vercel](https://vercel.com/) for Turborepo
-
----
-
-**Project Status:** 🚧 In Development (Day 0 completed)
-
-See [CURRENT_STATUS.md](./CURRENT_STATUS.md) for detailed progress.
