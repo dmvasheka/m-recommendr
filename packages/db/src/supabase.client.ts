@@ -1,5 +1,10 @@
+import * as dotenv from 'dotenv';
+import * as path from 'path';
 import { createClient } from '@supabase/supabase-js';
 import type { Database } from './types';
+
+// Load .env from monorepo root before creating clients
+dotenv.config({ path: path.join(__dirname, '../../../.env') });
 
 // Supabase client for server-side (uses service_role key with full access)
 export const supabase = createClient<Database>(

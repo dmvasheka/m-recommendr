@@ -4,11 +4,22 @@
 
 ---
 
+## 🎯 User Workflow Preference
+
+**IMPORTANT:** User prefers step-by-step manual implementation:
+- **Show and explain** code changes first
+- Provide code snippets for user to paste
+- Only apply changes automatically when explicitly requested
+- User will handle git commits manually
+
+---
+
 ## Overall Progress
 
 ```
 Day 0: ████████████████████ 100% Complete
-Day 1: ░░░░░░░░░░░░░░░░░░░░   0% Ready to start
+Day 1: ████████████████████ 100% Complete
+Day 2: ░░░░░░░░░░░░░░░░░░░░   0% Ready to start
 ```
 
 ---
@@ -42,12 +53,7 @@ movie-recommendr/
 - ✅ TypeScript strict mode
 - ✅ ESLint rules
 
-#### 3. NestJS API (apps/api)
-- Basic setup, port 3001
-- AppModule (empty, ready for modules)
-- Dependencies: @nestjs/common, @nestjs/core, @nestjs/platform-express
-
-#### 4. Documentation
+#### 3. Documentation
 - ✅ README.md - comprehensive project documentation
 - ✅ ROADMAP.md - detailed 14-day plan
 - ✅ CURRENT_STATUS.md - progress tracking
@@ -55,73 +61,145 @@ movie-recommendr/
 
 ---
 
-## ⏳ Remaining from Day 0:
+## ✅ Day 1 - Database & TMDB Integration (Complete)
 
-### External Services Setup
-- [ ] Create Supabase project → get SUPABASE_URL, ANON_KEY, SERVICE_KEY
-- [ ] Get TMDB API key from https://www.themoviedb.org/settings/api
-- [ ] Get OpenAI API key from https://platform.openai.com/api-keys
+### What's Done:
 
-### Local Setup
-- [ ] Create `.env` file (copy from `.env.example`)
-- [ ] Fill in all API keys
+#### 1. Supabase Setup
+- ✅ Supabase CLI installed
+- ✅ Project linked to remote Supabase instance
+- ✅ Migration `20251209000001_init.sql` - Database schema
+  - Tables: users, movies (with vector(1536)), user_watchlist, user_profiles
+  - pgvector extension enabled
+  - ivfflat indexes for vector similarity search
+  - RLS policies configured
+- ✅ Migration `20251209000002_vector_search_functions.sql` - SQL functions
+  - `match_movies()` - Find similar movies by embedding
+  - `match_movies_by_profile()` - User-based recommendations
+  - `get_similar_movies()` - "More like this" feature
+  - `update_user_profile_embedding()` - Calculate user preferences
+  - Auto-trigger for profile updates
+- ✅ Migrations applied successfully
 
-### Git
-- [ ] Commit Day 0 work: `git commit -m "feat: complete Day 0 - project setup and documentation"`
+#### 2. packages/db Package
+- ✅ Package setup with dependencies
+  - @supabase/supabase-js ^2.39.0
+  - dotenv ^17.2.3 (for env variable loading)
+  - TypeScript configuration
+- ✅ `src/supabase.client.ts` - Supabase client initialization
+  - Service client (full access with SERVICE_ROLE key)
+  - Anon client (RLS-protected with ANON key)
+  - Environment variables loaded with dotenv
+- ✅ `src/types.ts` - Full TypeScript definitions
+  - Database schema types
+  - Row, Insert, Update types for all tables
+  - Helper types (User, Movie, UserWatchlist, UserProfile, etc.)
+- ✅ `src/index.ts` - Package exports
+
+#### 3. TMDB Integration (apps/api)
+- ✅ Dependencies added: axios, @repo/db
+- ✅ Development dependencies: ts-node, tsconfig-paths, dotenv
+- ✅ `src/tmdb/tmdb.module.ts` - NestJS module
+- ✅ `src/tmdb/tmdb.service.ts` - TMDB API service
+  - searchMovies() - Search movies by query
+  - getMovieDetails() - Get full movie details
+  - getPopularMovies() - Get popular movies
+  - importMovieToDb() - Import single movie to database
+  - importPopularMovies() - Batch import with rate limiting
+- ✅ `src/tmdb/tmdb.controller.ts` - REST API endpoints
+  - GET /api/tmdb/search?q=query
+  - GET /api/tmdb/movie/:id
+  - GET /api/tmdb/popular
+  - POST /api/tmdb/import/popular?count=N
+  - POST /api/tmdb/import/:id
+  - GET /api/tmdb/health
+- ✅ TmdbModule registered in AppModule
+- ✅ CORS enabled in main.ts
+- ✅ Global API prefix configured (/api)
+
+#### 4. Configuration & Build
+- ✅ Environment variable loading from monorepo root (.env)
+- ✅ TypeScript path aliases configured (@repo/db)
+- ✅ Development script using ts-node with tsconfig-paths
+- ✅ NestJS nest-cli.json configuration
+
+#### 5. API Server
+- ✅ Server running successfully on port 3001
+- ✅ TMDB health check endpoint working
+- ✅ TMDB API connection verified
+- ✅ Movie import functionality tested and working
+
+### Technical Challenges Solved:
+1. ✅ Supabase CLI installation (used direct binary method)
+2. ✅ TypeScript export errors in TMDB module
+3. ✅ Environment variable loading in monorepo packages
+4. ✅ TypeScript execution with decorators (ts-node + tsconfig-paths)
+5. ✅ NestJS route ordering (specific routes before parameterized routes)
+6. ✅ Path alias resolution in development
 
 ---
 
-## 📋 Day 1 - Action Plan
+## 📋 Day 2 - Action Plan
 
-### Step 1: Install Supabase CLI
-```bash
-npm install -g supabase
-supabase init
-```
+### Embeddings & Vector Search
+1. **Setup packages/ai**
+   - OpenAI client configuration
+   - Text embedding function (text-embedding-3-small, 1536 dimensions)
+   - Batch processing utilities
 
-### Step 2: Create Migration
-File: `infra/supabase/migrations/001_init.sql`
+2. **Generate Movie Embeddings**
+   - Create embedding service in apps/api
+   - Generate embeddings for existing movies
+   - Update movies table with embedding vectors
 
-Tables: users, movies (with embedding vector(1536)), user_watchlist, user_profiles
-Indexes: ivfflat on embeddings, popularity, vote_average
+3. **Vector Search Endpoints**
+   - GET /api/movies/search?q=query - Semantic search
+   - GET /api/movies/similar/:id - Similar movies
+   - Test similarity search with cosine distance
 
-### Step 3: Setup packages/db
-```bash
-cd packages/db
-pnpm init
-pnpm add @supabase/supabase-js
-```
-
-Create: supabase.client.ts, types.ts
-
-### Step 4: TMDB Integration
-```bash
-cd apps/api
-pnpm add axios
-```
-
-Create: tmdb/tmdb.module.ts, tmdb.service.ts, tmdb.controller.ts
-
-### Step 5: Test Import
-Import 100 popular movies from TMDB (no embeddings yet)
+4. **Background Jobs (Optional)**
+   - Setup BullMQ for async embedding generation
+   - Job queue for batch processing
 
 ---
 
 ## 🎯 Next Session Priorities
 
-**High:** Get API keys, create .env, start Day 1
-**Medium:** Setup packages/db, TMDB integration
-**Low:** Test movie import, healthcheck endpoint
+**High:**
+- Setup packages/ai with OpenAI client
+- Implement embedding generation service
+- Generate embeddings for imported movies
+
+**Medium:**
+- Create vector search endpoints
+- Test semantic similarity search
+- Optimize vector search performance
+
+**Low:**
+- Setup background job queue
+- Add embedding regeneration endpoints
 
 ---
 
-## 📊 Metrics
+## 📊 Current Metrics
 
-**Files:** ~50+ (including config)
-**Custom code:** ~100 lines (mostly configs)
-**Modules:** 0 (API empty)
-**Endpoints:** 0
-**DB tables:** 0
+**Database:**
+- Tables: 4 (users, movies, user_watchlist, user_profiles)
+- SQL Functions: 4 (vector search, profile updates)
+- Migrations: 2
+
+**API Endpoints:**
+- TMDB: 6 endpoints
+- Total: 6 endpoints
+
+**Packages:**
+- @repo/db: Complete with types and clients
+- @repo/ai: Ready to implement
+
+**Files:**
+- Custom TypeScript files: ~15
+- Configuration files: ~10
+- SQL migrations: 2
 
 ---
 
@@ -130,20 +208,27 @@ Import 100 popular movies from TMDB (no embeddings yet)
 ```bash
 # Development
 pnpm dev                  # All apps
-pnpm --filter api dev     # API only
+pnpm --filter api dev     # API only (port 3001)
 pnpm --filter web dev     # Frontend only
 
-# Build & Lint
-pnpm build
-pnpm lint
+# API Server
+curl http://localhost:3001/api/tmdb/health
+
+# Import movies
+curl -X POST "http://localhost:3001/api/tmdb/import/popular?count=10"
+
+# Search movies
+curl "http://localhost:3001/api/tmdb/search?q=inception"
 
 # Supabase
 supabase db push          # Apply migrations
 supabase studio           # Open Studio
+supabase status           # Check status
 
 # Git
 git add .
-git commit -m "feat: complete Day 0 setup"
+git commit -m "feat: complete Day 1 - database and TMDB integration"
+git push
 ```
 
 ---
@@ -151,16 +236,45 @@ git commit -m "feat: complete Day 0 setup"
 ## 📝 Learning Progress
 
 - ✅ Monorepo architecture with Turborepo
-- ⏳ NestJS modular architecture
-- ⏳ Vector embeddings & similarity search
+- ✅ NestJS modular architecture
+- ✅ Supabase (Postgres + Auth + RLS)
+- ✅ pgvector extension and ivfflat indexes
+- ✅ SQL functions and triggers
+- ✅ TypeScript strict types for database schema
+- ⏳ Vector embeddings with OpenAI
+- ⏳ Semantic similarity search
 - ⏳ RAG (Retrieval-Augmented Generation)
 - ⏳ LLM integration (OpenAI API)
-- ⏳ Supabase (Postgres + Auth)
 - ⏳ BullMQ job queues
-- ⏳ Full-stack TypeScript
+- ⏳ Full-stack development
 
 ---
 
-**Ready for Day 1!** 🚀
+## 🐛 Known Issues
 
-Next: Get API keys, then start database setup and TMDB integration.
+None currently. All Day 1 functionality tested and working.
+
+---
+
+## 💡 Technical Notes
+
+### Environment Variables
+- `.env` file in monorepo root
+- Loaded with dotenv in both packages/db and apps/api
+- Required: SUPABASE_URL, SUPABASE_SERVICE_KEY, SUPABASE_ANON_KEY, TMDB_API_KEY
+
+### TypeScript Configuration
+- Path aliases configured: `@repo/db` → `../../packages/db/src`
+- Using ts-node with tsconfig-paths for development
+- Decorators enabled for NestJS
+
+### Database
+- Vector dimension: 1536 (OpenAI text-embedding-3-small)
+- Similarity metric: Cosine distance (<=> operator)
+- Index type: ivfflat with 100 lists
+
+---
+
+**Day 1 Complete!** 🎉
+
+Next: Implement embeddings with OpenAI and semantic search functionality.
