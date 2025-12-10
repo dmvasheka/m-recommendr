@@ -1,6 +1,6 @@
 # Movie Recommendr - Current Project Status
 
-**Last Updated:** 2025-12-09
+**Last Updated:** 2025-12-10
 
 ---
 
@@ -19,7 +19,8 @@
 ```
 Day 0: ████████████████████ 100% Complete
 Day 1: ████████████████████ 100% Complete
-Day 2: ░░░░░░░░░░░░░░░░░░░░   0% Ready to start
+Day 2: ████████████████████ 100% Complete
+Day 3: ░░░░░░░░░░░░░░░░░░░░   0% Ready to start
 ```
 
 ---
@@ -52,6 +53,7 @@ movie-recommendr/
 - ✅ pnpm workspaces
 - ✅ TypeScript strict mode
 - ✅ ESLint rules
+- ✅ .claudeignore for efficient AI context
 
 #### 3. Documentation
 - ✅ README.md - comprehensive project documentation
@@ -139,45 +141,109 @@ movie-recommendr/
 
 ---
 
-## 📋 Day 2 - Action Plan
+## ✅ Day 2 - Embeddings & Vector Search (Complete)
 
-### Embeddings & Vector Search
-1. **Setup packages/ai**
-   - OpenAI client configuration
-   - Text embedding function (text-embedding-3-small, 1536 dimensions)
-   - Batch processing utilities
+### What's Done:
 
-2. **Generate Movie Embeddings**
-   - Create embedding service in apps/api
-   - Generate embeddings for existing movies
-   - Update movies table with embedding vectors
+#### 1. packages/ai Package
+- ✅ Package setup with OpenAI SDK
+  - openai ^4.20.0
+  - dotenv ^17.2.3
+  - TypeScript configuration with commonjs modules
+- ✅ `src/openai.client.ts` - OpenAI client configuration
+  - Client initialization with API key
+  - Model constants (text-embedding-3-small, gpt-4o-mini, gpt-4o)
+  - Environment variable loading from monorepo root
+- ✅ `src/embeddings.ts` - Embedding generation utilities
+  - generateEmbedding() - Single text embedding
+  - generateEmbeddingsBatch() - Batch processing (up to 100 texts)
+  - createMovieEmbeddingText() - Format movie data for embedding
+  - Error handling and validation
+- ✅ `src/index.ts` - Package exports
 
-3. **Vector Search Endpoints**
-   - GET /api/movies/search?q=query - Semantic search
-   - GET /api/movies/similar/:id - Similar movies
-   - Test similarity search with cosine distance
+#### 2. Embeddings Module (apps/api)
+- ✅ Dependencies added: @repo/ai (workspace package)
+- ✅ `src/embeddings/embeddings.module.ts` - NestJS module
+- ✅ `src/embeddings/embeddings.service.ts` - Embedding service
+  - generateMovieEmbedding() - Generate for single movie
+  - generateAllMissingEmbeddings() - Batch process all movies without embeddings
+  - regenerateMovieEmbedding() - Force regenerate
+  - Batch processing with rate limiting (50 movies per batch)
+  - Progress logging for batch operations
+- ✅ `src/embeddings/embeddings.controller.ts` - REST API endpoints
+  - POST /api/embeddings/movie/:id - Generate for specific movie
+  - POST /api/embeddings/generate-all - Batch generate all missing
+  - POST /api/embeddings/regenerate/:id - Force regenerate
+- ✅ EmbeddingsModule registered in AppModule
 
-4. **Background Jobs (Optional)**
-   - Setup BullMQ for async embedding generation
-   - Job queue for batch processing
+#### 3. Movies Module (apps/api)
+- ✅ `src/movies/movies.module.ts` - NestJS module
+- ✅ `src/movies/movies.service.ts` - Movie & search service
+  - searchMovies() - Semantic search using embeddings
+  - getSimilarMovies() - Find similar movies by ID
+  - getMovieById() - Get single movie
+  - getAllMovies() - Paginated movie list
+  - Uses Supabase RPC functions (match_movies, get_similar_movies)
+- ✅ `src/movies/movies.controller.ts` - REST API endpoints
+  - GET /api/movies/search?q=query&limit=10 - Semantic search
+  - GET /api/movies/:id/similar?limit=10 - Similar movies
+  - GET /api/movies/:id - Get movie details
+  - GET /api/movies?page=1&pageSize=20 - List all movies
+- ✅ MoviesModule registered in AppModule
+
+#### 4. Testing & Validation
+- ✅ OpenAI API integration tested
+- ✅ Embedding generation tested (single and batch)
+- ✅ Semantic search tested with various queries
+- ✅ Similar movies functionality tested
+- ✅ All endpoints working correctly
+
+### Technical Challenges Solved:
+1. ✅ TypeScript strict type checking with Supabase (type assertions)
+2. ✅ RPC function typing (cast to any for dynamic functions)
+3. ✅ Optional chaining for nullable API responses
+4. ✅ Module resolution in packages/ai (commonjs modules)
+5. ✅ Batch processing with rate limiting to avoid OpenAI limits
+6. ✅ Vector data serialization (JSON.stringify for PostgreSQL)
+
+---
+
+## 📋 Day 3 - Action Plan
+
+### User Profile & Watchlist
+1. **Watchlist Endpoints**
+   - Add movies to watchlist
+   - Mark as watched with rating
+   - Update user profile embeddings automatically
+
+2. **User Recommendations**
+   - Personalized recommendations based on user profile
+   - Exclude already watched movies
+   - Combine multiple factors (ratings, genres, embeddings)
+
+3. **Advanced Search**
+   - Combine text search with filters (genre, year, rating)
+   - Hybrid search (keyword + semantic)
+   - Search result ranking
 
 ---
 
 ## 🎯 Next Session Priorities
 
 **High:**
-- Setup packages/ai with OpenAI client
-- Implement embedding generation service
-- Generate embeddings for imported movies
+- Create watchlist endpoints
+- Implement user profile embedding updates
+- Test personalized recommendations
 
 **Medium:**
-- Create vector search endpoints
-- Test semantic similarity search
-- Optimize vector search performance
+- Add advanced search filters
+- Implement hybrid search
+- Optimize search performance
 
 **Low:**
-- Setup background job queue
-- Add embedding regeneration endpoints
+- Add search result caching
+- Implement search analytics
+- Add recommendation explanations
 
 ---
 
@@ -187,18 +253,21 @@ movie-recommendr/
 - Tables: 4 (users, movies, user_watchlist, user_profiles)
 - SQL Functions: 4 (vector search, profile updates)
 - Migrations: 2
+- Movies with embeddings: Working
 
 **API Endpoints:**
 - TMDB: 6 endpoints
-- Total: 6 endpoints
+- Embeddings: 3 endpoints
+- Movies: 4 endpoints
+- Total: 13 endpoints
 
 **Packages:**
 - @repo/db: Complete with types and clients
-- @repo/ai: Ready to implement
+- @repo/ai: Complete with OpenAI integration
 
 **Files:**
-- Custom TypeScript files: ~15
-- Configuration files: ~10
+- Custom TypeScript files: ~25
+- Configuration files: ~12
 - SQL migrations: 2
 
 ---
@@ -211,14 +280,20 @@ pnpm dev                  # All apps
 pnpm --filter api dev     # API only (port 3001)
 pnpm --filter web dev     # Frontend only
 
-# API Server
+# TMDB Operations
 curl http://localhost:3001/api/tmdb/health
-
-# Import movies
-curl -X POST "http://localhost:3001/api/tmdb/import/popular?count=10"
-
-# Search movies
+curl -X POST "http://localhost:3001/api/tmdb/import/popular?count=20"
 curl "http://localhost:3001/api/tmdb/search?q=inception"
+
+# Embedding Generation
+curl -X POST "http://localhost:3001/api/embeddings/generate-all"
+curl -X POST "http://localhost:3001/api/embeddings/movie/550"
+
+# Semantic Search
+curl "http://localhost:3001/api/movies/search?q=space%20exploration&limit=5"
+curl "http://localhost:3001/api/movies/550/similar?limit=5"
+curl "http://localhost:3001/api/movies/550"
+curl "http://localhost:3001/api/movies?page=1&pageSize=20"
 
 # Supabase
 supabase db push          # Apply migrations
@@ -227,7 +302,7 @@ supabase status           # Check status
 
 # Git
 git add .
-git commit -m "feat: complete Day 1 - database and TMDB integration"
+git commit -m "feat: complete Day 2 - embeddings and vector search"
 git push
 ```
 
@@ -241,10 +316,11 @@ git push
 - ✅ pgvector extension and ivfflat indexes
 - ✅ SQL functions and triggers
 - ✅ TypeScript strict types for database schema
-- ⏳ Vector embeddings with OpenAI
-- ⏳ Semantic similarity search
+- ✅ Vector embeddings with OpenAI (text-embedding-3-small)
+- ✅ Semantic similarity search with cosine distance
+- ✅ Batch processing with rate limiting
 - ⏳ RAG (Retrieval-Augmented Generation)
-- ⏳ LLM integration (OpenAI API)
+- ⏳ User personalization with profile embeddings
 - ⏳ BullMQ job queues
 - ⏳ Full-stack development
 
@@ -252,7 +328,7 @@ git push
 
 ## 🐛 Known Issues
 
-None currently. All Day 1 functionality tested and working.
+None currently. All Day 1 and Day 2 functionality tested and working.
 
 ---
 
@@ -260,21 +336,34 @@ None currently. All Day 1 functionality tested and working.
 
 ### Environment Variables
 - `.env` file in monorepo root
-- Loaded with dotenv in both packages/db and apps/api
-- Required: SUPABASE_URL, SUPABASE_SERVICE_KEY, SUPABASE_ANON_KEY, TMDB_API_KEY
+- Loaded with dotenv in packages/db, packages/ai, and apps/api
+- Required: SUPABASE_URL, SUPABASE_SERVICE_KEY, SUPABASE_ANON_KEY, TMDB_API_KEY, OPENAI_API_KEY
 
 ### TypeScript Configuration
-- Path aliases configured: `@repo/db` → `../../packages/db/src`
+- Path aliases configured: `@repo/db`, `@repo/ai`
 - Using ts-node with tsconfig-paths for development
 - Decorators enabled for NestJS
+- Commonjs modules for packages/ai compatibility
+
+### OpenAI Integration
+- Model: text-embedding-3-small
+- Dimensions: 1536
+- Batch size: 50-100 texts per request
+- Rate limiting: 100ms delay between batches
 
 ### Database
 - Vector dimension: 1536 (OpenAI text-embedding-3-small)
 - Similarity metric: Cosine distance (<=> operator)
 - Index type: ivfflat with 100 lists
+- Embeddings stored as JSON strings
+
+### Vector Search
+- Uses SQL RPC functions (match_movies, get_similar_movies)
+- Returns similarity score (0-1, higher is more similar)
+- Filters out movies without embeddings
 
 ---
 
-**Day 1 Complete!** 🎉
+**Day 2 Complete!** 🎉
 
-Next: Implement embeddings with OpenAI and semantic search functionality.
+Next: Implement user profiles, watchlist, and personalized recommendations.
