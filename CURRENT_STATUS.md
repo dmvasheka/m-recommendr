@@ -20,7 +20,7 @@
 Day 0: ████████████████████ 100% Complete
 Day 1: ████████████████████ 100% Complete
 Day 2: ████████████████████ 100% Complete
-Day 3: ░░░░░░░░░░░░░░░░░░░░   0% Ready to start
+Day 3: ██████████░░░░░░░░░░  50% In Progress
 ```
 
 ---
@@ -208,42 +208,98 @@ movie-recommendr/
 
 ---
 
-## 📋 Day 3 - Action Plan
+## 🔄 Day 3 - Watchlist & Recommendations (In Progress - 50%)
 
-### User Profile & Watchlist
-1. **Watchlist Endpoints**
-   - Add movies to watchlist
-   - Mark as watched with rating
-   - Update user profile embeddings automatically
+### What's Done:
 
-2. **User Recommendations**
-   - Personalized recommendations based on user profile
-   - Exclude already watched movies
-   - Combine multiple factors (ratings, genres, embeddings)
+#### 1. Watchlist Module (apps/api) - Code Provided ✅
+- ✅ `src/watchlist/watchlist.module.ts` - NestJS module
+- ✅ `src/watchlist/watchlist.service.ts` - Watchlist service
+  - addToWatchlist() - Add movie to user's watchlist (planned/watched)
+  - markAsWatched() - Mark as watched with rating (1-10)
+  - getUserWatchlist() - Get user's watchlist with optional status filter
+  - removeFromWatchlist() - Remove movie from watchlist
+  - Automatic upsert logic (insert or update if exists)
+  - Integration with user_watchlist table
+- ✅ `src/watchlist/watchlist.controller.ts` - REST API endpoints
+  - POST /api/watchlist/add - Add to watchlist
+  - POST /api/watchlist/watched - Mark as watched with rating
+  - GET /api/watchlist?user_id=xxx&status=planned|watched - Get watchlist
+  - DELETE /api/watchlist/:movieId?user_id=xxx - Remove from watchlist
+- ⏳ WatchlistModule registered in AppModule (user to add)
 
-3. **Advanced Search**
-   - Combine text search with filters (genre, year, rating)
-   - Hybrid search (keyword + semantic)
-   - Search result ranking
+#### 2. Recommendations Module (apps/api) - Code Provided ✅
+- ✅ `src/recommendations/recommendations.module.ts` - NestJS module
+- ✅ `src/recommendations/recommendations.service.ts` - Recommendations service
+  - getPersonalizedRecommendations() - Profile-based recommendations
+  - getHybridRecommendations() - Combines similarity (70%) + popularity (30%)
+  - getPopularRecommendations() - Fallback for users without profile
+  - updateUserProfile() - Manually trigger profile update
+  - Uses SQL function match_movies_by_profile()
+  - Automatic filtering of watched movies
+- ✅ `src/recommendations/recommendations.controller.ts` - REST API endpoints
+  - GET /api/recommendations?user_id=xxx&limit=10 - Personalized
+  - GET /api/recommendations/hybrid?user_id=xxx - Hybrid ranking
+  - GET /api/recommendations/popular?limit=10 - Popular fallback
+  - POST /api/recommendations/update-profile - Manual profile update
+- ⏳ RecommendationsModule registered in AppModule (user to add)
+
+### What's Next:
+
+#### 3. Testing & Validation
+- ⏳ Files created by user (watchlist module files)
+- ⏳ Files created by user (recommendations module files)
+- ⏳ AppModule updated with new modules
+- ⏳ Test watchlist endpoints (add, watched, get, delete)
+- ⏳ Test user profile embedding trigger
+- ⏳ Test personalized recommendations
+- ⏳ Test hybrid recommendations
+- ⏳ Verify automatic profile updates work
+
+### Implementation Notes:
+
+**Watchlist Flow:**
+1. User adds movie to watchlist → status: 'planned'
+2. User marks as watched → status: 'watched', rating: 1-10, watched_at: timestamp
+3. Database trigger automatically updates user_profile_embedding
+4. Profile embedding = average of high-rated movies (≥7 rating)
+
+**Recommendations Flow:**
+1. Check if user has profile embedding
+2. If yes → use match_movies_by_profile() for personalized recs
+3. If no → fallback to popular movies
+4. Hybrid mode → rerank by combining similarity + popularity
+5. Always exclude already watched movies
+
+**Key Features:**
+- Automatic profile updates via database trigger
+- Upsert logic prevents duplicates
+- Status filter (planned/watched)
+- Join with movies table for full movie data
+- Rating validation (1-10)
+- Similarity + popularity hybrid ranking
 
 ---
 
 ## 🎯 Next Session Priorities
 
-**High:**
-- Create watchlist endpoints
-- Implement user profile embedding updates
-- Test personalized recommendations
+**Immediate (Complete Day 3):**
+- Create the 6 files for Watchlist and Recommendations modules
+- Update AppModule to register both modules
+- Start API server and test all new endpoints
+- Verify watchlist flow (add → watched → profile update)
+- Test personalized recommendations with real user data
 
-**Medium:**
-- Add advanced search filters
-- Implement hybrid search
-- Optimize search performance
+**Day 4 Preview - Embedding Pipeline:**
+- BullMQ job queue setup for batch processing
+- Background job for embedding generation
+- Webhook or cron for automatic embedding updates
 
-**Low:**
-- Add search result caching
-- Implement search analytics
-- Add recommendation explanations
+**Future:**
+- Advanced search filters (genre, year, rating range)
+- Search result caching with Redis
+- Recommendation explanations (why this movie?)
+- A/B testing different recommendation algorithms
 
 ---
 
@@ -259,14 +315,16 @@ movie-recommendr/
 - TMDB: 6 endpoints
 - Embeddings: 3 endpoints
 - Movies: 4 endpoints
-- Total: 13 endpoints
+- Watchlist: 4 endpoints (code provided, pending creation)
+- Recommendations: 4 endpoints (code provided, pending creation)
+- Total: 21 endpoints (13 working + 8 pending)
 
 **Packages:**
 - @repo/db: Complete with types and clients
 - @repo/ai: Complete with OpenAI integration
 
 **Files:**
-- Custom TypeScript files: ~25
+- Custom TypeScript files: ~25 (+ 6 pending for Day 3)
 - Configuration files: ~12
 - SQL migrations: 2
 
@@ -295,6 +353,27 @@ curl "http://localhost:3001/api/movies/550/similar?limit=5"
 curl "http://localhost:3001/api/movies/550"
 curl "http://localhost:3001/api/movies?page=1&pageSize=20"
 
+# Watchlist (Day 3 - pending)
+curl -X POST "http://localhost:3001/api/watchlist/add" \
+  -H "Content-Type: application/json" \
+  -d '{"user_id":"test-user-123","movie_id":550,"status":"planned"}'
+
+curl -X POST "http://localhost:3001/api/watchlist/watched" \
+  -H "Content-Type: application/json" \
+  -d '{"user_id":"test-user-123","movie_id":550,"rating":9}'
+
+curl "http://localhost:3001/api/watchlist?user_id=test-user-123&status=watched"
+curl -X DELETE "http://localhost:3001/api/watchlist/550?user_id=test-user-123"
+
+# Recommendations (Day 3 - pending)
+curl "http://localhost:3001/api/recommendations?user_id=test-user-123&limit=10"
+curl "http://localhost:3001/api/recommendations/hybrid?user_id=test-user-123&limit=10"
+curl "http://localhost:3001/api/recommendations/popular?limit=10"
+
+curl -X POST "http://localhost:3001/api/recommendations/update-profile" \
+  -H "Content-Type: application/json" \
+  -d '{"user_id":"test-user-123","min_rating":7}'
+
 # Supabase
 supabase db push          # Apply migrations
 supabase studio           # Open Studio
@@ -319,10 +398,12 @@ git push
 - ✅ Vector embeddings with OpenAI (text-embedding-3-small)
 - ✅ Semantic similarity search with cosine distance
 - ✅ Batch processing with rate limiting
+- ✅ User personalization with profile embeddings
+- ✅ Watchlist and user preferences management
+- ✅ Hybrid recommendation algorithms
 - ⏳ RAG (Retrieval-Augmented Generation)
-- ⏳ User personalization with profile embeddings
 - ⏳ BullMQ job queues
-- ⏳ Full-stack development
+- ⏳ Full-stack development with Next.js
 
 ---
 
@@ -364,6 +445,23 @@ None currently. All Day 1 and Day 2 functionality tested and working.
 
 ---
 
-**Day 2 Complete!** 🎉
+**Day 3 Progress: 50% Complete!** 🚀
 
-Next: Implement user profiles, watchlist, and personalized recommendations.
+**Completed:**
+- ✅ Watchlist Module code provided (3 files)
+- ✅ Recommendations Module code provided (3 files)
+- ✅ 8 new API endpoints designed
+
+**Next Steps:**
+1. Create the 6 module files (watchlist + recommendations)
+2. Update AppModule to register both modules
+3. Test all endpoints with curl
+4. Verify watchlist flow and profile updates
+5. Test personalized recommendations
+
+**When Day 3 is complete, you'll have:**
+- Full watchlist functionality (add, mark watched, rate)
+- Personalized recommendations based on user preferences
+- Hybrid recommendation algorithm
+- Automatic user profile embedding updates
+- 21 total API endpoints
