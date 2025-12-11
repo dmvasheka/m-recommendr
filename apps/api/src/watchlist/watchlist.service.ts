@@ -1,6 +1,6 @@
 import { Injectable, Logger } from '@nestjs/common';
 import { supabase } from '@repo/db';
-import type { UserWatchlist } from '@repo/db';
+import type { UserWatchlist, Database } from '@repo/db';
 
 export interface WatchlistItem extends Omit<UserWatchlist,
     'user_id'> {
@@ -49,9 +49,13 @@ export class WatchlistService {
 
             if (existing) {
                 // Update existing entry
-                const { data, error } = await supabase
+                const updateData: Database['public']['Tables']['user_watchlist']['Update'] = {
+                    status,
+                    updated_at: new Date().toISOString()
+                };
+                const { data, error } = await (supabase as any)
                     .from('user_watchlist')
-                    .update({ status, updated_at: new Date().toISOString() })
+                    .update(updateData)
                     .eq('user_id', user_id)
                     .eq('movie_id', movie_id)
                     .select()
@@ -62,13 +66,14 @@ export class WatchlistService {
             }
 
             // Insert new entry
-            const { data, error } = await supabase
+            const insertData: Database['public']['Tables']['user_watchlist']['Insert'] = {
+                user_id,
+                movie_id,
+                status,
+            };
+            const { data, error } = await (supabase as any)
                 .from('user_watchlist')
-                .insert({
-                    user_id,
-                    movie_id,
-                    status,
-                })
+                .insert(insertData)
                 .select()
                 .single();
 
@@ -99,15 +104,16 @@ export class WatchlistService {
                 throw new Error('Rating must be between 1 and 10');
             }
 
-            const { data, error } = await supabase
+            const upsertData: Database['public']['Tables']['user_watchlist']['Insert'] = {
+                user_id,
+                movie_id,
+                status: 'watched',
+                rating: rating || null,
+                watched_at: new Date().toISOString(),
+            };
+            const { data, error } = await (supabase as any)
                 .from('user_watchlist')
-                .upsert({
-                    user_id,
-                    movie_id,
-                    status: 'watched',
-                    rating: rating || null,
-                    watched_at: new Date().toISOString(),
-                })
+                .upsert(upsertData)
                 .select()
                 .single();
 

@@ -32,13 +32,13 @@ export class RecommendationsService {
 
             // Check if user has a profile embedding
             const { data: profile, error: profileError } =
-                await supabase
+                await (supabase as any)
                     .from('user_profiles')
                     .select('prefs_embedding')
                     .eq('user_id', userId)
                     .single();
 
-            if (profileError || !profile?.prefs_embedding)
+            if (profileError || !profile || !profile.prefs_embedding)
             {
                 this.logger.warn(
                     `User ${userId} has no profile embedding yet. Need to watch and rate movies first.`,
@@ -162,7 +162,7 @@ export class RecommendationsService {
             this.logger.log(`Getting popular movies as 
   fallback recommendations`);
 
-            const { data, error } = await supabase
+            const { data, error } = await (supabase as any)
                 .from('movies')
                 .select('id, title, description, poster_url, backdrop_url, genres, vote_average, popularity')
                 .not('embedding', 'is', null) // Only movies with embeddings
@@ -173,7 +173,7 @@ export class RecommendationsService {
                 throw error;
             }
 
-            const results = (data || []).map(movie => ({
+            const results = ((data || []) as any[]).map(movie => ({
                 ...movie,
                 similarity: 0, // No similarity for popular movies
             }));
