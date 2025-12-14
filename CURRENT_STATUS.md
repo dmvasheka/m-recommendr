@@ -285,22 +285,50 @@ movie-recommendr/
 
 ## 🎯 Next Session Priorities
 
-**Day 4 - Testing & Embedding Pipeline:**
-- Test watchlist endpoints with real data
-- Test personalized recommendations with user profiles
-- Verify database triggers for profile updates
-- Document API usage examples
+**Day 4-5 - Frontend Foundation (PRIMARY FOCUS):**
+1. **Supabase Auth Setup**
+   - Login & signup pages in Next.js
+   - Protected routes middleware
+   - User session management
+   - Auth context provider
 
-**Day 4 Preview - Advanced Features:**
-- BullMQ job queue setup for batch processing
-- Background job for embedding generation
-- Webhook or cron for automatic embedding updates
+2. **Core Pages to Build**
+   - `/` - Landing page with hero & features
+   - `/discover` - Movie discovery with semantic search
+   - `/movies/[id]` - Movie details page
+   - `/profile` - User profile & settings
 
-**Future:**
-- Advanced search filters (genre, year, rating range)
-- Search result caching with Redis
-- Recommendation explanations (why this movie?)
-- A/B testing different recommendation algorithms
+3. **Shared Components (packages/ui)**
+   - MovieCard component
+   - SearchBar with debouncing
+   - WatchlistButton (add/remove)
+   - RatingStars component
+   - LoadingSpinner & ErrorBoundary
+
+4. **API Integration**
+   - React Query or SWR for data fetching
+   - API client with typed endpoints
+   - Error handling & loading states
+   - Optimistic updates for watchlist
+
+**Why Frontend First:**
+- ✅ Backend is solid (21 working API endpoints)
+- ✅ Visual testing of all existing features
+- ✅ Quick path to working MVP
+- ✅ Can add advanced features (BullMQ, RAG) on top of working app
+
+**Updated Roadmap:**
+- **Day 4-5**: Frontend Foundation (Auth + Core Pages)
+- **Day 6**: Frontend - Watchlist & Recommendations UI
+- **Day 7**: BullMQ & Background Jobs
+- **Day 8**: Caching & Performance (Redis)
+- **Day 9-10**: RAG Pipeline - Documents & Embeddings
+- **Day 11**: RAG Pipeline - LLM Integration
+- **Day 12**: RAG UI & Natural Language Search
+- **Day 13**: Testing & Optimization
+- **Day 14**: Deploy & Production
+
+📖 **See ROADMAP.md for complete updated plan with all tasks!**
 
 ---
 
