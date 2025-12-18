@@ -1,7 +1,6 @@
 {
   "extends": "../../packages/typescript-config/base.json",
   "compilerOptions": {
-    "module": "commonjs",
     "declaration": true,
     "removeComments": true,
     "emitDecoratorMetadata": true,

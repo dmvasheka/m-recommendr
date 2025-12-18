@@ -146,8 +146,7 @@ export class RecommendationsService {
         } catch (error) {
             const errorMessage = error instanceof Error ?
                 error.message : String(error);
-            this.logger.error(`Get hybrid recommendations 
-  error: ${errorMessage}`);
+            this.logger.error(`Get hybrid recommendations error: ${errorMessage}`);
             throw error;
         }
     }
