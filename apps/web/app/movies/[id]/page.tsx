@@ -1,6 +1,5 @@
 'use client'
 
-import { use } from 'react'
 import Image from 'next/image'
 import Link from 'next/link'
 import { Navbar } from '@/components/Navbar'
@@ -9,12 +8,11 @@ import { WatchlistButton } from '@/components/WatchlistButton'
 import { useMovie, useSimilarMovies } from '@/lib/api/hooks'
 
 interface PageProps {
-    params: Promise<{ id: string }>
+    params: { id: string }
 }
 
 export default function MovieDetailsPage({ params }: PageProps) {
-    const { id } = use(params)
-    const movieId = parseInt(id)
+    const movieId = parseInt(params.id)
 
     const { data: movie, isLoading, error } = useMovie(movieId)
     const { data: similarMovies } = useSimilarMovies({
@@ -54,13 +52,14 @@ export default function MovieDetailsPage({ params }: PageProps) {
         )
     }
 
-    const backdropUrl = movie.backdrop_path
-        ? `https://image.tmdb.org/t/p/original${movie.backdrop_path}`
-        : null
+    // Handle both backdrop_url (full URL) and backdrop_path (path only)
+    const backdropUrl = (movie as any).backdrop_url
+        || (movie.backdrop_path ? `https://image.tmdb.org/t/p/original${movie.backdrop_path}` : null)
 
-    const posterUrl = movie.poster_path
-        ? `https://image.tmdb.org/t/p/w500${movie.poster_path}`
-        : '/placeholder-movie.jpg'
+    // Handle both poster_url (full URL) and poster_path (path only)
+    const posterUrl = (movie as any).poster_url
+        || (movie.poster_path ? `https://image.tmdb.org/t/p/w500${movie.poster_path}` : null)
+        || '/placeholder-movie.jpg'
 
     const year = movie.release_date ? new Date(movie.release_date).getFullYear() : 'N/A'
     const rating = movie.vote_average ? movie.vote_average.toFixed(1) : 'N/A'
@@ -148,10 +147,12 @@ export default function MovieDetailsPage({ params }: PageProps) {
             {/* Main Content */}
             <main className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-12">
                 {/* Overview */}
-                {movie.overview && (
+                {((movie as any).description || movie.overview) && (
                     <section className="mb-12">
                         <h2 className="text-2xl font-bold text-gray-900 mb-4">Overview</h2>
-                        <p className="text-gray-700 text-lg leading-relaxed">{movie.overview}</p>
+                        <p className="text-gray-700 text-lg leading-relaxed">
+                            {(movie as any).description || movie.overview}
+                        </p>
                     </section>
                 )}
 

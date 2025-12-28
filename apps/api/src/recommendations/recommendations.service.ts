@@ -163,7 +163,7 @@ export class RecommendationsService {
 
             const { data, error } = await (supabase as any)
                 .from('movies')
-                .select('id, title, description, poster_url, backdrop_url, genres, vote_average, popularity')
+                .select('id, title, description, poster_url, backdrop_url, genres, vote_average, popularity, release_date')
                 .not('embedding', 'is', null) // Only movies with embeddings
                 .order('popularity', { ascending: false })
                 .limit(limit);

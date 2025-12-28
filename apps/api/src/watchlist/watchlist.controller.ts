@@ -26,10 +26,15 @@ export class WatchlistController {
                 item,
             };
         } catch (error) {
-            const errorMessage = error instanceof Error ?
-                error.message : String(error);
-            this.logger.error(`Add to watchlist failed: 
-  ${errorMessage}`);
+            let errorMessage = 'Unknown error';
+            if (error instanceof Error) {
+                errorMessage = error.message;
+            } else if (error && typeof error === 'object') {
+                errorMessage = JSON.stringify(error);
+            } else {
+                errorMessage = String(error);
+            }
+            this.logger.error(`Add to watchlist failed: ${errorMessage}`);
             return {
                 success: false,
                 error: errorMessage,
