@@ -40,7 +40,8 @@ export class EmbeddingProcessor extends WorkerHost {
                 };
             }
         } catch (error) {
-            this.logger.error(`❌ Embedding generation failed: ${error.message}`);
+            const errorMessage = error instanceof Error ? error.message : String(error);
+            this.logger.error(`❌ Embedding generation failed: ${errorMessage}`);
             throw error;
         }
     }

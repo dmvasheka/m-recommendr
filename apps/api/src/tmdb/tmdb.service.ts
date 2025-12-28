@@ -182,7 +182,7 @@ export class TmdbService {
             const totalPages = Math.ceil(count / moviesPerPage);
 
             for (let page = startPage; page < startPage + totalPages; page++) {
-                const response = await this.httpService.axiosRef.get(
+                const response = await axios.get(
                     `${this.baseUrl}/movie/popular`,
                     {
                         params: {

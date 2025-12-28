@@ -27,9 +27,10 @@ export class QueuesController {
                 jobId: job.id,
             };
         } catch (error) {
+            const errorMessage = error instanceof Error ? error.message : String(error);
             return {
                 success: false,
-                error: error.message,
+                error: errorMessage,
             };
         }
     }
@@ -54,9 +55,10 @@ export class QueuesController {
                 jobId: job.id,
             };
         } catch (error) {
+            const errorMessage = error instanceof Error ? error.message : String(error);
             return {
                 success: false,
-                error: error.message,
+                error: errorMessage,
             };
         }
     }
@@ -80,9 +82,10 @@ export class QueuesController {
                 message: `Scheduled movie import: ${body.cronExpression}`,
             };
         } catch (error) {
+            const errorMessage = error instanceof Error ? error.message : String(error);
             return {
                 success: false,
-                error: error.message,
+                error: errorMessage,
             };
         }
     }
@@ -107,9 +110,10 @@ export class QueuesController {
                 },
             };
         } catch (error) {
+            const errorMessage = error instanceof Error ? error.message : String(error);
             return {
                 success: false,
-                error: error.message,
+                error: errorMessage,
             };
         }
     }
@@ -128,9 +132,10 @@ export class QueuesController {
                 message: 'Old jobs cleaned successfully',
             };
         } catch (error) {
+            const errorMessage = error instanceof Error ? error.message : String(error);
             return {
                 success: false,
-                error: error.message,
+                error: errorMessage,
             };
         }
     }

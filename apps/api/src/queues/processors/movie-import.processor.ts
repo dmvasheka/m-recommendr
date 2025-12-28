@@ -34,7 +34,8 @@ export class MovieImportProcessor extends WorkerHost {
                 skipped: result.skipped,
             };
         } catch (error) {
-            this.logger.error(`❌ Movie import failed: ${error.message}`);
+            const errorMessage = error instanceof Error ? error.message : String(error);
+            this.logger.error(`❌ Movie import failed: ${errorMessage}`);
             throw error; // BullMQ автоматически сделает retry
         }
     }

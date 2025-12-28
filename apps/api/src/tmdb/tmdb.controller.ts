@@ -62,13 +62,14 @@ export class TmdbController {
 
         try {
             this.logger.log(`Starting import of ${movieCount} popular movies...`);
-            const movies = await this.tmdbService.importPopularMovies(movieCount);
+            const result = await this.tmdbService.importPopularMovies(movieCount);
 
             return {
                 success: true,
-                message: `Successfully imported ${movies.length} movies`,
-                count: movies.length,
-                movies: movies.map(m => ({ id: m.id, title: m.title })),
+                message: `Successfully imported ${result.imported} movies`,
+                imported: result.imported,
+                skipped: result.skipped,
+                total: result.imported + result.skipped,
             };
         } catch (error) {
             const errorMessage = error instanceof Error ? error.message : String(error);

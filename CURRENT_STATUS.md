@@ -1,16 +1,35 @@
 # Movie Recommendr - Current Project Status
 
-**Last Updated:** 2025-12-19 (Testing Session)
+**Last Updated:** 2025-12-28 (Day 6-7: BullMQ & Background Jobs)
 
 ---
 
 ## 🎯 User Workflow Preference
 
-**IMPORTANT:** User prefers step-by-step manual implementation:
-- **Show and explain** code changes first
-- Provide code snippets for user to paste
-- Only apply changes automatically when explicitly requested
-- User will handle git commits manually
+**CRITICAL - READ THIS EVERY SESSION:**
+
+### When to Auto-Generate Files:
+- ✅ **Bug fixes** - Automatically fix and apply changes
+- ✅ **Error corrections** - TypeScript errors, compilation errors, runtime errors
+- ✅ **Dependency issues** - Package installations, version conflicts
+- ✅ **Configuration fixes** - Fix broken configs, missing settings
+
+### When to SHOW Code (Manual Implementation):
+- 📝 **New features** - Show code snippets for user to paste manually
+- 📝 **New modules** - Explain architecture, show file structure, let user create files
+- 📝 **Major refactoring** - Explain changes, show before/after, user applies
+- 📝 **New components** - Show component code with detailed explanation
+
+**Rule of Thumb:**
+- **Fixing = Auto** (исправление ошибок)
+- **Creating = Manual** (создание нового функционала)
+
+**Explanation Format for New Features:**
+1. Show the code snippet
+2. Explain what it does
+3. Explain why it's needed
+4. Show where to place it
+5. Wait for user to confirm file creation
 
 ---
 
@@ -22,7 +41,8 @@ Day 1: ████████████████████ 100% Complet
 Day 2: ████████████████████ 100% Complete
 Day 3: ████████████████████ 100% Complete
 Day 4: ████████████████████ 100% Complete
-Day 5: ██████████████░░░░░░  75% Testing & Bug Fixes (In Progress)
+Day 5: ████████████████████ 100% Complete
+Day 6-7: ████████████████░░░░  85% BullMQ & Background Jobs (In Progress)
 ```
 
 ---
@@ -642,9 +662,9 @@ Open `http://localhost:3000` to see your full-stack AI-powered movie recommendat
 
 ---
 
-## 🔄 Day 5 - Testing & Bug Fixes (75% Complete - In Progress)
+## ✅ Day 5 - Testing & Bug Fixes (100% Complete)
 
-**Session Date:** 2025-12-19
+**Session Date:** 2025-12-19 (Completed), 2025-12-28 (Additional fixes & movie import)
 
 ### What's Done:
 
@@ -873,11 +893,146 @@ curl "http://localhost:3001/api/recommendations/popular?limit=10"
    - `/watchlist` - управление списком
    - `/recommendations` - персональные рекомендации
 
-**Следующие шаги:**
-- Тестировать flow: регистрация → watchlist → рекомендации
-- Импортировать больше фильмов (100-200)
-- UI polish (toast, loading, errors)
+**Следующие шаги (завершено в след. сессии):**
+- ✅ Протестирован flow: регистрация → watchlist → рекомендации
+- ✅ Импортировано 106 фильмов (было 30)
+- ✅ Исправлены ошибки с отображением постеров
+- ✅ Исправлены ошибки API клиента
+- ✅ Добавлен auto-create trigger для пользователей
+
+**Day 5 Summary:**
+- ✅ Полное тестирование фронтенда и бэкенда
+- ✅ Исправлено 12+ багов (CORS, изображения, API, triggers)
+- ✅ База данных: 106 фильмов с embeddings
+- ✅ Все функции работают корректно
 
 ---
 
-**Next: Day 4 - Testing & Advanced Features**
+## 🔄 Day 6-7 - BullMQ & Background Jobs (85% Complete - In Progress)
+
+**Session Date:** 2025-12-28
+
+### What's Done:
+
+#### 1. Redis Installation & Setup ✅
+- ✅ Redis already installed (v5.0.14)
+- ✅ Redis service running on default port 6379
+- ⚠️ Version warning: BullMQ recommends 6.2.0+, but 5.0.14 works
+
+#### 2. Dependencies Installed ✅
+- ✅ `bullmq@5.66.4` - Modern job queue library
+- ✅ `ioredis@5.8.2` - Fast Redis client for Node.js
+- ✅ `@nestjs/bullmq@10.3.7` - NestJS integration for BullMQ
+- ✅ `@bull-board/api@6.11.0` - Bull Board monitoring core
+- ✅ `@bull-board/express@6.11.0` - Express adapter for Bull Board
+- ✅ `@bull-board/nestjs@6.11.0` - NestJS adapter for Bull Board
+
+#### 3. Redis Module Created ✅
+- ✅ `src/redis/redis.module.ts` - Global Redis module
+- ✅ `src/redis/redis.service.ts` - Redis client wrapper
+  - Connection management with ioredis
+  - Methods: get(), set(), del(), keys(), flushAll()
+  - Configuration: maxRetriesPerRequest: null (required for BullMQ)
+  - Error handling and logging
+
+#### 4. Queues Module Created ✅
+- ✅ `src/queues/queues.module.ts` - BullMQ module configuration
+  - BullModule.forRootAsync with Redis connection
+  - Two queues registered: movie-import, embedding-generation
+  - Processors registered
+- ✅ `src/queues/queues.service.ts` - Queue management service
+  - addMovieImportJob() - Add movie import to queue
+  - addEmbeddingJob() - Add embedding generation to queue
+  - scheduleMovieImport() - Cron-based scheduling
+  - getMovieImportStats() / getEmbeddingStats() - Queue statistics
+  - cleanQueues() - Cleanup completed jobs
+- ✅ `src/queues/queues.controller.ts` - REST API endpoints
+  - POST /api/queues/movie-import - Add import job
+  - POST /api/queues/generate-embeddings - Add embedding job
+  - POST /api/queues/schedule-import - Schedule with cron
+  - GET /api/queues/stats - Queue statistics
+  - POST /api/queues/clean - Clean old jobs
+
+#### 5. Job Processors Created ✅
+- ✅ `src/queues/processors/movie-import.processor.ts`
+  - @Processor('movie-import') decorator
+  - Processes movie import jobs from TMDB
+  - Progress tracking with job.updateProgress()
+  - Error handling with proper retry logic
+- ✅ `src/queues/processors/embedding.processor.ts`
+  - @Processor('embedding-generation') decorator
+  - Single movie or batch embedding generation
+  - Integrates with EmbeddingsService
+  - Progress logging
+
+#### 6. Bull Board Monitoring Setup ✅
+- ✅ `src/queues/bull-board.setup.ts` - Bull Board configuration
+- ✅ Integrated in `src/main.ts`
+  - Bull Board UI available at http://localhost:3001/admin/queues
+  - Monitors both queues (movie-import, embedding-generation)
+  - Real-time job status tracking
+  - Error handling if queues not available
+
+#### 7. TypeScript Compilation Fixes ✅
+- ✅ Fixed error handling in all processors (error.message → errorMessage)
+- ✅ Fixed error handling in queues.controller.ts (5 catch blocks)
+- ✅ Fixed error handling in main.ts (Bull Board setup)
+- ✅ All TypeScript errors resolved
+- ✅ Build completes successfully
+
+#### 8. Testing & Validation ✅
+- ✅ API server starts successfully despite Redis version warning
+- ✅ Bull Board UI accessible and working
+- ✅ Queue stats endpoint working (GET /api/queues/stats)
+- ✅ Movie import job tested: 5 movies imported successfully
+- ✅ Embedding generation job tested: completed successfully
+- ✅ Both queues show: waiting=0, active=0, completed=1, failed=0
+
+### Summary:
+
+**What's Working:**
+- ✅ Redis connection and BullMQ setup
+- ✅ Two background job queues operational
+- ✅ Job processors handling tasks correctly
+- ✅ Bull Board monitoring UI
+- ✅ Queue management API endpoints
+- ✅ Automatic retries on job failures
+- ✅ Progress tracking and statistics
+
+**API Endpoints Added:**
+- POST /api/queues/movie-import
+- POST /api/queues/generate-embeddings
+- POST /api/queues/schedule-import
+- GET /api/queues/stats
+- POST /api/queues/clean
+
+**Monitoring:**
+- Bull Board: http://localhost:3001/admin/queues
+
+**What's Remaining (15%):**
+- ⏳ Implement Redis caching for search queries
+- ⏳ Add caching for recommendations endpoint
+- ⏳ Add caching for popular movies
+- ⏳ (Optional) Upgrade Redis to 6.2.0+ for better compatibility
+
+### Technical Notes:
+
+**Redis Version:**
+- Current: 5.0.14
+- Recommended: 6.2.0+
+- Status: Working with warnings, upgrade recommended for production
+
+**BullMQ Features Used:**
+- Job queue with Redis backend
+- Automatic retries with exponential backoff
+- Job scheduling (cron expressions supported)
+- Progress tracking
+- Event-driven architecture
+- Bull Board for monitoring
+
+**Queue Configuration:**
+- movie-import queue: Imports movies from TMDB
+- embedding-generation queue: Generates embeddings for movies
+- Both queues: Default retry settings, automatic cleanup
+
+---
