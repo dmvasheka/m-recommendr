@@ -100,9 +100,10 @@ export default function WatchlistPage() {
                             const movie = item.movie
                             if (!movie) return null
 
-                            const posterUrl = movie.poster_path
-                                ? `https://image.tmdb.org/t/p/w200${movie.poster_path}`
-                                : '/placeholder-movie.jpg'
+                            // Handle both poster_url (full URL) and poster_path (path only)
+                            const posterUrl = (movie as any).poster_url
+                                || (movie.poster_path ? `https://image.tmdb.org/t/p/w200${movie.poster_path}` : null)
+                                || '/placeholder-movie.jpg'
 
                             const year = movie.release_date
                                 ? new Date(movie.release_date).getFullYear()
@@ -135,9 +136,9 @@ export default function WatchlistPage() {
                                             </Link>
                                             <p className="text-sm text-gray-500 mb-2">{year}</p>
 
-                                            {movie.overview && (
+                                            {((movie as any).description || movie.overview) && (
                                                 <p className="text-sm text-gray-600 line-clamp-2 mb-3">
-                                                    {movie.overview}
+                                                    {(movie as any).description || movie.overview}
                                                 </p>
                                             )}
 
