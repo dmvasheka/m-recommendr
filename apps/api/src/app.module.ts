@@ -4,6 +4,8 @@ import { EmbeddingsModule } from './embeddings/embeddings.module';
 import { MoviesModule } from './movies/movies.module';
 import { WatchlistModule } from './watchlist/watchlist.module';
 import { RecommendationsModule } from './recommendations/recommendations.module';
+import { RedisModule } from './redis/redis.module';
+import { QueuesModule } from './queues/queues.module';
 
 @Module({
     imports: [
@@ -12,6 +14,8 @@ import { RecommendationsModule } from './recommendations/recommendations.module'
         MoviesModule,
         WatchlistModule,
         RecommendationsModule,
+        RedisModule,
+        QueuesModule,
     ],
     controllers: [],
     providers: [],

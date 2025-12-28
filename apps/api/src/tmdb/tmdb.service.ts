@@ -172,37 +172,50 @@ export class TmdbService {
     /**
      * Import multiple popular movies to database
      */
-    async importPopularMovies(count = 20): Promise<MovieInsert[]> {
+    async importPopularMovies(count: number, startPage = 1): Promise<{ imported: number; skipped: number }> {
         try {
-            const imported: MovieInsert[] = [];
+            this.logger.log(`Importing ${count} popular movies from TMDB (starting page: ${startPage})`);
+
+            let imported = 0;
+            let skipped = 0;
             const moviesPerPage = 20;
-            const pages = Math.ceil(count / moviesPerPage);
+            const totalPages = Math.ceil(count / moviesPerPage);
 
-            for (let page = 1; page <= pages; page++) {
-                const response = await this.getPopularMovies(page);
-                const moviesToImport = response.results.slice(0, count - imported.length);
-
-                for (const movie of moviesToImport) {
-                    try {
-                        const importedMovie = await this.importMovieToDb(movie.id);
-                        imported.push(importedMovie);
-
-                        // Small delay to avoid rate limiting
-                        await new Promise(resolve => setTimeout(resolve, 250));
-                    } catch (error) {
-                        const errorMessage = error instanceof Error ? error.message : String(error);
-                        this.logger.warn(`Failed to import movie ${movie.id}: ${errorMessage}`);
+            for (let page = startPage; page < startPage + totalPages; page++) {
+                const response = await this.httpService.axiosRef.get(
+                    `${this.baseUrl}/movie/popular`,
+                    {
+                        params: {
+                            api_key: this.apiKey,
+                            page,
+                        },
                     }
+                );
+
+                const movies = response.data.results.slice(0, count - (imported + skipped));
+
+                for (const movie of movies) {
+                    try {
+                        await this.importMovieToDb(movie.id);
+                        imported++;
+                        this.logger.log(`Imported: ${movie.title} (${imported}/${count})`);
+                    } catch (error) {
+                        skipped++;
+                        this.logger.warn(`Skipped: ${movie.title} (already exists or error)`);
+                    }
+
+                    // Rate limiting: небольшая задержка между запросами
+                    await new Promise(resolve => setTimeout(resolve, 100));
                 }
 
-                if (imported.length >= count) break;
+                if (imported + skipped >= count) break;
             }
 
-            this.logger.log(`✅ Imported ${imported.length} movies total`);
-            return imported;
+            this.logger.log(`Import complete: ${imported} imported, ${skipped} skipped`);
+            return { imported, skipped }; // 👈 Возвращаем результат
         } catch (error) {
             const errorMessage = error instanceof Error ? error.message : String(error);
-            this.logger.error(`Error importing popular movies: ${errorMessage}`);
+            this.logger.error(`Import popular movies error: ${errorMessage}`);
             throw error;
         }
     }
