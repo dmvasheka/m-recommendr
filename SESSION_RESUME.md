@@ -1,7 +1,7 @@
-# Session Resume - Testing Day 5
+# Session Resume - Day 6-7 BullMQ & Background Jobs
 
-**Date:** 2025-12-19
-**Status:** 75% Complete - Ready for manual testing
+**Date:** 2025-12-28
+**Status:** 85% Complete - Redis caching remaining
 
 ---
 
@@ -27,101 +27,147 @@ pnpm --filter web dev
 
 ## ✅ What Was Completed This Session:
 
-### 1. Fixed All Build Errors ✅
-- TypeScript module configuration conflict resolved
-- Build process now works without errors
-- Error message formatting fixed
+### 1. Redis & BullMQ Setup ✅
+- Redis already installed and running (v5.0.14)
+- BullMQ packages installed (bullmq, ioredis, @nestjs/bullmq)
+- Bull Board monitoring packages installed
+- Redis module created with connection management
 
-### 2. Backend API Tested ✅
-- **30 movies imported** from TMDB
-- **30 embeddings generated** (100% success, 0 errors)
-- **Semantic search tested and working:**
-  - "epic space adventure" → finds TRON, sci-fi movies
-  - "horror scary monster" → finds Frankenstein, FNAF
-  - "animated adventure" → finds Zootopia 2, Avatar
-- **Similar movies working:**
-  - TRON → similar sci-fi (similarity ~0.44)
-  - Zootopia 2 → original Zootopia (similarity 0.795!)
+### 2. Background Job Queues Created ✅
+- **Two queues operational:**
+  - movie-import queue - Import movies from TMDB
+  - embedding-generation queue - Generate movie embeddings
+- **Job processors implemented:**
+  - MovieImportProcessor - Handles movie import jobs
+  - EmbeddingProcessor - Handles embedding generation jobs
+- **Queue management service:**
+  - Add jobs to queues
+  - Schedule jobs with cron
+  - Get queue statistics
+  - Clean old jobs
 
-### 3. Frontend Fixed ✅
-- Downgraded to compatible versions:
-  - Next.js 16 → 14.2.35
-  - React 19 → 18.3.0
-  - Tailwind 4 → 3.4.19
-- Frontend running on port 3002 (changed from 3000)
-- Tailwind CSS properly configured
+### 3. Bull Board Monitoring ✅
+- Bull Board UI configured at http://localhost:3001/admin/queues
+- Real-time job status monitoring
+- Queue statistics dashboard
+- Error handling for missing queues
 
-### 4. Authentication Pages Created ✅
-- `/auth/signup` - User registration
-- `/auth/login` - User login
-- `/auth/callback` - Supabase handler
-- All pages working with inline styles
+### 4. API Endpoints ✅
+- POST /api/queues/movie-import - Add movie import job
+- POST /api/queues/generate-embeddings - Add embedding job
+- POST /api/queues/schedule-import - Schedule with cron
+- GET /api/queues/stats - Get queue statistics
+- POST /api/queues/clean - Clean completed jobs
 
----
+### 5. TypeScript Fixes ✅
+- Fixed error handling in all processors
+- Fixed error handling in queues controller (5 catch blocks)
+- Fixed error handling in main.ts
+- Build completes successfully
 
-## 🧪 Ready for Testing:
-
-### Step 1: Open in Browser
-```
-http://localhost:3002
-```
-
-### Step 2: Test Signup
-1. Go to `/auth/signup`
-2. Create account with email/password
-3. Login with credentials
-
-### Step 3: Test Features
-After login, test these pages:
-- `/discover` - Semantic movie search
-- Click any movie → `/movies/[id]` - Details + similar movies
-- `/watchlist` - Add/remove/rate movies
-- `/recommendations` - Get personalized recommendations
+### 6. Testing & Validation ✅
+- Movie import job: 5 movies imported successfully
+- Embedding generation job: completed successfully
+- Queue stats showing correct status
+- Bull Board UI accessible and working
 
 ---
 
-## 📊 Current Database:
+## 🧪 What to Test:
 
-**Movies:** 30 (TMDB popular)
-**Embeddings:** 30/30 (100%)
-**Model:** OpenAI text-embedding-3-small (1536 dim)
+### BullMQ & Background Jobs
+1. **Bull Board UI:**
+   ```
+   http://localhost:3001/admin/queues
+   ```
+   - Check movie-import queue
+   - Check embedding-generation queue
+   - Monitor job progress
 
-**Sample movies:**
-- TRON: Ares
-- Zootopia 2
-- Five Nights at Freddy's 2
-- Avatar: Fire and Ash
-- Wake Up Dead Man: A Knives Out Mystery
-- The Running Man
-- And 24 more...
+2. **Queue API Endpoints:**
+   ```bash
+   # Add movie import job
+   curl -X POST http://localhost:3001/api/queues/movie-import \
+     -H "Content-Type: application/json" \
+     -d '{"count": 10, "page": 1}'
+
+   # Add embedding job
+   curl -X POST http://localhost:3001/api/queues/generate-embeddings \
+     -H "Content-Type: application/json" \
+     -d '{"batchSize": 20}'
+
+   # Check queue stats
+   curl http://localhost:3001/api/queues/stats
+   ```
+
+3. **Full Application:**
+   ```
+   http://localhost:3002
+   ```
+   - All Day 5 features still working
+   - User authentication
+   - Movie discovery and recommendations
+
+---
+
+## 📊 Current Status:
+
+**Database:**
+- Movies: 106 (TMDB popular)
+- Embeddings: 106/106 (100%)
+- Model: OpenAI text-embedding-3-small (1536 dim)
+
+**Background Jobs:**
+- Redis: Running (v5.0.14)
+- BullMQ: Operational
+- Queues: 2 (movie-import, embedding-generation)
+- Bull Board: http://localhost:3001/admin/queues
+
+**Servers:**
+- Backend API: http://localhost:3001 ✅
+- Frontend: http://localhost:3002 ✅
 
 ---
 
 ## 🎯 Next Steps:
 
-### Immediate Tasks:
-1. **Manual testing** - Open browser and test user flow
-2. **Import more movies** (optional):
-   ```bash
-   curl -X POST "http://localhost:3001/api/tmdb/import/popular?count=100"
-   curl -X POST "http://localhost:3001/api/embeddings/generate-all"
-   ```
-3. **Fix any bugs** found during testing
+### Remaining for Day 6-7 (15%):
+1. **Redis Caching Implementation:**
+   - Cache search queries (semantic search)
+   - Cache recommendations endpoint
+   - Cache popular movies
+   - Set appropriate TTL (time-to-live)
+   - Cache invalidation strategy
 
-### Future Enhancements:
-- UI polish (toasts, loading states, error boundaries)
-- More movies for better recommendations
-- BullMQ background jobs
-- Redis caching
-- RAG pipeline with GPT-4
+2. **(Optional) Redis Upgrade:**
+   - Current: 5.0.14 (works with warnings)
+   - Recommended: 6.2.0+
+   - Better compatibility with BullMQ
+
+### Day 8-10 - RAG Pipeline:
+- Document processing (movie reviews, plot summaries)
+- LLM integration (GPT-4 for conversational recommendations)
+- RAG UI (chat interface for movie discovery)
+
+### Day 11-12 - Advanced AI:
+- Mood-based recommendations
+- Multi-movie similarity
+- Explanation generation
 
 ---
 
-## 💾 Git Commits This Session:
+## 💾 Git Commits:
 
-1. **fa5a794** - TypeScript config fix
-2. **a1c4a0d** - Auth pages + Tailwind fix
-3. **a61f6ea** - CURRENT_STATUS.md update
+**Previous Sessions:**
+- fa5a794 - TypeScript config fix
+- a1c4a0d - Auth pages + Tailwind fix
+- a61f6ea - CURRENT_STATUS.md update (Day 5)
+- 9cc4e18 - SESSION_RESUME.md for quick restart
+- 55a4727 - Frontend UI overhaul
+
+**This Session (Day 6-7):**
+- No commits yet - user creates files manually for new features
+- Bugfixes applied automatically (TypeScript errors in processors/controllers)
 
 ---
 
@@ -131,22 +177,35 @@ After login, test these pages:
 # Backend API health check
 curl http://localhost:3001/api/tmdb/health
 
+# BullMQ Queue Stats
+curl http://localhost:3001/api/queues/stats
+
+# Add movie import job
+curl -X POST http://localhost:3001/api/queues/movie-import \
+  -H "Content-Type: application/json" \
+  -d '{"count": 20, "page": 1}'
+
+# Add embedding generation job
+curl -X POST http://localhost:3001/api/queues/generate-embeddings \
+  -H "Content-Type: application/json" \
+  -d '{"batchSize": 50}'
+
 # Test semantic search
 curl "http://localhost:3001/api/movies/search?q=space%20adventure&limit=5"
 
-# Test similar movies (TRON ID: 533533)
+# Test similar movies
 curl "http://localhost:3001/api/movies/533533/similar?limit=5"
-
-# Import more movies
-curl -X POST "http://localhost:3001/api/tmdb/import/popular?count=50"
-
-# Generate embeddings
-curl -X POST "http://localhost:3001/api/embeddings/generate-all"
 ```
 
 ---
 
 ## ⚠️ Known Issues:
+
+**Redis Version Warning:**
+- Current: 5.0.14
+- BullMQ recommends: 6.2.0+
+- Status: Working with warnings
+- Impact: None currently, but upgrade recommended for production
 
 **Node.js Warning:**
 - Supabase shows Node.js 18 deprecation warning
@@ -154,63 +213,59 @@ curl -X POST "http://localhost:3001/api/embeddings/generate-all"
 
 ---
 
-## 📝 Last Message (для вывода):
+## 🔥 IMPORTANT: Workflow Rules
 
-### ✅ Итоги тестирования и исправлений
+**READ THIS EVERY SESSION!**
 
-**Выполненные исправления:**
+### Auto-Generate Files (Багфиксы):
+- ✅ Bug fixes - автоматически исправлять
+- ✅ TypeScript errors - автоматически фиксить
+- ✅ Compilation errors - автоматически фиксить
+- ✅ Dependency issues - автоматически решать
 
-1. **TypeScript конфигурация** ✅
-   - Исправлен конфликт module configuration
-   - Проект собирается без ошибок
+### Show Code First (Новые фичи):
+- 📝 New features - показать код, объяснить, дождаться подтверждения
+- 📝 New modules - показать структуру, объяснить архитектуру
+- 📝 New components - показать код с объяснением
+- 📝 Major changes - показать план, дождаться одобрения
 
-2. **Совместимость версий** ✅
-   - Next.js 16 → 14.2.35 (Node.js 18 compatible)
-   - React 19 → 18.3.0
-   - Tailwind 4 → 3.4.19
-   - Добавлен autoprefixer
-
-3. **Страницы авторизации** ✅
-   - `/auth/signup` - регистрация
-   - `/auth/login` - вход
-   - `/auth/callback` - Supabase handler
-   - Inline styles для надёжности
-
-4. **Backend API** ✅
-   - 30 фильмов импортировано
-   - 30 embeddings сгенерировано
-   - Semantic search работает
-   - Similar movies работает
-
-**Текущее состояние:**
-
-Работает:
-- ✅ Backend API: `http://localhost:3001`
-- ✅ Frontend: `http://localhost:3002`
-- ✅ Auth pages: 200 OK
-- ✅ Semantic search API
-- ✅ Vector similarity search
-- ✅ Recommendations API
-
-**Доступно для тестирования:**
-1. `http://localhost:3002` - landing page
-2. `/auth/signup` - создать аккаунт
-3. После входа:
-   - `/discover` - semantic search
-   - `/movies/[id]` - детали + similar movies
-   - `/watchlist` - управление списком
-   - `/recommendations` - персональные рекомендации
-
-**Следующие шаги:**
-- Тестировать flow: регистрация → watchlist → рекомендации
-- Импортировать больше фильмов (100-200)
-- UI polish (toast, loading, errors)
+**Правило:**
+- **Исправление = Auto** (fixing bugs)
+- **Создание = Manual** (creating features)
 
 ---
 
-**🎉 Session Saved Successfully!**
+## 📝 Current Session Summary:
 
-All progress saved in:
-- `CURRENT_STATUS.md` - Full project status
-- `SESSION_RESUME.md` - This quick resume file
-- Git commits: fa5a794, a1c4a0d, a61f6ea
+### ✅ Завершено сегодня (Day 6-7):
+
+**BullMQ & Background Jobs:**
+- ✅ Redis подключен и работает
+- ✅ BullMQ установлен и настроен
+- ✅ 2 очереди созданы (movie-import, embedding-generation)
+- ✅ Процессоры реализованы и протестированы
+- ✅ Bull Board UI доступен: http://localhost:3001/admin/queues
+- ✅ 5 новых API эндпоинтов для управления очередями
+- ✅ TypeScript ошибки исправлены (автоматически)
+
+**Что работает:**
+- ✅ Backend API: http://localhost:3001
+- ✅ Frontend: http://localhost:3002
+- ✅ Bull Board: http://localhost:3001/admin/queues
+- ✅ Job queues: Operational
+- ✅ Database: 106 movies with embeddings
+- ✅ All Day 5 features + новая функциональность очередей
+
+**Что осталось (15% Day 6-7):**
+- ⏳ Redis caching для search queries
+- ⏳ Redis caching для recommendations
+- ⏳ (Optional) Upgrade Redis 5.0.14 → 6.2.0+
+
+---
+
+**🎉 Прогресс сохранён!**
+
+Файлы обновлены:
+- `CURRENT_STATUS.md` - полный статус проекта с Day 6-7
+- `SESSION_RESUME.md` - этот файл для быстрого старта
+- Workflow rules задокументированы
