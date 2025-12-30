@@ -1,7 +1,7 @@
-# Session Resume - Day 6-7 BullMQ & Background Jobs
+# Session Resume - Day 8-10 RAG Pipeline
 
-**Date:** 2025-12-28
-**Status:** 85% Complete - Redis caching remaining
+**Date:** 2025-12-30
+**Status:** 20% Complete - Database schema & TMDB service enhanced
 
 ---
 
@@ -25,51 +25,40 @@ pnpm --filter web dev
 
 ---
 
-## ✅ What Was Completed This Session:
+## ✅ What Was Completed This Session (Day 8-10):
 
-### 1. Redis & BullMQ Setup ✅
-- Redis already installed and running (v5.0.14)
-- BullMQ packages installed (bullmq, ioredis, @nestjs/bullmq)
-- Bull Board monitoring packages installed
-- Redis module created with connection management
+### 1. Database Schema Enhanced ✅
+- **Created migration:** `20251230000001_add_enriched_metadata.sql`
+- **New fields added to movies table:**
+  - `keywords` (TEXT[]) - Array of movie keywords
+  - `tagline` (TEXT) - Movie tagline/slogan
+  - `movie_cast` (JSONB) - Top 5 cast members with character info
+  - `crew` (JSONB) - Director, screenplay, key crew
+  - `production_companies` (TEXT[]) - Production studios
+- **Performance indexes:** GIN indexes on JSONB fields for fast queries
+- **Migration applied successfully** to production database
 
-### 2. Background Job Queues Created ✅
-- **Two queues operational:**
-  - movie-import queue - Import movies from TMDB
-  - embedding-generation queue - Generate movie embeddings
-- **Job processors implemented:**
-  - MovieImportProcessor - Handles movie import jobs
-  - EmbeddingProcessor - Handles embedding generation jobs
-- **Queue management service:**
-  - Add jobs to queues
-  - Schedule jobs with cron
-  - Get queue statistics
-  - Clean old jobs
+### 2. TypeScript Types Updated ✅
+- **Updated `packages/db/src/types.ts`:**
+  - Added new fields to Row, Insert, Update interfaces
+  - Full type safety for enriched metadata
+  - Used `Json` type for JSONB fields
 
-### 3. Bull Board Monitoring ✅
-- Bull Board UI configured at http://localhost:3001/admin/queues
-- Real-time job status monitoring
-- Queue statistics dashboard
-- Error handling for missing queues
+### 3. TMDB Service Enhanced ✅
+- **New method `getMovieKeywords()`:**
+  - Fetches keywords from TMDB `/movie/{id}/keywords`
+  - Returns array of keyword strings
+- **New method `getMovieCredits()`:**
+  - Fetches cast/crew from TMDB `/movie/{id}/credits`
+  - Returns top 5 actors + key crew (director, screenplay)
+- **Updated `importMovieToDb()`:**
+  - Parallel fetching of keywords & credits
+  - Saves all enriched metadata to database
+  - JSON serialization for cast/crew fields
 
-### 4. API Endpoints ✅
-- POST /api/queues/movie-import - Add movie import job
-- POST /api/queues/generate-embeddings - Add embedding job
-- POST /api/queues/schedule-import - Schedule with cron
-- GET /api/queues/stats - Get queue statistics
-- POST /api/queues/clean - Clean completed jobs
-
-### 5. TypeScript Fixes ✅
-- Fixed error handling in all processors
-- Fixed error handling in queues controller (5 catch blocks)
-- Fixed error handling in main.ts
-- Build completes successfully
-
-### 6. Testing & Validation ✅
-- Movie import job: 5 movies imported successfully
-- Embedding generation job: completed successfully
-- Queue stats showing correct status
-- Bull Board UI accessible and working
+### Previous Sessions Completed:
+- ✅ Day 0-5: Full app (auth, search, recommendations, watchlist)
+- ✅ Day 6-7: BullMQ + Redis caching (28x performance boost)
 
 ---
 
@@ -129,45 +118,64 @@ pnpm --filter web dev
 
 ---
 
-## 🎯 Next Steps:
+## 🎯 Next Steps (Day 8-10 - 80% Remaining):
 
-### Remaining for Day 6-7 (15%):
-1. **Redis Caching Implementation:**
-   - Cache search queries (semantic search)
-   - Cache recommendations endpoint
-   - Cache popular movies
-   - Set appropriate TTL (time-to-live)
-   - Cache invalidation strategy
+### Immediate - Phase 1 Complete:
+1. **Test enriched metadata import:**
+   - Import 1-2 test movies with new fields
+   - Verify keywords, cast, crew saved correctly
+   - Check database contents
 
-2. **(Optional) Redis Upgrade:**
-   - Current: 5.0.14 (works with warnings)
-   - Recommended: 6.2.0+
-   - Better compatibility with BullMQ
+2. **Re-import existing movies (optional):**
+   - Update 106 existing movies with enriched data
+   - Use queue for batch processing
 
-### Day 8-10 - RAG Pipeline:
-- Document processing (movie reviews, plot summaries)
-- LLM integration (GPT-4 for conversational recommendations)
-- RAG UI (chat interface for movie discovery)
+### Phase 2 - GPT-4 Integration:
+1. **Add to `packages/ai`:**
+   - Create `chat.ts` with GPT-4 functions
+   - `generateChatResponse()` - Main RAG function
+   - Context injection from vector search
+   - Conversation history management
 
-### Day 11-12 - Advanced AI:
-- Mood-based recommendations
-- Multi-movie similarity
-- Explanation generation
+2. **Prompt Engineering:**
+   - System prompt for movie assistant
+   - Context formatting
+   - Response structure
+
+### Phase 3 - RAG Service:
+1. **Database table for chat:**
+   - `chat_messages` table (user_id, message, response, timestamp)
+   - Store conversation history
+
+2. **Create ChatModule:**
+   - ChatService with RAG logic
+   - Vector search → context retrieval
+   - GPT-4 response generation
+
+### Phase 4 - API & UI:
+1. **Backend endpoints:**
+   - POST /api/chat - Send message, get AI response
+   - GET /api/chat/history/:userId
+   - DELETE /api/chat/clear/:userId
+
+2. **Frontend chat component:**
+   - Chat interface UI
+   - Message history display
+   - Real-time responses
 
 ---
 
 ## 💾 Git Commits:
 
 **Previous Sessions:**
-- fa5a794 - TypeScript config fix
-- a1c4a0d - Auth pages + Tailwind fix
-- a61f6ea - CURRENT_STATUS.md update (Day 5)
-- 9cc4e18 - SESSION_RESUME.md for quick restart
-- 55a4727 - Frontend UI overhaul
+- Day 0-5: Full app implementation
+- Day 6-7: BullMQ + Redis caching
 
-**This Session (Day 6-7):**
-- No commits yet - user creates files manually for new features
-- Bugfixes applied automatically (TypeScript errors in processors/controllers)
+**This Session (Day 8-10):**
+- Migration: `20251230000001_add_enriched_metadata.sql`
+- TypeScript types updated in `packages/db`
+- TMDB service enhanced with keywords/credits
+- Ready to commit after testing
 
 ---
 
@@ -266,6 +274,8 @@ curl "http://localhost:3001/api/movies/533533/similar?limit=5"
 **🎉 Прогресс сохранён!**
 
 Файлы обновлены:
-- `CURRENT_STATUS.md` - полный статус проекта с Day 6-7
-- `SESSION_RESUME.md` - этот файл для быстрого старта
-- Workflow rules задокументированы
+- `CURRENT_STATUS.md` - Day 8-10 (20% complete)
+- `SESSION_RESUME.md` - этот файл
+- Migration applied: enriched metadata schema
+- TMDB service enhanced
+- Ready for Phase 2: GPT-4 integration

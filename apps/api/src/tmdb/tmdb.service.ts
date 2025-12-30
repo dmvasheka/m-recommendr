@@ -119,12 +119,79 @@ export class TmdbService {
     }
 
     /**
+     * Get movie keywords from TMDB
+     */
+    async getMovieKeywords(movieId: number): Promise<string[]> {
+        try {
+            const response = await axios.get(
+                `${this.baseUrl}/movie/${movieId}/keywords`,
+                {
+                    params: {
+                        api_key: this.apiKey,
+                    },
+                }
+            );
+
+            const keywords = response.data.keywords || [];
+            return keywords.map((k: any) => k.name);
+        } catch (error) {
+            this.logger.warn(`Could not fetch keywords for movie ${movieId}`);
+            return [];
+        }
+    }
+
+    /**
+     * Get movie credits (cast + crew) from TMDB
+     */
+    async getMovieCredits(movieId: number): Promise<{
+        cast: any[];
+        crew: any[];
+    }> {
+        try {
+            const response = await axios.get(
+                `${this.baseUrl}/movie/${movieId}/credits`,
+                {
+                    params: {
+                        api_key: this.apiKey,
+                    },
+                }
+            );
+
+            return {
+                // Top 5 cast members
+                cast: (response.data.cast || []).slice(0, 5).map((c: any) => ({
+                    name: c.name,
+                    character: c.character,
+                    profile_path: c.profile_path,
+                })),
+                // Key crew: Director, Screenplay, Story
+                crew: (response.data.crew || [])
+                    .filter((c: any) =>
+                        ['Director', 'Screenplay', 'Story'].includes(c.job)
+                    )
+                    .map((c: any) => ({
+                        name: c.name,
+                        job: c.job,
+                        department: c.department,
+                    })),
+            };
+        } catch (error) {
+            this.logger.warn(`Could not fetch credits for movie ${movieId}`);
+            return { cast: [], crew: [] };
+        }
+    }
+
+    /**
      * Import movie from TMDB to our database
      */
     async importMovieToDb(movieId: number): Promise<MovieInsert> {
         try {
             // 1. Get full movie details from TMDB
             const tmdbMovie = await this.getMovieDetails(movieId);
+            const [keywords, credits] = await Promise.all([
+                this.getMovieKeywords(movieId),
+                this.getMovieCredits(movieId),
+            ]);
 
             // 2. Transform TMDB data to our database format
             const movieData: MovieInsert = {
@@ -146,6 +213,12 @@ export class TmdbService {
                 original_language: tmdbMovie.original_language || null,
                 // embedding will be generated later (Day 4)
                 embedding: null,
+                keywords: keywords.length > 0 ? keywords : null,
+                tagline: tmdbMovie.tagline || null,
+                movie_cast: credits.cast.length > 0 ? JSON.stringify(credits.cast) : null,
+                crew: credits.crew.length > 0 ? JSON.stringify(credits.crew) : null,
+                production_companies: tmdbMovie.production_companies?.map((c: any) => c.name) || null,
+
             };
 
             // 3. Insert or update in database

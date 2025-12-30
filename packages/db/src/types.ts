@@ -47,6 +47,11 @@ export interface Database {
                     runtime: number | null
                     original_language: string | null
                     embedding: number[] | null
+                    keywords: string[] | null
+                    tagline: string | null
+                    movie_cast: Json | null
+                    crew: Json | null
+                    production_companies: string[] | null
                     created_at: string
                     updated_at: string
                 }
@@ -64,6 +69,11 @@ export interface Database {
                     runtime?: number | null
                     original_language?: string | null
                     embedding?: number[] | null
+                    keywords?: string[] | null
+                    tagline?: string | null
+                    movie_cast?: Json | null
+                    crew?: Json | null
+                    production_companies?: string[] | null
                     created_at?: string
                     updated_at?: string
                 }
@@ -81,6 +91,11 @@ export interface Database {
                     runtime?: number | null
                     original_language?: string | null
                     embedding?: number[] | null
+                    keywords?: string[] | null
+                    tagline?: string | null
+                    movie_cast?: Json | null
+                    crew?: Json | null
+                    production_companies?: string[] | null
                     created_at?: string
                     updated_at?: string
                 }
