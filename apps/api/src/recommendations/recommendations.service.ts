@@ -1,5 +1,6 @@
 import { Injectable, Logger } from '@nestjs/common';
 import { supabase } from '@repo/db';
+import { RedisService } from '../redis/redis.service';
 
 export interface RecommendationResult {
     id: number;
@@ -15,9 +16,8 @@ export interface RecommendationResult {
 
 @Injectable()
 export class RecommendationsService {
-    private readonly logger = new
-    Logger(RecommendationsService.name);
-
+    private readonly logger = new Logger(RecommendationsService.name);
+    constructor(private readonly redisService: RedisService) {}
     /**
      * Get personalized recommendations for a user
      * Uses the user's profile embedding (calculated from
@@ -30,9 +30,18 @@ export class RecommendationsService {
         try {
             this.logger.log(`Getting personalized recommendations for user ${userId}`);
 
+            const cacheKey = `recommendations:${userId}:${limit}`;
+            const cached = await this.redisService.get<RecommendationResult[]>(cacheKey);
+
+            if (cached) {
+                this.logger.log(`✅ Cache HIT for user ${userId}`);
+                return cached;
+            }
+
+            this.logger.log(`❌ Cache MISS for user ${userId} - generating...`);
+
             // Check if user has a profile embedding
-            const { data: profile, error: profileError } =
-                await (supabase as any)
+            const { data: profile, error: profileError } = await (supabase as any)
                     .from('user_profiles')
                     .select('prefs_embedding')
                     .eq('user_id', userId)
@@ -57,6 +66,12 @@ export class RecommendationsService {
             }
 
             const results = data as RecommendationResult[] | null;
+
+            if (results && results.length > 0) {
+                await this.redisService.set(cacheKey, results, 600);
+                this.logger.log(`💾 Cached recommendations for user ${userId}`);
+            }
+
             this.logger.log(`Found ${results?.length || 0}
    personalized recommendations`);
             return results || [];
@@ -90,6 +105,12 @@ export class RecommendationsService {
             }
 
             this.logger.log(`User profile updated successfully`);
+            const pattern = `recommendations:${userId}:*`;
+            const keys = await this.redisService.keys(pattern);
+            for (const key of keys) {
+                await this.redisService.del(key);
+            }
+            this.logger.log(`🗑️  Invalidated ${keys.length} cache keys for user ${userId}`);
         } catch (error) {
             const errorMessage = error instanceof Error ?
                 error.message : String(error);
@@ -158,8 +179,16 @@ export class RecommendationsService {
     async getPopularRecommendations(limit = 10):
         Promise<RecommendationResult[]> {
         try {
-            this.logger.log(`Getting popular movies as 
-  fallback recommendations`);
+            this.logger.log(`Getting popular movies as fallback recommendations`);
+            const cacheKey = `popular:${limit}`;
+            const cached = await this.redisService.get<RecommendationResult[]>(cacheKey);
+
+            if (cached) {
+                this.logger.log(`✅ Cache HIT for popular movies`);
+                return cached;
+            }
+
+            this.logger.log(`❌ Cache MISS for popular movies - fetching from DB...`);
 
             const { data, error } = await (supabase as any)
                 .from('movies')
@@ -176,9 +205,13 @@ export class RecommendationsService {
                 ...movie,
                 similarity: 0, // No similarity for popular movies
             }));
+            this.logger.log(`Found ${results.length} popular movies`);
 
-            this.logger.log(`Found ${results.length} 
-  popular movies`);
+            if (results.length > 0) {
+                await this.redisService.set(cacheKey, results, 86400);
+                this.logger.log(`💾 Cached popular movies for 24 hours`);
+            }
+
             return results as RecommendationResult[];
         } catch (error) {
             const errorMessage = error instanceof Error ?

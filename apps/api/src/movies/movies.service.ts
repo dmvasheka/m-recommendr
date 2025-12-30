@@ -2,6 +2,7 @@ import { Injectable, Logger } from '@nestjs/common';
 import { supabase } from '@repo/db';
 import { generateEmbedding } from '@repo/ai';
 import type { Movie } from '@repo/db';
+import { RedisService } from '../redis/redis.service';
 
 export interface SearchResult extends Omit<Movie, 'embedding'> {
     similarity: number;
@@ -10,6 +11,7 @@ export interface SearchResult extends Omit<Movie, 'embedding'> {
 @Injectable()
 export class MoviesService {
     private readonly logger = new Logger(MoviesService.name);
+    constructor(private readonly redisService: RedisService) {}
 
     /**
      * Semantic search - find movies by query text
@@ -17,6 +19,16 @@ export class MoviesService {
     async searchMovies(query: string, limit = 10): Promise<SearchResult[]> {
         try {
             this.logger.log(`Searching for: "${query}"`);
+
+            const cacheKey = `search:${query.toLowerCase()}:${limit}`;
+            const cached = await this.redisService.get<SearchResult[]>(cacheKey);
+
+            if (cached) {
+                this.logger.log(`✅ Cache HIT for "${query}"`);
+                return cached;
+            }
+
+            this.logger.log(`❌ Cache MISS for "${query}" - generating...`);
 
             // 1. Generate embedding for search query
             const queryEmbedding = await generateEmbedding(query);
@@ -33,6 +45,11 @@ export class MoviesService {
 
             const results = data as SearchResult[] | null;
             this.logger.log(`Found ${results?.length || 0} results`);
+            if (results && results.length > 0) {
+                await this.redisService.set(cacheKey, results, 3600);
+                this.logger.log(`💾 Cached results for "${query}"`);
+            }
+
             return results || [];
         } catch (error) {
             const errorMessage = error instanceof Error ? error.message :
