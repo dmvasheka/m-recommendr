@@ -65,16 +65,16 @@ export class ChatService {
             );
 
             // 5. Save conversation to database
-            const { data: savedMessage, error: saveError } = await supabase
+            const { data: savedMessage, error: saveError } = await (supabase
                 .from('chat_messages')
                 .insert({
                     user_id: dto.userId,
                     user_message: dto.message,
                     ai_response: aiResponse,
                     context_movies: movieIds,
-                })
+                } as any)
                 .select()
-                .single();
+                .single() as any);
 
             if (saveError) {
                 this.logger.warn(`Failed to save chat message: ${saveError.message}`);
@@ -87,7 +87,7 @@ export class ChatService {
                 userMessage: dto.message,
                 aiResponse,
                 contextMovies: movieIds,
-                timestamp: savedMessage?.created_at || new Date().toISOString(),
+                timestamp: savedMessage ? savedMessage.created_at : new Date().toISOString(),
             };
         } catch (error) {
             const errorMessage = error instanceof Error ? error.message : String(error);

@@ -6,6 +6,7 @@ import { WatchlistModule } from './watchlist/watchlist.module';
 import { RecommendationsModule } from './recommendations/recommendations.module';
 import { RedisModule } from './redis/redis.module';
 import { QueuesModule } from './queues/queues.module';
+import { ChatModule } from './chat/chat.module';
 
 @Module({
     imports: [
@@ -16,6 +17,7 @@ import { QueuesModule } from './queues/queues.module';
         RecommendationsModule,
         RedisModule,
         QueuesModule,
+        ChatModule,
     ],
     controllers: [],
     providers: [],
