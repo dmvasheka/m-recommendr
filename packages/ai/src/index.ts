@@ -1,4 +1,6 @@
-export { openai, EMBEDDING_MODEL, EMBEDDING_DIMENSIONS, CHAT_MODEL_SMALL, CHAT_MODEL_LARGE } from
+export { openai, EMBEDDING_MODEL, EMBEDDING_DIMENSIONS, CHAT_MODEL_SMALL, CHAT_MODEL_LARGE, GPT4O_MINI_MODEL, GPT4_MODEL } from
         './openai.client';
 export { generateEmbedding, generateEmbeddingsBatch, createMovieEmbeddingText } from
         './embeddings';
+export { generateChatResponse, summarizeMovie } from './chat';
+export type { ChatMessage, MovieContext } from './chat';

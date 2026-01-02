@@ -21,6 +21,8 @@ export interface TmdbMovie {
 export interface TmdbMovieDetails extends TmdbMovie {
     runtime: number | null;
     genres: { id: number; name: string }[];
+    tagline?: string | null;
+    production_companies?: { id: number; name: string }[];
 }
 
 export interface TmdbSearchResponse {

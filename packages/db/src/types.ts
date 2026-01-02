@@ -146,6 +146,32 @@ export interface Database {
                     updated_at?: string
                 }
             }
+            chat_messages: {
+                Row: {
+                    id: string
+                    user_id: string
+                    user_message: string
+                    ai_response: string
+                    context_movies: Json | null
+                    created_at: string
+                }
+                Insert: {
+                    id?: string
+                    user_id: string
+                    user_message: string
+                    ai_response: string
+                    context_movies?: Json | null
+                    created_at?: string
+                }
+                Update: {
+                    id?: string
+                    user_id?: string
+                    user_message?: string
+                    ai_response?: string
+                    context_movies?: Json | null
+                    created_at?: string
+                }
+            }
         }
         Views: {
             [_ in never]: never
