@@ -61,3 +61,22 @@ export interface SimilarMoviesParams {
     movieId: number
     limit?: number
 }
+
+// Chat types
+export interface ChatMessage {
+    userMessage: string
+    aiResponse: string
+    contextMovies: number[]
+    timestamp: string
+}
+
+export interface SendChatMessageParams {
+    userId: string
+    message: string
+    includeHistory?: boolean
+}
+
+export interface ChatHistoryMessage {
+    role: 'user' | 'assistant'
+    content: string
+}

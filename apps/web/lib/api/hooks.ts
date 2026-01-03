@@ -5,6 +5,7 @@ import type {
     MarkAsWatchedParams,
     SearchMoviesParams,
     SimilarMoviesParams,
+    SendChatMessageParams,
 } from './types'
 
 // Movies
@@ -107,5 +108,37 @@ export function usePopularMovies(limit = 10) {
     return useQuery({
         queryKey: ['movies', 'popular', limit],
         queryFn: () => api.getPopularMovies(limit),
+    })
+}
+
+// Chat
+export function useChatHistory(userId: string, limit = 20) {
+    return useQuery({
+        queryKey: ['chat', 'history', userId, limit],
+        queryFn: () => api.getChatHistory(userId, limit),
+        enabled: !!userId,
+    })
+}
+
+export function useSendChatMessage() {
+    const queryClient = useQueryClient()
+
+    return useMutation({
+        mutationFn: (params: SendChatMessageParams) => api.sendChatMessage(params),
+        onSuccess: (_, variables) => {
+            // Invalidate chat history to refetch
+            queryClient.invalidateQueries({ queryKey: ['chat', 'history', variables.userId] })
+        },
+    })
+}
+
+export function useClearChatHistory() {
+    const queryClient = useQueryClient()
+
+    return useMutation({
+        mutationFn: (userId: string) => api.clearChatHistory(userId),
+        onSuccess: (_, userId) => {
+            queryClient.invalidateQueries({ queryKey: ['chat', 'history', userId] })
+        },
     })
 }

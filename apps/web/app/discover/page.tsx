@@ -5,18 +5,47 @@ import { useSearchParams } from 'next/navigation'
 import { Navbar } from '@/components/Navbar'
 import { SearchBar } from '@/components/SearchBar'
 import { MovieCard } from '@/components/MovieCard'
-import { useSearchMovies, usePopularMovies } from '@/lib/api/hooks'
+import { useSearchMovies, usePopularMovies, useSendChatMessage } from '@/lib/api/hooks'
+import { useAuth } from '@/lib/auth/AuthProvider'
 
 export default function DiscoverPage() {
     const searchParams = useSearchParams()
     const initialQuery = searchParams.get('q') || ''
     const [searchQuery, setSearchQuery] = useState(initialQuery)
+    const { user } = useAuth()
+    const [aiExplanation, setAiExplanation] = useState('')
+    const sendChatMessage = useSendChatMessage()
+
 
     // Update search query when URL changes
     useEffect(() => {
         const query = searchParams.get('q') || ''
         setSearchQuery(query)
     }, [searchParams])
+
+    // RAG search when query changes
+    useEffect(() => {
+        const performRAGSearch = async () => {
+            if (!searchQuery || !user) {
+                setAiExplanation('')
+                return
+            }
+
+            try {
+                const response = await sendChatMessage.mutateAsync({
+                    userId: user.id,
+                    message: searchQuery,
+                    includeHistory: false,
+                })
+                setAiExplanation(response.aiResponse)
+            } catch (error) {
+                console.error('RAG search error:', error)
+                setAiExplanation('')
+            }
+        }
+
+        performRAGSearch()
+    }, [searchQuery, user])
 
     // Fetch search results when query exists
     const { data: searchResults, isLoading: isSearchLoading } = useSearchMovies({
@@ -52,16 +81,41 @@ export default function DiscoverPage() {
                 {/* Search Bar */}
                 <div className="mb-8">
                     <SearchBar
-                        placeholder="Try: 'space exploration with emotional depth' or 'funny time travel movies'"
+                        placeholder="Search by title or describe what you want: 'uplifting adventure' or 'sci-fi thriller'..."
                         defaultValue={initialQuery}
                     />
                     <p className="mt-2 text-sm text-gray-500">
-                        💡 Use natural language to describe the kind of movie you want to watch
+                        💡🤖 AI-powered search: Use natural language or search by title - we'll find the perfect match
                     </p>
                 </div>
+                {/* AI Explanation */}
+                {aiExplanation && searchQuery && (
+                    <div className="mb-6 p-4 bg-gradient-to-r from-indigo-50 to-purple-50 rounded-lg border border-indigo-200">
+                        <div className="flex items-start gap-3">
+                            <div className="text-2xl">🤖</div>
+                            <div className="flex-1">
+                                <h3 className="font-semibold text-indigo-900 mb-2">
+                                    AI Recommendations
+                                </h3>
+                                <div className="text-sm text-indigo-800 prose prose-sm max-w-none">
+                                    {aiExplanation.split('\n').map((line, i) => {
+                                        const boldFormatted = line.replace(/\*\*(.+?)\*\*/g, '<strong>$1</strong>')
+                                        return (
+                                            <p
+                                                key={i}
+                                                className="mb-2 last:mb-0"
+                                                dangerouslySetInnerHTML={{ __html: boldFormatted }}
+                                            />
+                                        )
+                                    })}
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                )}
 
                 {/* Results */}
-                {isLoading ? (
+                {isLoading || sendChatMessage.isPending ? (
                     <div className="flex justify-center items-center py-20">
                         <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-indigo-600"></div>
                     </div>
@@ -95,13 +149,14 @@ export default function DiscoverPage() {
                 {showSearchResults && movies && movies.length > 0 && (
                     <div className="mt-12 p-6 bg-indigo-50 rounded-lg border border-indigo-200">
                         <h3 className="text-lg font-semibold text-indigo-900 mb-2">
-                            🧠 How Semantic Search Works
+                            🤖 How AI-Powered Search Works
                         </h3>
                         <p className="text-indigo-800 text-sm leading-relaxed">
-                            We use AI embeddings to understand the <strong>meaning</strong> behind your search,
-                            not just keywords. Your query is converted into a 1536-dimensional vector and compared
-                            with movie embeddings to find the best semantic matches. This means you can describe
-                            the vibe, themes, or feeling you're looking for, and we'll find movies that match!
+                            We use <strong>Retrieval-Augmented Generation (RAG)</strong> combining semantic search with GPT-4.
+                            Your query is converted into a vector embedding, matched against our movie database,
+                            then GPT-4 analyzes enriched metadata (keywords, cast, crew, themes) to explain
+                            <em> why</em> each movie fits your request. This gives you intelligent recommendations
+                            with context, not just keyword matching!
                         </p>
                     </div>
                 )}

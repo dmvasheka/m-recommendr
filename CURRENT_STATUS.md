@@ -1,35 +1,110 @@
 # Movie Recommendr - Current Project Status
 
-**Last Updated:** 2026-01-03 (Day 8-10: RAG Pipeline - 70% Complete)
+**Last Updated:** 2026-01-03 (Day 8-10: RAG Pipeline - 100% Complete ✅)
 
 ---
 
-## 🎯 User Workflow Preference
+## ⚠️ CRITICAL WORKFLOW RULES - READ BEFORE EVERY ACTION
 
-**CRITICAL - READ THIS EVERY SESSION:**
+**🔴 MANDATORY CHECK BEFORE USING ANY TOOL (Write, Edit, Bash)**
 
-### When to Auto-Generate Files:
-- ✅ **Bug fixes** - Automatically fix and apply changes
-- ✅ **Error corrections** - TypeScript errors, compilation errors, runtime errors
-- ✅ **Dependency issues** - Package installations, version conflicts
-- ✅ **Configuration fixes** - Fix broken configs, missing settings
+See detailed rules in: **[WORKFLOW_RULES.md](./WORKFLOW_RULES.md)**
 
-### When to SHOW Code (Manual Implementation):
-- 📝 **New features** - Show code snippets for user to paste manually
-- 📝 **New modules** - Explain architecture, show file structure, let user create files
-- 📝 **Major refactoring** - Explain changes, show before/after, user applies
-- 📝 **New components** - Show component code with detailed explanation
+---
 
-**Rule of Thumb:**
-- **Fixing = Auto** (исправление ошибок)
-- **Creating = Manual** (создание нового функционала)
+### 🚫 NEVER AUTO-CREATE/EDIT (Always Show Code First):
 
-**Explanation Format for New Features:**
-1. Show the code snippet
-2. Explain what it does
-3. Explain why it's needed
-4. Show where to place it
-5. Wait for user to confirm file creation
+**Category: New Code**
+- ❌ NEW FEATURES (any new functionality)
+- ❌ NEW COMPONENTS (React, UI elements)
+- ❌ NEW PAGES (routes, screens)
+- ❌ NEW MODULES (services, controllers)
+- ❌ NEW API ENDPOINTS
+
+**Category: Updates**
+- ❌ FEATURE ENHANCEMENTS (improving existing features)
+- ❌ UI/UX CHANGES (design, layout updates)
+- ❌ REFACTORING (code restructuring)
+- ❌ ARCHITECTURE CHANGES
+
+**Category: Major Changes**
+- ❌ DATABASE SCHEMA (show migration SQL)
+- ❌ DEPENDENCIES (show install command)
+- ❌ CONFIGURATION (show config changes)
+
+---
+
+### ✅ AUTO-CREATE/EDIT ONLY (No Manual Approval Needed):
+
+**Category: Fixes**
+- ✅ BUG FIXES (broken functionality)
+- ✅ TYPESCRIPT ERRORS (type/compilation errors)
+- ✅ BUILD ERRORS (failed builds)
+- ✅ RUNTIME ERRORS (crashes, exceptions)
+
+**Category: Dependencies**
+- ✅ DEPENDENCY INSTALLATION (when requested)
+- ✅ MISSING IMPORTS (adding imports)
+- ✅ VERSION CONFLICTS (fixing versions)
+
+**Category: Documentation**
+- ✅ DOCUMENTATION UPDATES (CURRENT_STATUS.md, SESSION_RESUME.md)
+- ✅ FIXING TYPOS
+- ✅ PROGRESS UPDATES (todos, status)
+
+---
+
+### 📋 MANDATORY PROCESS FOR NEW FEATURES:
+
+```
+1. STOP ✋ - Don't use Write/Edit/Bash
+2. SHOW CODE 📝 - Present in markdown block
+3. EXPLAIN 💬 - What, why, where
+4. WAIT ⏸️ - For user confirmation ("создал", "готово", "done")
+5. CONTINUE ➡️ - Only after confirmation
+```
+
+---
+
+### ❓ DECISION TREE:
+
+```
+Is this CREATING new functionality?
+├─ YES → SHOW CODE, don't auto-create
+└─ NO → Is this FIXING broken code?
+    ├─ YES → AUTO-FIX
+    └─ NO → Is this UPDATING existing feature?
+        ├─ YES → SHOW CODE, don't auto-create
+        └─ NO → SHOW CODE to be safe
+```
+
+**Golden Rule:**
+```
+IF (creating || updating || enhancing) → SHOW_CODE_AND_WAIT()
+ELSE IF (fixing || error || bug) → AUTO_FIX()
+```
+
+---
+
+### 🔴 CRITICAL VIOLATIONS TO AVOID:
+
+1. **NEVER create new files without showing code first** (except docs)
+2. **NEVER edit existing features without explaining** (except bug fixes)
+3. **NEVER assume user wants auto-creation** (except bug fixes)
+4. **NEVER skip SHOW → EXPLAIN → WAIT** for new features
+
+**When user says "ты опять за меня делаешь"** → You violated workflow. Re-read WORKFLOW_RULES.md immediately.
+
+---
+
+### ✅ COMPLIANCE CHECKLIST:
+
+Before ANY tool use:
+- [ ] Is this a bug fix? → If NO, show code first
+- [ ] Is this new functionality? → If YES, show code first
+- [ ] Did I explain the changes? → Required for features
+- [ ] Did user confirm? → Required before creating
+- [ ] Following SHOW → EXPLAIN → WAIT? → Mandatory
 
 ---
 
@@ -43,7 +118,8 @@ Day 3: ████████████████████ 100% Complet
 Day 4: ████████████████████ 100% Complete
 Day 5: ████████████████████ 100% Complete
 Day 6-7: ████████████████████ 100% Complete
-Day 8-10: ██████████████░░░░░░  70% RAG Pipeline (In Progress)
+Day 8-10: ████████████████████ 100% Complete ✅
+Day 11-12: ░░░░░░░░░░░░░░░░░░░░   0% Advanced AI (Next)
 ```
 
 ---
@@ -1051,7 +1127,7 @@ curl "http://localhost:3001/api/recommendations/popular?limit=10"
 
 ---
 
-## 🔄 Day 8-10 - RAG Pipeline (70% - In Progress)
+## ✅ Day 8-10 - RAG Pipeline (100% Complete)
 
 **Session Date:** 2026-01-03
 
@@ -1196,20 +1272,21 @@ GET /api/chat/history/:userId?limit=20
 DELETE /api/chat/clear/:userId
 ```
 
-### What's Remaining (30%):
+### Phase 4 - Frontend Integration ✅
+1. ✅ Integrated RAG into /discover page (Variant 1: Smart Search)
+2. ✅ AI explanation display with markdown formatting
+3. ✅ React Query hooks (useSendChatMessage, useChatHistory, useClearChatHistory)
+4. ✅ API client methods (sendChatMessage, getChatHistory, clearChatHistory)
+5. ✅ TypeScript types (ChatMessage, SendChatMessageParams, ChatHistoryMessage)
+6. ✅ Automatic RAG search on query input
+7. ✅ Loading states and error handling
+8. ✅ End-to-end testing successful
 
-**Phase 4 - Frontend Chat UI:**
-1. ⏳ Create chat interface component in Next.js
-2. ⏳ Message list with user/AI messages
-3. ⏳ Input field for user questions
-4. ⏳ Real-time response display
-5. ⏳ Optional: Streaming responses for better UX
-
-**Optional Enhancements:**
+**Optional Future Enhancements:**
 - ⏳ Re-import existing 106 movies with enriched metadata
 - ⏳ Streaming responses (Server-Sent Events)
 - ⏳ Rate limiting for API protection
-- ⏳ Cost tracking for OpenAI usage
+- ⏳ Usage tracking dashboard
 
 ### Test Results:
 
@@ -1253,5 +1330,87 @@ DELETE /api/chat/clear/:userId
 - Running: http://localhost:3001
 - Chat endpoint: POST /api/chat (tested and working)
 - Bull Board: http://localhost:3001/admin/queues
+
+**Summary:**
+Day 8-10 RAG Pipeline is **100% complete** with full backend + frontend integration! 🎊
+
+---
+
+## 🔄 Day 11-12 - Advanced AI Features (In Progress - 0%)
+
+**Session Date:** 2026-01-03
+
+### Plan Overview:
+
+**Goal:** Enhance AI capabilities with advanced features for better personalization and user experience
+
+### Planned Features:
+
+#### 1. Multi-Movie Similarity Search ⏳
+**What:** "Find movies like these 3 combined"
+**How:**
+- Combine embeddings of multiple movies (average/weighted)
+- Vector search for movies similar to the combined vector
+- Useful for "More like Inception + Interstellar + The Matrix"
+
+#### 2. Personalized RAG with Watchlist History ⏳
+**What:** Use user's watchlist to personalize RAG responses
+**How:**
+- Include user's highly-rated movies in RAG context
+- GPT considers user preferences when recommending
+- "Based on your love for sci-fi and Christopher Nolan..."
+
+#### 3. Mood & Theme-Based Search Enhancement ⏳
+**What:** Better mood/theme detection and filtering
+**How:**
+- Extract mood keywords from query (uplifting, dark, intense, etc.)
+- Filter by genres/keywords matching mood
+- Combine with RAG for contextual recommendations
+
+#### 4. Why This Movie? Explanation Feature ⏳
+**What:** Dedicated endpoint explaining why a specific movie was recommended
+**How:**
+- New endpoint: POST /api/movies/:id/explain
+- Input: movieId + userId (for context)
+- Output: Detailed explanation of recommendation reasoning
+
+#### 5. Conversation Memory & Context ⏳
+**What:** Multi-turn conversations with memory
+**How:**
+- Include recent chat history in RAG context
+- GPT remembers previous conversation
+- "What about something darker?" (remembers previous genre)
+
+### What's Remaining (100%):
+
+**Phase 1 - Multi-Movie Similarity:**
+1. ⏳ Add endpoint POST /api/movies/similar-to-multiple
+2. ⏳ Implement vector averaging/combining logic
+3. ⏳ Frontend UI for selecting multiple movies
+4. ⏳ Test with various movie combinations
+
+**Phase 2 - Personalized RAG:**
+1. ⏳ Update ChatService to fetch user watchlist
+2. ⏳ Include top-rated movies in RAG context
+3. ⏳ Update system prompt with personalization
+4. ⏳ Test personalized vs non-personalized responses
+
+**Phase 3 - Enhanced Mood Detection:**
+1. ⏳ Create mood/theme keyword dictionary
+2. ⏳ Add mood detection in RAG pipeline
+3. ⏳ Filter movies by detected mood
+4. ⏳ Test with various mood queries
+
+**Phase 4 - Explanation Endpoint:**
+1. ⏳ Create /api/movies/:id/explain endpoint
+2. ⏳ Implement explanation generation with GPT
+3. ⏳ Frontend UI for "Why this?" button
+4. ⏳ Test explanation quality
+
+**Phase 5 - Conversation Memory:**
+1. ⏳ Update ChatService to include history in context
+2. ⏳ Limit to last N messages (cost optimization)
+3. ⏳ Test multi-turn conversations
+4. ⏳ Handle context window limits
 
 ---
