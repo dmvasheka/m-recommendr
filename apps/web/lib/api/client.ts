@@ -6,6 +6,9 @@ import type {
     Recommendation,
     SearchMoviesParams,
     SimilarMoviesParams,
+    ChatMessage,
+    SendChatMessageParams,
+    ChatHistoryMessage,
 } from './types'
 
 const API_BASE_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:3001/api'
@@ -118,6 +121,41 @@ class ApiClient {
     async importMovieFromTMDB(tmdbId: number): Promise<Movie> {
         return this.fetch(`/api/tmdb/import/${tmdbId}`, {
             method: 'POST',
+        })
+    }
+
+    // Chat
+    async sendChatMessage(params: SendChatMessageParams): Promise<ChatMessage> {
+        const response = await this.fetch<{
+            success: boolean
+            userMessage: string
+            aiResponse: string
+            contextMovies: number[]
+            timestamp: string
+        }>('/api/chat', {
+            method: 'POST',
+            body: JSON.stringify(params),
+        })
+        return {
+            userMessage: response.userMessage,
+            aiResponse: response.aiResponse,
+            contextMovies: response.contextMovies,
+            timestamp: response.timestamp,
+        }
+    }
+
+    async getChatHistory(userId: string, limit = 20): Promise<ChatHistoryMessage[]> {
+        const response = await this.fetch<{
+            success: boolean
+            history: ChatHistoryMessage[]
+            count: number
+        }>(`/api/chat/history/${userId}?limit=${limit}`)
+        return response.history || []
+    }
+
+    async clearChatHistory(userId: string): Promise<void> {
+        return this.fetch(`/api/chat/clear/${userId}`, {
+            method: 'DELETE',
         })
     }
 }
