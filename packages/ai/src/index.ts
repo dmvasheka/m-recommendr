@@ -4,4 +4,11 @@ export { generateEmbedding, generateEmbeddingsBatch, createMovieEmbeddingText } 
         './embeddings';
 export { generateChatResponse, summarizeMovie } from './chat';
 export type { ChatMessage, MovieContext, UserPreferences } from './chat';
+export {
+    detectMood,
+    scoreMoodMatch,
+    MOOD_DICTIONARY,
+    type MoodKeywords
+} from './mood-detector';
+
 

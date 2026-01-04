@@ -1,6 +1,15 @@
 import { Injectable, Logger } from '@nestjs/common';
 import { supabase } from '@repo/db';
-import { generateEmbedding, generateChatResponse, MovieContext, ChatMessage, UserPreferences } from '@repo/ai';
+import {
+    generateEmbedding,
+    generateChatResponse,
+    MovieContext,
+    ChatMessage,
+    UserPreferences,
+    detectMood,
+    scoreMoodMatch,
+    MoodKeywords
+} from '@repo/ai';
 
 export interface SendMessageDto {
     userId: string;
@@ -93,6 +102,12 @@ export class ChatService {
 
             this.logger.log(`Found ${relevantMovies?.length || 0} relevant movies`);
 
+            const detectedMood = detectMood(dto.message);
+            if (detectedMood) {
+                this.logger.log(`Detected mood: ${detectedMood.mood}`);
+            }
+
+
             // 3. Fetch full enriched metadata for context
             const movieIds = (relevantMovies || []).map((m: any) => m.id);
             const { data: enrichedMovies, error: enrichError } = await supabase
@@ -104,7 +119,7 @@ export class ChatService {
                 throw enrichError;
             }
 
-            const context: MovieContext[] = (enrichedMovies || []) as any[];
+            let context: MovieContext[] = (enrichedMovies || []) as any[];
 
             // NEW: Fetch conversation history if not provided
             let conversationHistory = dto.conversationHistory || [];
@@ -120,12 +135,25 @@ export class ChatService {
                 this.logger.log(`Using personalized context for user ${dto.userId}`);
             }
 
+            if (detectedMood && context.length > 0) {
+                context = context
+                    .map(movie => ({
+                        ...movie,
+                        moodScore: scoreMoodMatch(movie, detectedMood)
+                    }))
+                    .sort((a, b) => (b.moodScore || 0) - (a.moodScore || 0))
+                    .slice(0, 10); // Keep top 10 mood-matching movies
+
+                this.logger.log(`Re-ranked ${context.length} movies by mood: ${detectedMood.mood}`);
+            }
+
             // 4. Generate AI response using RAG with personalization + history
             const aiResponse = await generateChatResponse(
                 dto.message,
                 context,
                 conversationHistory, // NOW includes previous messages
-                userPreferences || undefined
+                userPreferences || undefined,
+                detectedMood || undefined
             );
 
             // 5. Save conversation to database

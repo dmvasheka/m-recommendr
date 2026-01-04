@@ -1,5 +1,5 @@
 import { openai, GPT4_MODEL, GPT4O_MINI_MODEL } from './openai.client';
-
+import { MoodKeywords } from './mood-detector';
 export interface ChatMessage {
     role: 'user' | 'assistant' | 'system';
     content: string;
@@ -39,7 +39,8 @@ export async function generateChatResponse(
     userMessage: string,
     context: MovieContext[],
     conversationHistory: ChatMessage[] = [],
-    userPreferences?: UserPreferences // NEW parameter
+    userPreferences?: UserPreferences,
+    detectedMood?: MoodKeywords
 ): Promise<string> {
     // Format context from movies into readable text
     const formattedContext = context.map((movie, index) => {
@@ -80,7 +81,7 @@ export async function generateChatResponse(
       Guidelines:
       1. Use the provided movie context to give personalized recommendations
       2. ${userPreferences ? '**IMPORTANT**: Consider the user\'s top-rated movies when making recommendations. Reference their preferences to show you understand their taste.' : ''}
-      3. **Remember the conversation**: If the user asks follow-up questions (like "what about something darker?"), refer back to previous recommendations and adjust accordingly.
+      3. ${detectedMood ? `**MOOD DETECTED: "${detectedMood.mood}"** - The user is looking for ${detectedMood.mood} movies. Prioritize films that match this mood and explain how they fit the vibe.` : '**Remember the conversation**: If the user asks follow-up questions (like "what about something darker?"), refer back to previous recommendations and adjust accordingly.'}
       4. Explain WHY you're recommending each movie (genre match, similar themes, cast/director, mood${userPreferences ? ', similarity to their favorites' : ''})
       5. Be conversational and enthusiastic about movies
       6. If asked about a specific genre/mood/theme, prioritize movies that match
@@ -99,10 +100,11 @@ export async function generateChatResponse(
         {
             role: 'user',
             content: formattedContext
-                ? `Based on these movies:\n\n${formattedContext}${preferencesContext}\n\nUser question: ${userMessage}`
+                ? `Based on these movies:\n\n${formattedContext}${preferencesContext}${detectedMood ? `\n\n**User wants: ${detectedMood.mood} movies**` : ''}\n\nUser question: ${userMessage}`
                 : userMessage
         }
     ];
+
 
     try {
         const response = await openai.chat.completions.create({
