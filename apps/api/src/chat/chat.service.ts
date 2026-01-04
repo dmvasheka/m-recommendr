@@ -1,6 +1,6 @@
 import { Injectable, Logger } from '@nestjs/common';
 import { supabase } from '@repo/db';
-import { generateEmbedding, generateChatResponse, MovieContext, ChatMessage } from '@repo/ai';
+import { generateEmbedding, generateChatResponse, MovieContext, ChatMessage, UserPreferences } from '@repo/ai';
 
 export interface SendMessageDto {
     userId: string;
@@ -18,6 +18,55 @@ export interface ChatResponse {
 @Injectable()
 export class ChatService {
     private readonly logger = new Logger(ChatService.name);
+
+    /**
+     * Get user's top-rated movies for personalization
+     * (Movies with rating >= 7)
+     */
+    private async getUserPreferences(userId: string): Promise<UserPreferences | null> {
+        try {
+            // Fixed Supabase query - correct join syntax
+            const { data: watchlist, error } = await supabase
+                .from('user_watchlist')
+                .select('rating, movies!inner(title, genres)')  // Fixed: movies!inner instead of movie:movies
+                .eq('user_id', userId)
+                .eq('status', 'watched')
+                .gte('rating', 7)
+                .order('rating', { ascending: false })
+                .limit(5); // Top 5 rated movies
+
+            if (error) {
+                this.logger.warn(`Supabase error fetching preferences: ${error.message}`);
+                return null;
+            }
+
+            if (!watchlist || watchlist.length === 0) {
+                this.logger.log(`No top-rated movies found for user ${userId}`);
+                return null;
+            }
+
+            // Map the response correctly
+            const topRatedMovies = watchlist
+                .filter((item: any) => item.movies)  // Changed from item.movie to item.movies
+                .map((item: any) => ({
+                    title: item.movies.title,        // Changed from item.movie.title
+                    rating: item.rating,
+                    genres: item.movies.genres || [], // Changed from item.movie.genres
+                }));
+
+            if (topRatedMovies.length === 0) {
+                return null;
+            }
+
+            this.logger.log(`Found ${topRatedMovies.length} top-rated movies for user ${userId}`);
+            return { topRatedMovies };
+        } catch (error) {
+            const errorMessage = error instanceof Error ? error.message : String(error);
+            this.logger.warn(`Failed to fetch user preferences: ${errorMessage}`);
+            return null; // Don't fail if preferences unavailable
+        }
+    }
+
 
     /**
      * Process user message and generate AI response using RAG
@@ -57,11 +106,18 @@ export class ChatService {
 
             const context: MovieContext[] = (enrichedMovies || []) as any[];
 
-            // 4. Generate AI response using RAG
+            // NEW: Get user preferences for personalization
+            const userPreferences = await this.getUserPreferences(dto.userId);
+            if (userPreferences) {
+                this.logger.log(`Using personalized context for user ${dto.userId}`);
+            }
+
+            // 4. Generate AI response using RAG with personalization
             const aiResponse = await generateChatResponse(
                 dto.message,
                 context,
-                dto.conversationHistory || []
+                dto.conversationHistory || [],
+                userPreferences || undefined  // NEW: Pass user preferences
             );
 
             // 5. Save conversation to database

@@ -18,6 +18,15 @@ export interface MovieContext {
     release_date: string | null;
 }
 
+export interface UserPreferences {
+    topRatedMovies: Array<{
+        title: string;
+        rating: number;
+        genres: string[];
+    }>;
+}
+
+
 /**
  * Generate AI response for movie recommendations using RAG
  *
@@ -29,7 +38,8 @@ export interface MovieContext {
 export async function generateChatResponse(
     userMessage: string,
     context: MovieContext[],
-    conversationHistory: ChatMessage[] = []
+    conversationHistory: ChatMessage[] = [],
+    userPreferences?: UserPreferences // NEW parameter
 ): Promise<string> {
     // Format context from movies into readable text
     const formattedContext = context.map((movie, index) => {
@@ -44,31 +54,41 @@ export async function generateChatResponse(
         const keywords = movie.keywords?.slice(0, 5).join(', ') || 'N/A';
 
         return `
-  Movie ${index + 1}:
-  - Title: ${movie.title} (${movie.release_date?.substring(0, 4) || 'N/A'})
-  - Tagline: ${movie.tagline || 'N/A'}
-  - Genres: ${movie.genres?.join(', ') || 'N/A'}
-  - Description: ${movie.description || 'No description available'}
-  - Keywords: ${keywords}
-  - Director: ${director}
-  - Cast: ${cast}
-  - Rating: ${movie.vote_average ? `${movie.vote_average}/10` : 'N/A'}
-          `.trim();
+    Movie ${index + 1}:
+    - Title: ${movie.title} (${movie.release_date?.substring(0, 4) || 'N/A'})
+    - Tagline: ${movie.tagline || 'N/A'}
+    - Genres: ${movie.genres?.join(', ') || 'N/A'}
+    - Description: ${movie.description || 'No description available'}
+    - Keywords: ${keywords}
+    - Director: ${director}
+    - Cast: ${cast}
+    - Rating: ${movie.vote_average ? `${movie.vote_average}/10` : 'N/A'}
+            `.trim();
     }).join('\n\n');
+
+    // NEW: Format user preferences if available
+    let preferencesContext = '';
+    if (userPreferences && userPreferences.topRatedMovies.length > 0) {
+        preferencesContext = `\n\nUser's Top-Rated Movies:\n${userPreferences.topRatedMovies.map((movie, idx) =>
+            `${idx + 1}. ${movie.title} (Rating: ${movie.rating}/10, Genres: ${movie.genres.join(', ')})`
+        ).join('\n')}`;
+    }
 
     // System prompt for movie recommendation assistant
     const systemPrompt = `You are an expert movie recommendation assistant with deep knowledge of cinema. Your role is to help users discover movies they'll love based on their preferences, mood, or specific requests.
 
-  Guidelines:
-  1. Use the provided movie context to give personalized recommendations
-  2. Explain WHY you're recommending each movie (genre match, similar themes, cast/director, mood)
-  3. Be conversational and enthusiastic about movies
-  4. If asked about a specific genre/mood/theme, prioritize movies that match
-  5. Mention key details: title, year, director, main cast, and what makes it special
-  6. Keep responses concise but informative (2-4 movie recommendations per response)
-  7. If no relevant context is provided, be honest and suggest the user try different search terms
+    Guidelines:
+    1. Use the provided movie context to give personalized recommendations
+    2. ${userPreferences ? '**IMPORTANT**: Consider the user\'s top-rated movies when making recommendations. Reference their preferences to show you understand their taste.' : ''}
+    3. Explain WHY you're recommending each movie (genre match, similar themes, cast/director, mood${userPreferences ? ', similarity to their favorites' : ''})
+    4. Be conversational and enthusiastic about movies
+    5. If asked about a specific genre/mood/theme, prioritize movies that match
+    6. Mention key details: title, year, director, main cast, and what makes it special
+    7. Keep responses concise but informative (2-4 movie recommendations per response)
+    8. If no relevant context is provided, be honest and suggest the user try different search terms
+    ${userPreferences ? '9. When appropriate, mention connections to their favorite movies (e.g., "Since you loved Inception...")\n  10. Personalize your tone based on their genre preferences' : ''}
 
-  Always format your recommendations clearly with movie titles in **bold**.`;
+    Always format your recommendations clearly with movie titles in **bold**.`;
 
     // Build messages array
     const messages: ChatMessage[] = [
@@ -77,7 +97,7 @@ export async function generateChatResponse(
         {
             role: 'user',
             content: formattedContext
-                ? `Based on these movies:\n\n${formattedContext}\n\nUser question: ${userMessage}`
+                ? `Based on these movies:\n\n${formattedContext}${preferencesContext}\n\nUser question: ${userMessage}`
                 : userMessage
         }
     ];
@@ -97,6 +117,7 @@ export async function generateChatResponse(
         throw new Error(`Failed to generate AI response: ${errorMessage}`);
     }
 }
+
 
 /**
  * Generate a concise summary of movie for context window

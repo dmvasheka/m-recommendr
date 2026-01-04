@@ -119,7 +119,7 @@ Day 4: ████████████████████ 100% Complet
 Day 5: ████████████████████ 100% Complete
 Day 6-7: ████████████████████ 100% Complete
 Day 8-10: ████████████████████ 100% Complete ✅
-Day 11-12: ░░░░░░░░░░░░░░░░░░░░   0% Advanced AI (Next)
+Day 11-12: ████░░░░░░░░░░░░░░░░  20% Advanced AI (In Progress)
 ```
 
 ---
@@ -1336,9 +1336,9 @@ Day 8-10 RAG Pipeline is **100% complete** with full backend + frontend integrat
 
 ---
 
-## 🔄 Day 11-12 - Advanced AI Features (In Progress - 0%)
+## 🔄 Day 11-12 - Advanced AI Features (In Progress - 20%)
 
-**Session Date:** 2026-01-03
+**Session Date:** 2026-01-03, 2026-01-04
 
 ### Plan Overview:
 
@@ -1353,12 +1353,17 @@ Day 8-10 RAG Pipeline is **100% complete** with full backend + frontend integrat
 - Vector search for movies similar to the combined vector
 - Useful for "More like Inception + Interstellar + The Matrix"
 
-#### 2. Personalized RAG with Watchlist History ⏳
+#### 2. Personalized RAG with Watchlist History ✅
 **What:** Use user's watchlist to personalize RAG responses
-**How:**
-- Include user's highly-rated movies in RAG context
-- GPT considers user preferences when recommending
-- "Based on your love for sci-fi and Christopher Nolan..."
+**Status:** COMPLETE - Fully working!
+**Implementation:**
+- ✅ ChatService.getUserPreferences() - fetches top 5 movies with rating ≥7
+- ✅ Supabase query with proper join syntax (.select('rating, movies!inner(title, genres)'))
+- ✅ UserPreferences interface in packages/ai
+- ✅ Updated generateChatResponse() to accept userPreferences parameter
+- ✅ Enhanced system prompt to reference user's favorite movies
+- ✅ GPT explicitly mentions user's top-rated films in recommendations
+**Result:** "Since you absolutely love **Inception** (10/10), **Interstellar** (10/10)..." 🎯
 
 #### 3. Mood & Theme-Based Search Enhancement ⏳
 **What:** Better mood/theme detection and filtering
@@ -1389,11 +1394,13 @@ Day 8-10 RAG Pipeline is **100% complete** with full backend + frontend integrat
 3. ⏳ Frontend UI for selecting multiple movies
 4. ⏳ Test with various movie combinations
 
-**Phase 2 - Personalized RAG:**
-1. ⏳ Update ChatService to fetch user watchlist
-2. ⏳ Include top-rated movies in RAG context
-3. ⏳ Update system prompt with personalization
-4. ⏳ Test personalized vs non-personalized responses
+**Phase 2 - Personalized RAG:** ✅ COMPLETE
+1. ✅ Update ChatService to fetch user watchlist
+2. ✅ Include top-rated movies in RAG context
+3. ✅ Update system prompt with personalization
+4. ✅ Test personalized vs non-personalized responses
+5. ✅ Fixed Supabase query syntax bug (movies!inner)
+6. ✅ Verified logs show "Found X top-rated movies" and "Using personalized context"
 
 **Phase 3 - Enhanced Mood Detection:**
 1. ⏳ Create mood/theme keyword dictionary

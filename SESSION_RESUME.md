@@ -1,7 +1,7 @@
-# Session Resume - Day 8-10 RAG Pipeline
+# Session Resume - Day 11-12 Advanced AI Features
 
-**Date:** 2026-01-03
-**Status:** 70% Complete - RAG pipeline fully operational, frontend UI remaining
+**Date:** 2026-01-04
+**Status:** 20% Complete - Personalized RAG ✅, Next: Conversation Memory
 
 ---
 
@@ -25,332 +25,393 @@ pnpm --filter web dev
 
 ---
 
-## ✅ What Was Completed This Session (Day 8-10):
+## ✅ What Was Completed This Session (Day 11-12):
 
-### 1. Database Schema Enhanced ✅
-- **Created migration:** `20251230000001_add_enriched_metadata.sql`
-- **New fields added to movies table:**
-  - `keywords` (TEXT[]) - Array of movie keywords
-  - `tagline` (TEXT) - Movie tagline/slogan
-  - `movie_cast` (JSONB) - Top 5 cast members with character info
-  - `crew` (JSONB) - Director, screenplay, key crew
-  - `production_companies` (TEXT[]) - Production studios
-- **Performance indexes:** GIN indexes on JSONB fields for fast queries
-- **Migration applied successfully** to production database
-- **Fixed:** Reserved word issue (`cast` → `movie_cast`)
+### 1. Personalized RAG with Watchlist History ✅
 
-### 2. TypeScript Types Updated ✅
-- **Updated `packages/db/src/types.ts`:**
-  - Added enriched metadata fields to movies table types
-  - Added chat_messages table types (Row, Insert, Update)
-  - Full type safety for all new fields
-  - Used `Json` type for JSONB fields
+**Goal:** Make RAG responses personalized based on user's top-rated movies
 
-### 3. TMDB Service Enhanced ✅
-- **New method `getMovieKeywords()`:**
-  - Fetches keywords from TMDB `/movie/{id}/keywords`
-  - Returns array of keyword strings
-- **New method `getMovieCredits()`:**
-  - Fetches cast/crew from TMDB `/movie/{id}/credits`
-  - Returns top 5 actors + key crew (director, screenplay)
-- **Updated `importMovieToDb()`:**
-  - Parallel fetching of keywords & credits
-  - Saves all enriched metadata to database
-  - JSON serialization for cast/crew fields
-- **Fixed:** TmdbMovieDetails interface (added tagline, production_companies)
-- **Tested:** Fight Club import successful with full enriched data
+**What Was Implemented:**
 
-### 4. GPT-4 Integration ✅
-- **Created `packages/ai/src/chat.ts`:**
-  - `generateChatResponse()` - Main RAG function
-  - `summarizeMovie()` - Movie summarization
-  - `MovieContext` interface for context typing
-  - System prompt for movie recommendation assistant
-  - Context formatting with enriched metadata
-- **Updated `packages/ai/src/openai.client.ts`:**
-  - Added GPT4O_MINI_MODEL and GPT4_MODEL aliases
-- **Updated `packages/ai/src/index.ts`:**
-  - Exported chat functions and types
-- **Configuration:**
-  - Model: GPT-4o-mini (cost/speed optimized)
-  - Temperature: 0.7 (creativity/consistency balance)
-  - Max tokens: 800 (concise responses)
+#### Backend Changes:
 
-### 5. Chat Messages Database ✅
-- **Created migration:** `20251230000002_create_chat_messages.sql`
-- **Table structure:**
-  - id (UUID), user_id (UUID FK), user_message (TEXT)
-  - ai_response (TEXT), context_movies (JSONB), created_at (TIMESTAMP)
-- **RLS policies:** User isolation (users can only see own messages)
-- **Indexes:** user_id, created_at for fast queries
-- **Migration applied successfully**
+1. **Updated `packages/ai/src/chat.ts`:**
+   - Added `UserPreferences` interface
+   ```typescript
+   export interface UserPreferences {
+       topRatedMovies: Array<{
+           title: string;
+           rating: number;
+           genres: string[];
+       }>;
+   }
+   ```
+   - Updated `generateChatResponse()` to accept optional `userPreferences` parameter
+   - Enhanced system prompt to reference user's favorite movies
+   - Added context formatting for user's top-rated movies
+   - GPT instructed to mention connections like "Since you loved Inception..."
 
-### 6. ChatService Implementation ✅
-- **Created `apps/api/src/chat/chat.service.ts`:**
-  - `sendMessage()` - Full RAG pipeline (embedding → vector search → GPT-4 → save)
-  - `getConversationHistory()` - Retrieve past conversations
-  - `clearConversationHistory()` - Clear user chat
-  - Integration with vector search and enriched metadata
-- **Created `apps/api/src/chat/chat.controller.ts`:**
-  - POST /api/chat - Send message, get AI response
-  - GET /api/chat/history/:userId - Get conversation history
-  - DELETE /api/chat/clear/:userId - Clear conversation
-- **Created `apps/api/src/chat/chat.module.ts`:**
-  - NestJS module with service and controller
-- **Registered:** ChatModule in AppModule
-- **Fixed:** TypeScript compilation errors (type assertions for Supabase)
+2. **Updated `packages/ai/src/index.ts`:**
+   - Exported `UserPreferences` type
 
-### 7. End-to-End RAG Testing ✅
-- **Test 1:** "I want to watch an uplifting movie about overcoming challenges"
-  - Result: 3 contextually relevant recommendations
-  - Quality: Explains WHY each movie fits (resilience, underdog, growth)
-  - Format: Bold titles, ratings, engaging descriptions
-- **Test 2:** "What are some good sci-fi movies with space exploration?"
-  - Result: Interstellar, Avatar, Inception
-  - Quality: Genre-appropriate with director/cast info
-  - Format: Detailed thematic analysis
-- **Test 3:** "Tell me more about Interstellar"
-  - Result: Detailed contextual response
-  - Quality: Conversational, informative, engaging
-- **Performance:** RAG pipeline working end-to-end successfully
+3. **Updated `apps/api/src/chat/chat.service.ts`:**
+   - Added `getUserPreferences()` private method:
+     - Fetches user's watchlist items with rating ≥7
+     - Uses Supabase query: `.select('rating, movies!inner(title, genres)')`
+     - Returns top 5 highest-rated movies
+     - Properly handles errors (returns null if no preferences)
+   - Updated `sendMessage()` to call `getUserPreferences()` and pass to GPT
+   - Added logging: "Found X top-rated movies" and "Using personalized context"
 
-### Previous Sessions Completed:
-- ✅ Day 0-5: Full app (auth, search, recommendations, watchlist)
-- ✅ Day 6-7: BullMQ + Redis caching (28x performance boost)
+**Bug Fixed:**
+- Initial Supabase query syntax was wrong: `movie:movies(title, genres)`
+- Fixed to: `movies!inner(title, genres)` (correct join syntax)
+
+**Test Results:**
+- ✅ Query: "recommend me something good"
+- ✅ Response includes: "Since you absolutely love **Inception** (10/10), **Interstellar** (10/10), **The Fantastic 4: First Steps** (10/10)..."
+- ✅ GPT makes personalized recommendations based on user's taste
+- ✅ Logs confirm: "Found 5 top-rated movies for user" and "Using personalized context"
+
+**Files Modified:**
+- `packages/ai/src/chat.ts` - Added UserPreferences, updated generateChatResponse()
+- `packages/ai/src/index.ts` - Exported UserPreferences
+- `apps/api/src/chat/chat.service.ts` - Added getUserPreferences(), integrated with sendMessage()
 
 ---
 
-## 🧪 What to Test:
+## 🎯 Next Task: Conversation Memory (Feature #5)
 
-### BullMQ & Background Jobs
-1. **Bull Board UI:**
-   ```
-   http://localhost:3001/admin/queues
-   ```
-   - Check movie-import queue
-   - Check embedding-generation queue
-   - Monitor job progress
+**User Selected:** Option A - Conversation Memory
 
-2. **Queue API Endpoints:**
-   ```bash
-   # Add movie import job
-   curl -X POST http://localhost:3001/api/queues/movie-import \
-     -H "Content-Type: application/json" \
-     -d '{"count": 10, "page": 1}'
+**Goal:** Enable multi-turn conversations where RAG remembers previous messages
 
-   # Add embedding job
-   curl -X POST http://localhost:3001/api/queues/generate-embeddings \
-     -H "Content-Type: application/json" \
-     -d '{"batchSize": 20}'
+### Current State:
 
-   # Check queue stats
-   curl http://localhost:3001/api/queues/stats
-   ```
+**Already Exists:**
+- ✅ `conversationHistory` parameter in `generateChatResponse()`
+- ✅ `conversationHistory` parameter in `SendMessageDto`
+- ✅ `getConversationHistory()` method in ChatService
+- ✅ Chat messages saved to database (`chat_messages` table)
 
-3. **Full Application:**
-   ```
-   http://localhost:3002
-   ```
-   - All Day 5 features still working
-   - User authentication
-   - Movie discovery and recommendations
+**What's Missing:**
+- ⏳ Frontend doesn't send conversation history with requests
+- ⏳ Backend doesn't automatically fetch and include history
+- ⏳ Need to limit history length (cost optimization - last 5-10 messages)
 
----
+### Implementation Plan:
 
-## 📊 Current Status:
+#### Phase 1 - Backend Enhancement (Auto-fetch history):
 
-**Database:**
-- Movies: 106 (TMDB popular)
-- Embeddings: 106/106 (100%)
-- Model: OpenAI text-embedding-3-small (1536 dim)
+**File: `apps/api/src/chat/chat.service.ts`**
 
-**Background Jobs:**
-- Redis: Running (v5.0.14)
-- BullMQ: Operational
-- Queues: 2 (movie-import, embedding-generation)
-- Bull Board: http://localhost:3001/admin/queues
+Update `sendMessage()` method:
+```typescript
+async sendMessage(dto: SendMessageDto): Promise<ChatResponse> {
+    try {
+        this.logger.log(`Processing chat message for user ${dto.userId}`);
 
-**Servers:**
-- Backend API: http://localhost:3001 ✅
-- Frontend: http://localhost:3002 ✅
+        // 1. Generate embedding for user's question
+        const queryEmbedding = await generateEmbedding(dto.message);
 
----
+        // 2. Vector search: Find relevant movies
+        const { data: relevantMovies, error: searchError } = await (supabase.rpc as any)(
+            'match_movies',
+            {
+                query_embedding: JSON.stringify(queryEmbedding),
+                match_count: 10,
+            }
+        );
 
-## 🎯 Next Steps (Day 8-10 - 30% Remaining):
+        if (searchError) {
+            throw searchError;
+        }
 
-### Phase 4 - Frontend Chat UI (Remaining Work):
+        this.logger.log(`Found ${relevantMovies?.length || 0} relevant movies`);
 
-1. **Create Chat Page Component:**
-   - Create `apps/web/app/chat/page.tsx`
-   - Chat interface with message list
-   - Input field for user questions
-   - Send button and loading states
+        // 3. Fetch full enriched metadata for context
+        const movieIds = (relevantMovies || []).map((m: any) => m.id);
+        const { data: enrichedMovies, error: enrichError } = await supabase
+            .from('movies')
+            .select('id, title, description, genres, keywords, tagline, movie_cast, crew, vote_average, release_date')
+            .in('id', movieIds);
 
-2. **Message Display:**
-   - User message bubbles (right-aligned)
-   - AI response bubbles (left-aligned)
-   - Timestamp display
-   - Markdown rendering for AI responses (bold titles, etc.)
+        if (enrichError) {
+            throw enrichError;
+        }
 
-3. **Integration with Backend:**
-   - Use React Query hook for chat API
-   - Real-time message updates
-   - Loading indicators
-   - Error handling
+        const context: MovieContext[] = (enrichedMovies || []) as any[];
 
-4. **Optional Enhancements:**
-   - Conversation history loading
-   - Clear conversation button
-   - Streaming responses (Server-Sent Events)
-   - Copy response to clipboard
-   - Movie cards in responses (clickable titles)
+        // NEW: Fetch conversation history if not provided
+        let conversationHistory = dto.conversationHistory || [];
+        if (!conversationHistory || conversationHistory.length === 0) {
+            conversationHistory = await this.getConversationHistory(dto.userId, 10); // Last 10 messages
+            if (conversationHistory.length > 0) {
+                this.logger.log(`Loaded ${conversationHistory.length} previous messages for context`);
+            }
+        }
 
-### Optional Future Improvements:
+        // Get user preferences for personalization
+        const userPreferences = await this.getUserPreferences(dto.userId);
+        if (userPreferences) {
+            this.logger.log(`Using personalized context for user ${dto.userId}`);
+        }
 
-1. **Re-import existing movies:**
-   - Update 106 existing movies with enriched metadata
-   - Use BullMQ queue for batch processing
+        // 4. Generate AI response using RAG with personalization + history
+        const aiResponse = await generateChatResponse(
+            dto.message,
+            context,
+            conversationHistory, // NOW includes previous messages
+            userPreferences || undefined
+        );
 
-2. **Performance & Monitoring:**
-   - Rate limiting for chat API
-   - Cost tracking for OpenAI usage
-   - Analytics for popular queries
+        // 5. Save conversation to database
+        const { data: savedMessage, error: saveError } = await (supabase
+            .from('chat_messages')
+            .insert({
+                user_id: dto.userId,
+                user_message: dto.message,
+                ai_response: aiResponse,
+                context_movies: movieIds,
+            } as any)
+            .select()
+            .single() as any);
 
-3. **Advanced Features:**
-   - Multi-turn conversation context
-   - Personalized recommendations based on user watchlist
-   - Voice input/output
-   - Share conversation links
+        if (saveError) {
+            this.logger.warn(`Failed to save chat message: ${saveError.message}`);
+        }
 
----
+        this.logger.log(`✅ Generated AI response for user ${dto.userId}`);
 
-## 💾 Git Commits:
-
-**Previous Sessions:**
-- Day 0-5: Full app implementation
-- Day 6-7: BullMQ + Redis caching
-
-**This Session (Day 8-10):**
-- Migration: `20251230000001_add_enriched_metadata.sql`
-- TypeScript types updated in `packages/db`
-- TMDB service enhanced with keywords/credits
-- Ready to commit after testing
-
----
-
-## 🔗 Useful Commands:
-
-```bash
-# Backend API health check
-curl http://localhost:3001/api/tmdb/health
-
-# BullMQ Queue Stats
-curl http://localhost:3001/api/queues/stats
-
-# Add movie import job
-curl -X POST http://localhost:3001/api/queues/movie-import \
-  -H "Content-Type: application/json" \
-  -d '{"count": 20, "page": 1}'
-
-# Add embedding generation job
-curl -X POST http://localhost:3001/api/queues/generate-embeddings \
-  -H "Content-Type: application/json" \
-  -d '{"batchSize": 50}'
-
-# Test semantic search
-curl "http://localhost:3001/api/movies/search?q=space%20adventure&limit=5"
-
-# Test similar movies
-curl "http://localhost:3001/api/movies/533533/similar?limit=5"
+        return {
+            userMessage: dto.message,
+            aiResponse,
+            contextMovies: movieIds,
+            timestamp: savedMessage ? savedMessage.created_at : new Date().toISOString(),
+        };
+    } catch (error) {
+        const errorMessage = error instanceof Error ? error.message : String(error);
+        this.logger.error(`Chat service error: ${errorMessage}`);
+        throw error;
+    }
+}
 ```
+
+**Key Changes:**
+1. Auto-fetch last 10 messages if `conversationHistory` not provided
+2. Add logging when history is loaded
+3. Pass history to `generateChatResponse()`
+
+#### Phase 2 - System Prompt Enhancement:
+
+**File: `packages/ai/src/chat.ts`**
+
+Update system prompt to mention conversation memory:
+```typescript
+const systemPrompt = `You are an expert movie recommendation assistant with deep knowledge of cinema. Your role is to help users discover movies they'll love based on their preferences, mood, or specific requests.
+
+  Guidelines:
+  1. Use the provided movie context to give personalized recommendations
+  2. ${userPreferences ? '**IMPORTANT**: Consider the user\'s top-rated movies when making recommendations. Reference their preferences to show you understand their taste.' : ''}
+  3. **Remember the conversation**: If the user asks follow-up questions (like "what about something darker?"), refer back to previous recommendations and adjust accordingly.
+  4. Explain WHY you're recommending each movie (genre match, similar themes, cast/director, mood${userPreferences ? ', similarity to their favorites' : ''})
+  5. Be conversational and enthusiastic about movies
+  6. If asked about a specific genre/mood/theme, prioritize movies that match
+  7. Mention key details: title, year, director, main cast, and what makes it special
+  8. Keep responses concise but informative (2-4 movie recommendations per response)
+  9. If no relevant context is provided, be honest and suggest the user try different search terms
+  ${userPreferences ? '10. When appropriate, mention connections to their favorite movies (e.g., "Since you loved Inception...")\n  11. Personalize your tone based on their genre preferences' : ''}
+
+  Always format your recommendations clearly with movie titles in **bold**.`;
+```
+
+#### Phase 3 - Testing:
+
+**Test Scenario:**
+```bash
+# First message
+curl -X POST "http://localhost:3001/api/chat" \
+  -H "Content-Type: application/json" \
+  -d '{
+    "userId": "b7d7f2a0-2c97-40ae-bad7-b82193de260e",
+    "message": "Recommend me a good sci-fi movie"
+  }'
+
+# Follow-up (should remember first message)
+curl -X POST "http://localhost:3001/api/chat" \
+  -H "Content-Type: application/json" \
+  -d '{
+    "userId": "b7d7f2a0-2c97-40ae-bad7-b82193de260e",
+    "message": "What about something darker?"
+  }'
+```
+
+**Expected Result:**
+- First response: Recommends sci-fi movies
+- Second response: "Based on your interest in sci-fi, here are some darker films..."
+
+#### Phase 4 - Cost Optimization:
+
+**Limit History Length:**
+- Only include last 5-10 messages (configurable)
+- Each message pair = ~200-400 tokens
+- 10 messages = ~2000-4000 tokens
+- Keep under GPT-4o-mini's 128k context window
+
+**Consider:**
+- Add `historyLimit` parameter to `SendMessageDto`
+- Default: 10 messages
+- Allow user to override via API
+
+---
+
+## 📊 Day 11-12 Progress:
+
+```
+Feature 1 - Multi-Movie Similarity:        ░░░░░░░░░░ 0%
+Feature 2 - Personalized RAG:              ██████████ 100% ✅
+Feature 3 - Enhanced Mood Detection:       ░░░░░░░░░░ 0%
+Feature 4 - "Why This?" Explanation:       ░░░░░░░░░░ 0%
+Feature 5 - Conversation Memory:           ░░░░░░░░░░ 0% ← NEXT
+
+Overall Day 11-12 Progress:                ████░░░░░░ 20%
+```
+
+---
+
+## 🔗 Files to Modify for Conversation Memory:
+
+1. **`apps/api/src/chat/chat.service.ts`** - Add auto-fetch logic in `sendMessage()`
+2. **`packages/ai/src/chat.ts`** - Update system prompt to mention conversation context
+3. **Test:** Multi-turn conversation via API
+
+---
+
+## 📝 Current Database Status:
+
+**Movies:** 106 (with embeddings + enriched metadata)
+**Users:** Multiple test users
+**Watchlist Items:** User `b7d7f2a0-2c97-40ae-bad7-b82193de260e` has:
+- The Fantastic 4: First Steps (10/10)
+- Inception (10/10)
+- Interstellar (10/10)
+- It Chapter Two (8/10)
+- Avatar: Fire and Ash (8/10)
+- Kantara - A Legend: Chapter 1 (2/10)
+
+**Chat Messages:** Stored in `chat_messages` table, ready for conversation history
 
 ---
 
 ## ⚠️ Known Issues:
 
-**Redis Version Warning:**
-- Current: 5.0.14
-- BullMQ recommends: 6.2.0+
-- Status: Working with warnings
-- Impact: None currently, but upgrade recommended for production
-
-**Node.js Warning:**
-- Supabase shows Node.js 18 deprecation warning
-- Everything works, but consider upgrading to Node.js 20+ later
+**None currently** - Personalized RAG working perfectly!
 
 ---
 
-## 🔥 IMPORTANT: Workflow Rules
+## 🔥 Quick Commands:
 
-**READ THIS EVERY SESSION!**
+```bash
+# Backend API health check
+curl http://localhost:3001/api/tmdb/health
 
-### Auto-Generate Files (Багфиксы):
-- ✅ Bug fixes - автоматически исправлять
-- ✅ TypeScript errors - автоматически фиксить
-- ✅ Compilation errors - автоматически фиксить
-- ✅ Dependency issues - автоматически решать
+# Test personalized RAG
+curl -X POST "http://localhost:3001/api/chat" \
+  -H "Content-Type: application/json" \
+  -d '{
+    "userId": "b7d7f2a0-2c97-40ae-bad7-b82193de260e",
+    "message": "recommend me something good"
+  }'
 
-### Show Code First (Новые фичи):
-- 📝 New features - показать код, объяснить, дождаться подтверждения
-- 📝 New modules - показать структуру, объяснить архитектуру
-- 📝 New components - показать код с объяснением
-- 📝 Major changes - показать план, дождаться одобрения
+# Check user's watchlist
+curl "http://localhost:3001/api/watchlist?user_id=b7d7f2a0-2c97-40ae-bad7-b82193de260e&status=watched"
 
-**Правило:**
-- **Исправление = Auto** (fixing bugs)
-- **Создание = Manual** (creating features)
+# Get chat history
+curl "http://localhost:3001/api/chat/history/b7d7f2a0-2c97-40ae-bad7-b82193de260e?limit=10"
 
----
-
-## 📝 Current Session Summary:
-
-### ✅ Завершено сегодня (Day 8-10):
-
-**RAG Pipeline Implementation:**
-- ✅ Database schema extended with enriched metadata (keywords, cast, crew, tagline)
-- ✅ Chat messages table created with RLS policies
-- ✅ TMDB service enhanced with getMovieKeywords() and getMovieCredits()
-- ✅ GPT-4o-mini integration in @repo/ai package
-- ✅ ChatService with full RAG pipeline (embedding → vector search → GPT-4 → save)
-- ✅ Chat API endpoints (POST /chat, GET /history, DELETE /clear)
-- ✅ ChatModule registered in AppModule
-- ✅ End-to-end testing successful - 3 different queries tested
-
-**Что работает:**
-- ✅ Backend API: http://localhost:3001 (with ChatModule)
-- ✅ Frontend: http://localhost:3002
-- ✅ Chat endpoint: POST /api/chat (fully operational)
-- ✅ RAG pipeline: Contextual movie recommendations working perfectly
-- ✅ Database: 106 movies with embeddings + enriched metadata
-- ✅ Vector search with enriched context (keywords, cast, crew)
-- ✅ GPT-4o-mini generating high-quality recommendations
-
-**Test Results:**
-- ✅ Query 1: "uplifting movie" → 3 relevant recommendations with WHY explanations
-- ✅ Query 2: "sci-fi space exploration" → Interstellar, Avatar, Inception
-- ✅ Query 3: "Tell me about Interstellar" → Detailed contextual response
-- ✅ Context includes: title, tagline, genres, keywords, director, cast, rating
-
-**Что осталось (30% Day 8-10):**
-- ⏳ Frontend chat UI component (apps/web/app/chat/page.tsx)
-- ⏳ Message bubbles and conversation display
-- ⏳ React Query integration for chat API
-- ⏳ (Optional) Re-import movies with enriched metadata
-- ⏳ (Optional) Streaming responses
+# Clear chat history
+curl -X DELETE "http://localhost:3001/api/chat/clear/b7d7f2a0-2c97-40ae-bad7-b82193de260e"
+```
 
 ---
 
-**🎉 Прогресс сохранён!**
+## 💡 Implementation Notes for Next Session:
 
-Файлы обновлены:
-- `CURRENT_STATUS.md` - Day 8-10 (70% complete)
-- `SESSION_RESUME.md` - этот файл (обновлён)
+### Conversation Memory Implementation:
 
-Что создано:
-- 2 migrations applied (enriched metadata, chat messages)
-- 3 new files in packages/ai (chat.ts with RAG functions)
-- 3 new files in apps/api/src/chat (service, controller, module)
-- TypeScript types updated for all new tables
-- RAG pipeline fully operational and tested
+**Step 1:** Update `sendMessage()` in ChatService
+- Auto-fetch last 10 messages using `getConversationHistory()`
+- Only fetch if `conversationHistory` not provided in request
+- Add logging: "Loaded X previous messages for context"
 
-**Backend RAG System: Production Ready! ✅**
+**Step 2:** Update system prompt in `generateChatResponse()`
+- Add guideline: "Remember the conversation and refer to previous context"
+- Mention follow-up questions handling
+
+**Step 3:** Test multi-turn conversations
+- Test 1: "Recommend sci-fi" → "What about darker?"
+- Test 2: "I want comedy" → "Something with Jim Carrey?"
+- Verify GPT references previous messages
+
+**Step 4:** Optimize token usage
+- Limit to last 5-10 messages (configurable)
+- Monitor OpenAI costs
+- Consider summarization for long conversations (future enhancement)
+
+### Expected Behavior:
+
+**Before (No Memory):**
+```
+User: "Recommend me a sci-fi movie"
+AI: "How about Interstellar?"
+User: "What about something darker?"
+AI: "Here are some dark movies..." (generic, no sci-fi context)
+```
+
+**After (With Memory):**
+```
+User: "Recommend me a sci-fi movie"
+AI: "How about Interstellar?"
+User: "What about something darker?"
+AI: "For a darker sci-fi film, try Blade Runner 2049..." (remembers sci-fi!)
+```
+
+---
+
+## 🎉 Session Summary:
+
+**Completed:**
+- ✅ Personalized RAG with Watchlist History (Feature #2)
+- ✅ Fixed Supabase query bug
+- ✅ Tested and verified personalization working
+- ✅ Updated CURRENT_STATUS.md to 20% progress
+
+**Next Up:**
+- ⏳ Conversation Memory (Feature #5) - **USER SELECTED**
+
+**Current State:**
+- Backend API: Running on http://localhost:3001
+- Frontend: Running on http://localhost:3002
+- Personalized RAG: Fully operational
+- Ready for Conversation Memory implementation
+
+---
+
+**🔖 To resume next session:**
+1. Start both servers (API + Frontend)
+2. Read this file (SESSION_RESUME.md)
+3. Implement Conversation Memory following the plan above
+4. Test multi-turn conversations
+5. Update progress to 40% (2/5 features complete)
+
+**Files ready to modify:**
+- `apps/api/src/chat/chat.service.ts` (sendMessage method)
+- `packages/ai/src/chat.ts` (system prompt)
+
+**Estimated time:** 30-45 minutes for Conversation Memory implementation + testing
+
+---
+
+**Last Updated:** 2026-01-04
+**Progress:** Day 11-12 at 20% (1/5 features complete)
+**Next Feature:** Conversation Memory (auto-fetch and include chat history in RAG)

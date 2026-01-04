@@ -3,4 +3,5 @@ export { openai, EMBEDDING_MODEL, EMBEDDING_DIMENSIONS, CHAT_MODEL_SMALL, CHAT_M
 export { generateEmbedding, generateEmbeddingsBatch, createMovieEmbeddingText } from
         './embeddings';
 export { generateChatResponse, summarizeMovie } from './chat';
-export type { ChatMessage, MovieContext } from './chat';
+export type { ChatMessage, MovieContext, UserPreferences } from './chat';
+
