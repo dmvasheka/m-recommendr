@@ -148,4 +148,86 @@ export class MoviesService {
             throw error;
         }
     }
+    /**
+     * Find movies similar to multiple movies combined
+     * @param movieIds - Array of movie IDs to combine
+     * @param limit - Number of results to return
+     */
+    async getSimilarToMultiple(movieIds: number[], limit = 10): Promise<SearchResult[]> {
+        try {
+            this.logger.log(`Finding movies similar to combination of: [${movieIds.join(', ')}]`);
+
+            if (!movieIds || movieIds.length === 0) {
+                throw new Error('At least one movie ID is required');
+            }
+
+            // 1. Fetch embeddings for all specified movies
+            const { data: movies, error: fetchError } = await supabase
+                .from('movies')
+                .select('id, title, embedding')
+                .in('id', movieIds);
+
+            if (fetchError) {
+                throw fetchError;
+            }
+
+            if (!movies || movies.length === 0) {
+                throw new Error('No movies found with specified IDs');
+            }
+
+            // Filter out movies without embeddings
+            const moviesWithEmbeddings = movies.filter((m: any) => m.embedding);
+
+            if (moviesWithEmbeddings.length === 0) {
+                throw new Error('None of the specified movies have embeddings');
+            }
+
+            this.logger.log(`Found ${moviesWithEmbeddings.length} movies with embeddings`);
+
+            // 2. Parse embeddings (stored as JSON strings) and average them
+            const embeddings = moviesWithEmbeddings.map((m: any) =>
+                JSON.parse(m.embedding) as number[]
+            );
+
+            // Calculate average embedding
+            const embeddingLength = embeddings[0].length; // Should be 1536
+            const averageEmbedding = new Array(embeddingLength).fill(0);
+
+            for (const embedding of embeddings) {
+                for (let i = 0; i < embeddingLength; i++) {
+                    averageEmbedding[i] += embedding[i];
+                }
+            }
+
+            for (let i = 0; i < embeddingLength; i++) {
+                averageEmbedding[i] /= embeddings.length;
+            }
+
+            this.logger.log(`Computed average embedding from ${embeddings.length} movies`);
+
+            // 3. Use averaged embedding to find similar movies via match_movies RPC
+            const { data, error } = await (supabase.rpc as any)('match_movies', {
+                query_embedding: JSON.stringify(averageEmbedding),
+                match_count: limit + movieIds.length, // Fetch extra to exclude input movies
+            });
+
+            if (error) {
+                throw error;
+            }
+
+            const results = (data as SearchResult[] | null) || [];
+
+            // 4. Filter out the input movies from results
+            const filtered = results.filter((r: SearchResult) => !movieIds.includes(r.id));
+
+            this.logger.log(`Found ${filtered.length} similar movies (after filtering input)`);
+
+            return filtered.slice(0, limit);
+        } catch (error) {
+            const errorMessage = error instanceof Error ? error.message : String(error);
+            this.logger.error(`Multi-movie similarity error: ${errorMessage}`);
+            throw error;
+        }
+    }
+
 }

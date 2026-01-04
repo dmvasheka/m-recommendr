@@ -1,5 +1,5 @@
-import { Controller, Get, Query, Param, Logger } from '@nestjs/common';
-import { MoviesService } from './movies.service';
+import {Controller, Get, Query, Param, Logger, Post, Body} from '@nestjs/common';
+import {MoviesService, SearchResult} from './movies.service';
 
 @Controller('movies')
 export class MoviesController {
@@ -147,5 +147,13 @@ export class MoviesController {
                 error: errorMessage,
             };
         }
+    }
+
+    @Post('similar-to-multiple')
+    async getSimilarToMultiple(
+        @Body() body: { movieIds: number[]; limit?: number }
+    ): Promise<SearchResult[]> {
+        const { movieIds, limit = 10 } = body;
+        return this.moviesService.getSimilarToMultiple(movieIds, limit);
     }
 }

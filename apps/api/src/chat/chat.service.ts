@@ -106,18 +106,26 @@ export class ChatService {
 
             const context: MovieContext[] = (enrichedMovies || []) as any[];
 
-            // NEW: Get user preferences for personalization
+            // NEW: Fetch conversation history if not provided
+            let conversationHistory = dto.conversationHistory || [];
+            if (!conversationHistory || conversationHistory.length === 0) {
+                conversationHistory = await this.getConversationHistory(dto.userId, 10); // Last 10 messages
+                if (conversationHistory.length > 0) {
+                    this.logger.log(`Loaded ${conversationHistory.length} previous messages for context`);
+                }
+            }
+
             const userPreferences = await this.getUserPreferences(dto.userId);
             if (userPreferences) {
                 this.logger.log(`Using personalized context for user ${dto.userId}`);
             }
 
-            // 4. Generate AI response using RAG with personalization
+            // 4. Generate AI response using RAG with personalization + history
             const aiResponse = await generateChatResponse(
                 dto.message,
                 context,
-                dto.conversationHistory || [],
-                userPreferences || undefined  // NEW: Pass user preferences
+                conversationHistory, // NOW includes previous messages
+                userPreferences || undefined
             );
 
             // 5. Save conversation to database

@@ -1,7 +1,7 @@
 # Session Resume - Day 11-12 Advanced AI Features
 
 **Date:** 2026-01-04
-**Status:** 20% Complete - Personalized RAG ✅, Next: Conversation Memory
+**Status:** 60% Complete - Personalized RAG ✅, Conversation Memory ✅, Multi-Movie Similarity (Code ✅, Testing Pending)
 
 ---
 
@@ -80,210 +80,125 @@ pnpm --filter web dev
 
 ---
 
-## 🎯 Next Task: Conversation Memory (Feature #5)
-
-**User Selected:** Option A - Conversation Memory
+### 2. Conversation Memory (Feature #5) ✅
 
 **Goal:** Enable multi-turn conversations where RAG remembers previous messages
 
-### Current State:
+**What Was Implemented:**
 
-**Already Exists:**
-- ✅ `conversationHistory` parameter in `generateChatResponse()`
-- ✅ `conversationHistory` parameter in `SendMessageDto`
-- ✅ `getConversationHistory()` method in ChatService
-- ✅ Chat messages saved to database (`chat_messages` table)
+#### Backend Changes:
 
-**What's Missing:**
-- ⏳ Frontend doesn't send conversation history with requests
-- ⏳ Backend doesn't automatically fetch and include history
-- ⏳ Need to limit history length (cost optimization - last 5-10 messages)
+1. **Updated `apps/api/src/chat/chat.service.ts`:**
+   - Modified `sendMessage()` to auto-fetch conversation history if not provided
+   - Added logic: `conversationHistory = await this.getConversationHistory(dto.userId, 10)`
+   - Limits history to last 10 messages (5 user+assistant pairs) for cost optimization
+   - Added logging: "Loaded X previous messages for context"
+   - GPT now receives full conversation context automatically
 
-### Implementation Plan:
+2. **Updated `packages/ai/src/chat.ts`:**
+   - Enhanced system prompt with new guideline #3:
+     ```
+     3. **Remember the conversation**: If the user asks follow-up questions
+        (like "what about something darker?"), refer back to previous
+        recommendations and adjust accordingly.
+     ```
+   - Renumbered remaining guidelines (3→4, 4→5, etc.)
+   - GPT explicitly instructed to use conversation history
 
-#### Phase 1 - Backend Enhancement (Auto-fetch history):
+**Test Results:**
+- ✅ **Test 1:** "Recommend me a good sci-fi movie" → GPT recommends TRON: Ares, Avatar, etc.
+- ✅ **Test 2:** "What about something darker?" → GPT remembers context and adjusts recommendations
+- ✅ **Test 3:** "What was the first movie you just recommended to me?" → GPT correctly recalls: "TRON: Ares"
+- ✅ Backend auto-fetches last 10 messages from database
+- ✅ GPT references previous recommendations in responses
+- ✅ Personalization + Conversation Memory work together seamlessly
 
-**File: `apps/api/src/chat/chat.service.ts`**
+**Key Features:**
+- Auto-fetch conversation history (no frontend changes needed)
+- Limit to 10 messages (≈2000-4000 tokens) for cost efficiency
+- Hybrid context: vector search + user preferences + conversation history
+- GPT makes intelligent decisions based on ALL available data
 
-Update `sendMessage()` method:
+**Files Modified:**
+- `apps/api/src/chat/chat.service.ts` - Auto-fetch logic in sendMessage()
+- `packages/ai/src/chat.ts` - Updated system prompt with conversation memory guideline
+
+---
+
+### 3. Multi-Movie Similarity (Feature #1) - IN PROGRESS ⏳
+
+**Goal:** "Find movies like these 3 combined"
+
+**What Was Implemented:**
+
+#### Backend Changes:
+
+1. **Updated `apps/api/src/movies/movies.service.ts`:**
+   - Added `getSimilarToMultiple(movieIds: number[], limit: number)` method
+   - Fetches embeddings for all specified movies from database
+   - Computes average embedding: `average[i] = (v1[i] + v2[i] + v3[i]) / n`
+   - Uses `match_movies` RPC with averaged embedding
+   - Filters out input movies from results
+   - Full error handling and logging
+
+2. **Updated `apps/api/src/movies/movies.controller.ts`:**
+   - Added POST `/api/movies/similar-to-multiple` endpoint
+   - Request body: `{ movieIds: number[], limit?: number }`
+   - Returns: `SearchResult[]` (same format as other similarity endpoints)
+
+**Algorithm:**
 ```typescript
-async sendMessage(dto: SendMessageDto): Promise<ChatResponse> {
-    try {
-        this.logger.log(`Processing chat message for user ${dto.userId}`);
-
-        // 1. Generate embedding for user's question
-        const queryEmbedding = await generateEmbedding(dto.message);
-
-        // 2. Vector search: Find relevant movies
-        const { data: relevantMovies, error: searchError } = await (supabase.rpc as any)(
-            'match_movies',
-            {
-                query_embedding: JSON.stringify(queryEmbedding),
-                match_count: 10,
-            }
-        );
-
-        if (searchError) {
-            throw searchError;
-        }
-
-        this.logger.log(`Found ${relevantMovies?.length || 0} relevant movies`);
-
-        // 3. Fetch full enriched metadata for context
-        const movieIds = (relevantMovies || []).map((m: any) => m.id);
-        const { data: enrichedMovies, error: enrichError } = await supabase
-            .from('movies')
-            .select('id, title, description, genres, keywords, tagline, movie_cast, crew, vote_average, release_date')
-            .in('id', movieIds);
-
-        if (enrichError) {
-            throw enrichError;
-        }
-
-        const context: MovieContext[] = (enrichedMovies || []) as any[];
-
-        // NEW: Fetch conversation history if not provided
-        let conversationHistory = dto.conversationHistory || [];
-        if (!conversationHistory || conversationHistory.length === 0) {
-            conversationHistory = await this.getConversationHistory(dto.userId, 10); // Last 10 messages
-            if (conversationHistory.length > 0) {
-                this.logger.log(`Loaded ${conversationHistory.length} previous messages for context`);
-            }
-        }
-
-        // Get user preferences for personalization
-        const userPreferences = await this.getUserPreferences(dto.userId);
-        if (userPreferences) {
-            this.logger.log(`Using personalized context for user ${dto.userId}`);
-        }
-
-        // 4. Generate AI response using RAG with personalization + history
-        const aiResponse = await generateChatResponse(
-            dto.message,
-            context,
-            conversationHistory, // NOW includes previous messages
-            userPreferences || undefined
-        );
-
-        // 5. Save conversation to database
-        const { data: savedMessage, error: saveError } = await (supabase
-            .from('chat_messages')
-            .insert({
-                user_id: dto.userId,
-                user_message: dto.message,
-                ai_response: aiResponse,
-                context_movies: movieIds,
-            } as any)
-            .select()
-            .single() as any);
-
-        if (saveError) {
-            this.logger.warn(`Failed to save chat message: ${saveError.message}`);
-        }
-
-        this.logger.log(`✅ Generated AI response for user ${dto.userId}`);
-
-        return {
-            userMessage: dto.message,
-            aiResponse,
-            contextMovies: movieIds,
-            timestamp: savedMessage ? savedMessage.created_at : new Date().toISOString(),
-        };
-    } catch (error) {
-        const errorMessage = error instanceof Error ? error.message : String(error);
-        this.logger.error(`Chat service error: ${errorMessage}`);
-        throw error;
-    }
-}
+1. Fetch embeddings from DB for movieIds [550, 157336, 27205]
+2. Parse JSON embeddings → number[][] (1536 dimensions each)
+3. Calculate average: averageEmbedding[i] = sum(embeddings[i]) / count
+4. Call match_movies(averageEmbedding, limit)
+5. Filter out input movies from results
+6. Return top N similar movies
 ```
 
-**Key Changes:**
-1. Auto-fetch last 10 messages if `conversationHistory` not provided
-2. Add logging when history is loaded
-3. Pass history to `generateChatResponse()`
+**Use Case:**
+- User: "Find movies like Inception + Interstellar + Matrix"
+- System: Combines their embeddings → finds sci-fi mind-bending adventures
 
-#### Phase 2 - System Prompt Enhancement:
+**What's Remaining:**
+- ⏳ Test endpoint via API
+- ⏳ Test with various movie combinations (2, 3, 5 movies)
+- ⏳ Verify results quality
+- ⏳ Add caching (optional)
 
-**File: `packages/ai/src/chat.ts`**
+**Files Modified:**
+- `apps/api/src/movies/movies.service.ts` - Added getSimilarToMultiple()
+- `apps/api/src/movies/movies.controller.ts` - Added POST endpoint
 
-Update system prompt to mention conversation memory:
-```typescript
-const systemPrompt = `You are an expert movie recommendation assistant with deep knowledge of cinema. Your role is to help users discover movies they'll love based on their preferences, mood, or specific requests.
+---
 
-  Guidelines:
-  1. Use the provided movie context to give personalized recommendations
-  2. ${userPreferences ? '**IMPORTANT**: Consider the user\'s top-rated movies when making recommendations. Reference their preferences to show you understand their taste.' : ''}
-  3. **Remember the conversation**: If the user asks follow-up questions (like "what about something darker?"), refer back to previous recommendations and adjust accordingly.
-  4. Explain WHY you're recommending each movie (genre match, similar themes, cast/director, mood${userPreferences ? ', similarity to their favorites' : ''})
-  5. Be conversational and enthusiastic about movies
-  6. If asked about a specific genre/mood/theme, prioritize movies that match
-  7. Mention key details: title, year, director, main cast, and what makes it special
-  8. Keep responses concise but informative (2-4 movie recommendations per response)
-  9. If no relevant context is provided, be honest and suggest the user try different search terms
-  ${userPreferences ? '10. When appropriate, mention connections to their favorite movies (e.g., "Since you loved Inception...")\n  11. Personalize your tone based on their genre preferences' : ''}
+## 🎯 Next Session Task: Test Multi-Movie Similarity
 
-  Always format your recommendations clearly with movie titles in **bold**.`;
-```
-
-#### Phase 3 - Testing:
-
-**Test Scenario:**
-```bash
-# First message
-curl -X POST "http://localhost:3001/api/chat" \
-  -H "Content-Type: application/json" \
-  -d '{
-    "userId": "b7d7f2a0-2c97-40ae-bad7-b82193de260e",
-    "message": "Recommend me a good sci-fi movie"
-  }'
-
-# Follow-up (should remember first message)
-curl -X POST "http://localhost:3001/api/chat" \
-  -H "Content-Type: application/json" \
-  -d '{
-    "userId": "b7d7f2a0-2c97-40ae-bad7-b82193de260e",
-    "message": "What about something darker?"
-  }'
-```
-
-**Expected Result:**
-- First response: Recommends sci-fi movies
-- Second response: "Based on your interest in sci-fi, here are some darker films..."
-
-#### Phase 4 - Cost Optimization:
-
-**Limit History Length:**
-- Only include last 5-10 messages (configurable)
-- Each message pair = ~200-400 tokens
-- 10 messages = ~2000-4000 tokens
-- Keep under GPT-4o-mini's 128k context window
-
-**Consider:**
-- Add `historyLimit` parameter to `SendMessageDto`
-- Default: 10 messages
-- Allow user to override via API
+**Steps:**
+1. Start backend API server: `pnpm --filter api dev`
+2. Test endpoint with curl:
+   ```bash
+   curl -X POST "http://localhost:3001/api/movies/similar-to-multiple" \
+     -H "Content-Type: application/json" \
+     -d '{"movieIds": [550, 27205, 157336], "limit": 5}'
+   ```
+3. Verify results make sense (should return sci-fi/thriller movies)
+4. Test with 2 movies, 3 movies, 5 movies
+5. Update progress to 60% → 80% when testing complete
 
 ---
 
 ## 📊 Day 11-12 Progress:
 
 ```
-Feature 1 - Multi-Movie Similarity:        ░░░░░░░░░░ 0%
+Feature 1 - Multi-Movie Similarity:        ████████░░ 80% (Code ✅, Testing Pending)
 Feature 2 - Personalized RAG:              ██████████ 100% ✅
 Feature 3 - Enhanced Mood Detection:       ░░░░░░░░░░ 0%
 Feature 4 - "Why This?" Explanation:       ░░░░░░░░░░ 0%
-Feature 5 - Conversation Memory:           ░░░░░░░░░░ 0% ← NEXT
+Feature 5 - Conversation Memory:           ██████████ 100% ✅
 
-Overall Day 11-12 Progress:                ████░░░░░░ 20%
+Overall Day 11-12 Progress:                ████████████░░ 60%
 ```
-
----
-
-## 🔗 Files to Modify for Conversation Memory:
-
-1. **`apps/api/src/chat/chat.service.ts`** - Add auto-fetch logic in `sendMessage()`
-2. **`packages/ai/src/chat.ts`** - Update system prompt to mention conversation context
-3. **Test:** Multi-turn conversation via API
 
 ---
 
@@ -305,7 +220,7 @@ Overall Day 11-12 Progress:                ████░░░░░░ 20%
 
 ## ⚠️ Known Issues:
 
-**None currently** - Personalized RAG working perfectly!
+**None currently** - Both Personalized RAG and Conversation Memory working perfectly!
 
 ---
 
