@@ -156,4 +156,47 @@ export class MoviesController {
         const { movieIds, limit = 10 } = body;
         return this.moviesService.getSimilarToMultiple(movieIds, limit);
     }
+
+    /**
+     * Explain why a movie is recommended
+     * POST /api/movies/:id/explain
+     */
+    @Post(':id/explain')
+    async explainMovie(
+        @Param('id') id: string,
+        @Body('userId') userId?: string,
+        @Body('context') context?: string,
+    ) {
+        try {
+            const movieId = parseInt(id, 10);
+            if (isNaN(movieId)) {
+                return {
+                    success: false,
+                    error: 'Invalid movie ID',
+                };
+            }
+
+            this.logger.log(`Generating explanation for movie ${movieId}`);
+
+            const explanation = await this.moviesService.explainRecommendation(
+                movieId,
+                userId,
+                context
+            );
+
+            return {
+                success: true,
+                movieId,
+                explanation,
+            };
+        } catch (error) {
+            const errorMessage = error instanceof Error ? error.message : String(error);
+            this.logger.error(`Explain movie error: ${errorMessage}`);
+            return {
+                success: false,
+                error: errorMessage,
+            };
+        }
+    }
+
 }

@@ -1,6 +1,11 @@
 import { Injectable, Logger } from '@nestjs/common';
 import { supabase } from '@repo/db';
-import { generateEmbedding } from '@repo/ai';
+import {
+    generateEmbedding,
+    generateMovieExplanation,
+    type MovieContext,
+    type UserPreferences
+} from '@repo/ai';
 import type { Movie } from '@repo/db';
 import { RedisService } from '../redis/redis.service';
 
@@ -230,4 +235,66 @@ export class MoviesService {
         }
     }
 
+    async explainRecommendation(
+        movieId: number,
+        userId?: string,
+        context?: string
+    ): Promise<string> {
+        try {
+            this.logger.log(`Explaining recommendation for movie ${movieId}`);
+
+            // 1. Fetch movie details
+            const { data: movie, error: movieError } = await supabase
+                .from('movies')
+                .select('id, title, description, genres, keywords, tagline, movie_cast, crew, vote_average, release_date')
+                .eq('id', movieId)
+                .single();
+
+            if (movieError || !movie) {
+                throw new Error(`Movie not found: ${movieId}`);
+            }
+
+            // 2. Fetch user preferences if userId provided
+            let userPreferences: UserPreferences | undefined;
+            if (userId) {
+                const { data: watchlist } = await supabase
+                    .from('user_watchlist')
+                    .select('rating, movies!inner(title, genres)')
+                    .eq('user_id', userId)
+                    .eq('status', 'watched')
+                    .gte('rating', 7)
+                    .order('rating', { ascending: false })
+                    .limit(5);
+
+                if (watchlist && watchlist.length > 0) {
+                    const topRatedMovies = watchlist
+                        .filter((item: any) => item.movies)
+                        .map((item: any) => ({
+                            title: item.movies.title,
+                            rating: item.rating,
+                            genres: item.movies.genres || [],
+                        }));
+
+                    if (topRatedMovies.length > 0) {
+                        userPreferences = { topRatedMovies };
+                        this.logger.log(`Found ${topRatedMovies.length} user preferences for explanation`);
+                    }
+                }
+            }
+
+            // 3. Generate explanation with GPT
+            const explanation = await generateMovieExplanation(
+                movie as any,
+                userPreferences,
+                context
+            );
+
+            this.logger.log(`✅ Generated explanation for movie ${movieId}`);
+            return explanation;
+        } catch (error) {
+            const errorMessage = error instanceof Error ? error.message : String(error);
+            this.logger.error(`Explain recommendation error: ${errorMessage}`);
+            throw error;
+        }
+    }
 }

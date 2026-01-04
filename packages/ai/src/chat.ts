@@ -129,3 +129,88 @@ export async function generateChatResponse(
 export function summarizeMovie(movie: MovieContext): string {
     return `${movie.title} (${movie.release_date?.substring(0, 4) || 'N/A'}) - ${movie.genres?.join(', ') || 'N/A'} - ${movie.description?.substring(0, 100)}...`;
 }
+
+/**
+ * Generate explanation for why a movie is recommended
+ *
+ * @param movie - Movie details
+ * @param userPreferences - User's top-rated movies (optional)
+ * @param context - Additional context like search query (optional)
+ * @returns Detailed explanation
+ */
+export async function generateMovieExplanation(
+    movie: MovieContext,
+    userPreferences?: UserPreferences,
+    context?: string
+): Promise<string> {
+    // Format movie details
+    const cast = movie.movie_cast
+        ? JSON.parse(movie.movie_cast).map((c: any) => c.name).slice(0, 3).join(', ')
+        : 'Unknown';
+
+    const director = movie.crew
+        ? JSON.parse(movie.crew).find((c: any) => c.job === 'Director')?.name || 'Unknown'
+        : 'Unknown';
+
+    const keywords = movie.keywords?.slice(0, 5).join(', ') || 'N/A';
+
+    const movieDetails = `
+  Movie: ${movie.title} (${movie.release_date?.substring(0, 4) || 'N/A'})
+  Director: ${director}
+  Cast: ${cast}
+  Genres: ${movie.genres?.join(', ') || 'N/A'}
+  Rating: ${movie.vote_average ? `${movie.vote_average}/10` : 'N/A'}
+  Tagline: ${movie.tagline || 'N/A'}
+  Keywords: ${keywords}
+  Description: ${movie.description || 'No description available'}
+      `.trim();
+
+    // Format user preferences if available
+    let preferencesText = '';
+    if (userPreferences && userPreferences.topRatedMovies.length > 0) {
+        preferencesText = `\n\nUser's Top-Rated Movies:\n${userPreferences.topRatedMovies.map((m, i) =>
+            `${i + 1}. ${m.title} (Rating: ${m.rating}/10, Genres: ${m.genres.join(', ')})`
+        ).join('\n')}`;
+    }
+
+    // Context text
+    const contextText = context ? `\n\nSearch Context: "${context}"` : '';
+
+    const systemPrompt = `You are a movie recommendation expert explaining why a specific movie is a good match for a user.
+
+  Your task:
+  1. Analyze the movie's details and explain its strengths
+  2. ${userPreferences ? 'Connect the movie to the user\'s preferences based on their top-rated films' : 'Explain what makes this movie appealing'}
+  3. ${context ? 'Explain how the movie matches the user\'s search query or context' : ''}
+  4. Be specific and reference concrete details (director, cast, themes, genres)
+  5. Keep the explanation concise but insightful (3-5 points)
+  6. Use a friendly, conversational tone
+
+  Format:
+  - Start with a one-sentence summary
+  - Then provide 3-5 specific reasons why this movie is recommended
+  - Use bullet points for clarity`;
+
+    const userMessage = `${movieDetails}${preferencesText}${contextText}
+
+  Please explain why this movie would be a great recommendation${userPreferences ? ' for this user' : ''}.`;
+
+    try {
+        const response = await openai.chat.completions.create({
+            model: GPT4O_MINI_MODEL,
+            messages: [
+                { role: 'system', content: systemPrompt },
+                { role: 'user', content: userMessage }
+            ],
+            temperature: 0.7,
+            max_tokens: 500, // Concise explanations
+        });
+
+        return response.choices[0]?.message?.content || 'Unable to generate explanation.';
+    } catch (error) {
+        const errorMessage = error instanceof Error ? error.message : String(error);
+        console.error('Error generating movie explanation:', errorMessage);
+        throw new Error(`Failed to generate explanation: ${errorMessage}`);
+    }
+}
+

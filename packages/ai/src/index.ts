@@ -2,7 +2,7 @@ export { openai, EMBEDDING_MODEL, EMBEDDING_DIMENSIONS, CHAT_MODEL_SMALL, CHAT_M
         './openai.client';
 export { generateEmbedding, generateEmbeddingsBatch, createMovieEmbeddingText } from
         './embeddings';
-export { generateChatResponse, summarizeMovie } from './chat';
+export { generateChatResponse, summarizeMovie, generateMovieExplanation } from './chat';
 export type { ChatMessage, MovieContext, UserPreferences } from './chat';
 export {
     detectMood,
