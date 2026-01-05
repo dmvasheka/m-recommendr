@@ -13,9 +13,9 @@ async function bootstrap() {
     const app = await NestFactory.create(AppModule);
     const logger = new Logger('Bootstrap');
 
-    // Enable CORS for frontend access
+    // Enable CORS for frontend access (supports multiple origins)
     app.enableCors({
-        origin: process.env.CORS_ORIGIN || 'http://localhost:3002',
+        origin: process.env.CORS_ORIGIN?.split(',') || ['http://localhost:3002'],
         credentials: true,
     });
 

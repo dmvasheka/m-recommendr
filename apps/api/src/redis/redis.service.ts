@@ -7,18 +7,30 @@ export class RedisService implements OnModuleDestroy {
     private readonly client: Redis;
 
     constructor() {
-        this.client = new Redis({
-            host: process.env.REDIS_HOST || 'localhost',
-            port: parseInt(process.env.REDIS_PORT || '6379'),
-            maxRetriesPerRequest: null, // Required for BullMQ
-        });
+        // Support both REDIS_URL (Upstash) and individual host/port
+        const redisUrl = process.env.REDIS_URL;
+
+        if (redisUrl) {
+            this.client = new Redis(redisUrl, {
+                maxRetriesPerRequest: null,
+                tls: redisUrl.startsWith('rediss://') ? {} : undefined,
+            });
+            this.logger.log('🔗 Connecting to Redis via URL');
+        } else {
+            this.client = new Redis({
+                host: process.env.REDIS_HOST || 'localhost',
+                port: parseInt(process.env.REDIS_PORT || '6379'),
+                maxRetriesPerRequest: null,
+            });
+            this.logger.log('🔗 Connecting to Redis via host/port');
+        }
 
         this.client.on('connect', () => {
             this.logger.log('✅ Redis connected');
         });
 
         this.client.on('error', (error) => {
-            this.logger.error('❌ Redis connection error:', error);
+            this.logger.error('❌ Redis connection error:', error.message);
         });
     }
 
