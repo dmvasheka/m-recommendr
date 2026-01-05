@@ -15,6 +15,9 @@ RUN pnpm install --frozen-lockfile
 # Build the API (this will also build dependencies)
 RUN pnpm --filter api build
 
+# Debug: Check if dist folder was created
+RUN ls -la /app/apps/api/ && echo "=== Checking dist folder ===" && ls -la /app/apps/api/dist/ || echo "ERROR: dist folder not found!"
+
 # Production stage
 FROM node:20-alpine AS runner
 
