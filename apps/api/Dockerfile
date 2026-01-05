@@ -12,12 +12,10 @@ COPY . .
 # Install all dependencies
 RUN pnpm install --frozen-lockfile
 
-# Build packages first
-RUN cd /app/packages/db && pnpm build || echo "db build failed or no build script"
-RUN cd /app/packages/ai && pnpm build || echo "ai build failed or no build script"
-
-# Build API directly with nest build
-RUN cd /app/apps/api && pnpm build
+# Build packages and API from workspace root
+RUN pnpm --filter @repo/db build
+RUN pnpm --filter @repo/ai build
+RUN pnpm --filter api build
 
 # Debug: Check if dist folder was created
 RUN echo "=== Checking dist folder ===" && find /app/apps/api/dist -name "*.js" | head -20 || echo "No JS files found"
