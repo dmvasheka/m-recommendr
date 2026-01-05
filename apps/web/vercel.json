@@ -1,6 +1,5 @@
 {
   "framework": "nextjs",
-  "buildCommand": "cd ../.. && pnpm install && pnpm --filter web build",
-  "outputDirectory": ".next",
-  "installCommand": "echo 'skipped'"
+  "buildCommand": "cd ../.. && pnpm install --frozen-lockfile && pnpm --filter web build",
+  "outputDirectory": ".next"
 }
