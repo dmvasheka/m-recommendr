@@ -1,4 +1,4 @@
-# Build stage - Railway cache bust v3
+# Build stage - Railway cache bust v4 (final)
 FROM node:20-alpine AS builder
 
 # Install pnpm
