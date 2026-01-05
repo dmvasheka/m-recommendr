@@ -37,10 +37,10 @@ async function bootstrap() {
     }
 
 
-    const port = process.env.API_PORT || 3001;
+    const port = process.env.PORT || process.env.API_PORT || 3001;
     await app.listen(port);
 
-    logger.log(`🚀 API Server running on: http://localhost:${port}/api`);
+    logger.log(`🚀 API Server running on port: ${port}`);
     logger.log(`📚 TMDB endpoints: http://localhost:${port}/api/tmdb`);
 }
 
