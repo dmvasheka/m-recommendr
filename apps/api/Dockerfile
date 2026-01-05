@@ -12,8 +12,8 @@ COPY . .
 # Install all dependencies
 RUN pnpm install --frozen-lockfile
 
-# Build the API using turbo (builds all dependencies too)
-RUN cd /app && pnpm build
+# Build only the API and its dependencies
+RUN pnpm turbo run build --filter=api
 
 # Debug: Check if dist folder was created
 RUN echo "=== Checking dist folder ===" && ls -laR /app/apps/api/dist/ | head -50
