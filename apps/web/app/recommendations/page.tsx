@@ -47,6 +47,11 @@ export default function RecommendationsPage() {
             ? hybridRecs
             : popularMovies
 
+    // Normalize recommendations to Movie[] format
+    const normalizedMovies = currentRecs?.map((item) =>
+        'movie' in item ? item.movie : item
+    )
+
     const isLoading = showPersonalized
         ? isPersonalizedLoading
         : showHybrid
@@ -173,13 +178,13 @@ export default function RecommendationsPage() {
                     <div className="flex justify-center items-center py-20">
                         <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-indigo-600"></div>
                     </div>
-                ) : currentRecs && currentRecs.length > 0 ? (
+                ) : normalizedMovies && normalizedMovies.length > 0 ? (
                     <>
                         <div className="mb-4 text-sm text-gray-600">
-                            {currentRecs.length} recommendation{currentRecs.length !== 1 ? 's' : ''} for you
+                            {normalizedMovies.length} recommendation{normalizedMovies.length !== 1 ? 's' : ''} for you
                         </div>
                         <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 gap-6">
-                            {currentRecs.map((movie) => (
+                            {normalizedMovies.map((movie) => (
                                 <MovieCard key={movie.id} movie={movie} />
                             ))}
                         </div>
