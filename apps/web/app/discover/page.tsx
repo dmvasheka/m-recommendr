@@ -1,6 +1,6 @@
 'use client'
 
-import { useState, useEffect } from 'react'
+import { useState, useEffect, Suspense } from 'react'
 import { useSearchParams } from 'next/navigation'
 import { Navbar } from '@/components/Navbar'
 import { SearchBar } from '@/components/SearchBar'
@@ -8,7 +8,7 @@ import { MovieCard } from '@/components/MovieCard'
 import { useSearchMovies, usePopularMovies, useSendChatMessage } from '@/lib/api/hooks'
 import { useAuth } from '@/lib/auth/AuthProvider'
 
-export default function DiscoverPage() {
+function DiscoverPageContent() {
     const searchParams = useSearchParams()
     const initialQuery = searchParams.get('q') || ''
     const [searchQuery, setSearchQuery] = useState(initialQuery)
@@ -162,5 +162,17 @@ export default function DiscoverPage() {
                 )}
             </main>
         </div>
+    )
+}
+
+export default function DiscoverPage() {
+    return (
+        <Suspense fallback={
+            <div className="min-h-screen bg-gray-50 flex items-center justify-center">
+                <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-indigo-600"></div>
+            </div>
+        }>
+            <DiscoverPageContent />
+        </Suspense>
     )
 }
