@@ -2,8 +2,5 @@
   "framework": "nextjs",
   "buildCommand": "cd ../.. && pnpm install && pnpm --filter web build",
   "outputDirectory": ".next",
-  "installCommand": "echo 'skipped'",
-  "env": {
-    "NEXT_PUBLIC_API_URL": "@api_url"
-  }
+  "installCommand": "echo 'skipped'"
 }
