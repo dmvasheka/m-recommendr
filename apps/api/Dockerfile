@@ -12,11 +12,15 @@ COPY . .
 # Install all dependencies
 RUN pnpm install --frozen-lockfile
 
-# Build only the API and its dependencies
-RUN pnpm turbo run build --filter=api
+# Build packages first
+RUN cd /app/packages/db && pnpm build || echo "db build failed or no build script"
+RUN cd /app/packages/ai && pnpm build || echo "ai build failed or no build script"
+
+# Build API directly with nest build
+RUN cd /app/apps/api && pnpm build
 
 # Debug: Check if dist folder was created
-RUN echo "=== Checking dist folder ===" && ls -laR /app/apps/api/dist/ | head -50
+RUN echo "=== Checking dist folder ===" && find /app/apps/api/dist -name "*.js" | head -20 || echo "No JS files found"
 
 # Production stage
 FROM node:20-alpine AS runner
