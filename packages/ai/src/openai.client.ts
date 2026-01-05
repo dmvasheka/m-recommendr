@@ -1,9 +1,11 @@
-import * as dotenv from 'dotenv';
-import * as path from 'path';
 import OpenAI from 'openai';
 
-// Load .env from monorepo root
-dotenv.config({ path: path.join(__dirname, '../../../.env') });
+// Load .env from monorepo root (only in development)
+if (process.env.NODE_ENV !== 'production') {
+    const dotenv = require('dotenv');
+    const path = require('path');
+    dotenv.config({ path: path.join(__dirname, '../../../.env') });
+}
 
 if (!process.env.OPENAI_API_KEY) {
     throw new Error('OPENAI_API_KEY is not set in environment variables');
