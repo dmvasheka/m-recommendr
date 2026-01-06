@@ -34,28 +34,28 @@ class ApiClient {
     // Movies
     async getMovies(page = 1, pageSize = 20): Promise<Movie[]> {
         const response = await this.fetch<{ success: boolean; movies: Movie[] }>(
-            `/api/movies?page=${page}&pageSize=${pageSize}`
+            `/movies?page=${page}&pageSize=${pageSize}`
         )
         return response.movies || []
     }
 
     async getMovieById(id: number): Promise<Movie> {
         const response = await this.fetch<{ success: boolean; movie: Movie }>(
-            `/api/movies/${id}`
+            `/movies/${id}`
         )
         return response.movie
     }
 
     async searchMovies({ query, limit = 10 }: SearchMoviesParams): Promise<Movie[]> {
         const response = await this.fetch<{ success: boolean; results: Movie[] }>(
-            `/api/movies/search?q=${encodeURIComponent(query)}&limit=${limit}`
+            `/movies/search?q=${encodeURIComponent(query)}&limit=${limit}`
         )
         return response.results || []
     }
 
     async getSimilarMovies({ movieId, limit = 10 }: SimilarMoviesParams): Promise<Movie[]> {
         const response = await this.fetch<{ success: boolean; results: Movie[] }>(
-            `/api/movies/${movieId}/similar?limit=${limit}`
+            `/movies/${movieId}/similar?limit=${limit}`
         )
         return response.results || []
     }
@@ -64,13 +64,13 @@ class ApiClient {
     async getWatchlist(userId: string, status?: 'planned' | 'watched'): Promise<WatchlistItem[]> {
         const statusParam = status ? `&status=${status}` : ''
         const response = await this.fetch<{ success: boolean; items: WatchlistItem[] }>(
-            `/api/watchlist?user_id=${userId}${statusParam}`
+            `/watchlist?user_id=${userId}${statusParam}`
         )
         return response.items || []
     }
 
     async addToWatchlist(params: AddToWatchlistParams): Promise<WatchlistItem> {
-        const response = await this.fetch<{ success: boolean; item: WatchlistItem }>('/api/watchlist/add', {
+        const response = await this.fetch<{ success: boolean; item: WatchlistItem }>('/watchlist/add', {
             method: 'POST',
             body: JSON.stringify(params),
         })
@@ -78,7 +78,7 @@ class ApiClient {
     }
 
     async markAsWatched(params: MarkAsWatchedParams): Promise<WatchlistItem> {
-        const response = await this.fetch<{ success: boolean; item: WatchlistItem }>('/api/watchlist/watched', {
+        const response = await this.fetch<{ success: boolean; item: WatchlistItem }>('/watchlist/watched', {
             method: 'POST',
             body: JSON.stringify(params),
         })
@@ -86,7 +86,7 @@ class ApiClient {
     }
 
     async removeFromWatchlist(movieId: number, userId: string): Promise<void> {
-        return this.fetch(`/api/watchlist/${movieId}?user_id=${userId}`, {
+        return this.fetch(`/watchlist/${movieId}?user_id=${userId}`, {
             method: 'DELETE',
         })
     }
@@ -94,32 +94,32 @@ class ApiClient {
     // Recommendations
     async getRecommendations(userId: string, limit = 10): Promise<Recommendation[]> {
         const response = await this.fetch<{ success: boolean; recommendations: Recommendation[] }>(
-            `/api/recommendations?user_id=${userId}&limit=${limit}`
+            `/recommendations?user_id=${userId}&limit=${limit}`
         )
         return response.recommendations || []
     }
 
     async getHybridRecommendations(userId: string, limit = 10): Promise<Recommendation[]> {
         const response = await this.fetch<{ success: boolean; recommendations: Recommendation[] }>(
-            `/api/recommendations/hybrid?user_id=${userId}&limit=${limit}`
+            `/recommendations/hybrid?user_id=${userId}&limit=${limit}`
         )
         return response.recommendations || []
     }
 
     async getPopularMovies(limit = 10): Promise<Movie[]> {
         const response = await this.fetch<{ success: boolean; recommendations: Movie[] }>(
-            `/api/recommendations/popular?limit=${limit}`
+            `/recommendations/popular?limit=${limit}`
         )
         return response.recommendations || []
     }
 
     // TMDB
     async searchTMDB(query: string): Promise<any[]> {
-        return this.fetch(`/api/tmdb/search?q=${encodeURIComponent(query)}`)
+        return this.fetch(`/tmdb/search?q=${encodeURIComponent(query)}`)
     }
 
     async importMovieFromTMDB(tmdbId: number): Promise<Movie> {
-        return this.fetch(`/api/tmdb/import/${tmdbId}`, {
+        return this.fetch(`/tmdb/import/${tmdbId}`, {
             method: 'POST',
         })
     }
@@ -132,7 +132,7 @@ class ApiClient {
             aiResponse: string
             contextMovies: number[]
             timestamp: string
-        }>('/api/chat', {
+        }>('/chat', {
             method: 'POST',
             body: JSON.stringify(params),
         })
@@ -149,12 +149,12 @@ class ApiClient {
             success: boolean
             history: ChatHistoryMessage[]
             count: number
-        }>(`/api/chat/history/${userId}?limit=${limit}`)
+        }>(`/chat/history/${userId}?limit=${limit}`)
         return response.history || []
     }
 
     async clearChatHistory(userId: string): Promise<void> {
-        return this.fetch(`/api/chat/clear/${userId}`, {
+        return this.fetch(`/chat/clear/${userId}`, {
             method: 'DELETE',
         })
     }
