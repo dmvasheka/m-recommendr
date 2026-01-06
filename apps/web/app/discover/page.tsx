@@ -2,9 +2,9 @@
 
 import { useState, useEffect, Suspense } from 'react'
 import { useSearchParams } from 'next/navigation'
-import { Navbar } from '@/components/Navbar'
+import { Navigation } from '@/components/Navigation'
 import { SearchBar } from '@/components/SearchBar'
-import { MovieCard } from '@/components/MovieCard'
+import { NewMovieCard } from '@/components/NewMovieCard'
 import { useSearchMovies, usePopularMovies, useSendChatMessage } from '@/lib/api/hooks'
 import { useAuth } from '@/lib/auth/AuthProvider'
 
@@ -62,16 +62,16 @@ function DiscoverPageContent() {
     const isLoading = showSearchResults ? isSearchLoading : isPopularLoading
 
     return (
-        <div className="min-h-screen bg-gray-50">
-            <Navbar />
+        <div className="min-h-screen bg-gradient-to-b from-[#0a0a0f] via-[#1a1a2e] to-[#0a0a0f]">
+            <Navigation />
 
-            <main className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+            <main className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8 pt-24">
                 {/* Header */}
                 <div className="mb-8">
-                    <h1 className="text-3xl font-bold text-gray-900 mb-2">
+                    <h1 className="text-3xl font-bold text-white mb-2">
                         Discover Movies
                     </h1>
-                    <p className="text-gray-600">
+                    <p className="text-[#9ca3af]">
                         {showSearchResults
                             ? `Search results for "${searchQuery}"`
                             : 'Popular movies and trending picks'}
@@ -84,22 +84,22 @@ function DiscoverPageContent() {
                         placeholder="Search by title or describe what you want: 'uplifting adventure' or 'sci-fi thriller'..."
                         defaultValue={initialQuery}
                     />
-                    <p className="mt-2 text-sm text-gray-500">
+                    <p className="mt-2 text-sm text-[#9ca3af]">
                         💡🤖 AI-powered search: Use natural language or search by title - we'll find the perfect match
                     </p>
                 </div>
                 {/* AI Explanation */}
                 {aiExplanation && searchQuery && (
-                    <div className="mb-6 p-4 bg-gradient-to-r from-indigo-50 to-purple-50 rounded-lg border border-indigo-200">
+                    <div className="mb-6 p-4 bg-gradient-to-r from-[#e50914]/10 to-[#f59e0b]/10 rounded-lg border border-[#e50914]/20 backdrop-blur-sm">
                         <div className="flex items-start gap-3">
                             <div className="text-2xl">🤖</div>
                             <div className="flex-1">
-                                <h3 className="font-semibold text-indigo-900 mb-2">
+                                <h3 className="font-semibold text-white mb-2">
                                     AI Recommendations
                                 </h3>
-                                <div className="text-sm text-indigo-800 prose prose-sm max-w-none">
+                                <div className="text-sm text-[#9ca3af] prose prose-sm max-w-none">
                                     {aiExplanation.split('\n').map((line, i) => {
-                                        const boldFormatted = line.replace(/\*\*(.+?)\*\*/g, '<strong>$1</strong>')
+                                        const boldFormatted = line.replace(/\*\*(.+?)\*\*/g, '<strong class="text-white">$1</strong>')
                                         return (
                                             <p
                                                 key={i}
@@ -117,27 +117,27 @@ function DiscoverPageContent() {
                 {/* Results */}
                 {isLoading || sendChatMessage.isPending ? (
                     <div className="flex justify-center items-center py-20">
-                        <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-indigo-600"></div>
+                        <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-[#e50914]"></div>
                     </div>
                 ) : movies && movies.length > 0 ? (
                     <>
-                        <div className="mb-4 text-sm text-gray-600">
+                        <div className="mb-4 text-sm text-[#9ca3af]">
                             Found {movies.length} movie{movies.length !== 1 ? 's' : ''}
                             {showSearchResults && ' matching your search'}
                         </div>
-                        <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 gap-6">
+                        <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 gap-4 sm:gap-6">
                             {movies.map((movie) => (
-                                <MovieCard key={movie.id} movie={movie} />
+                                <NewMovieCard key={movie.id} movie={movie} />
                             ))}
                         </div>
                     </>
                 ) : (
                     <div className="text-center py-20">
                         <div className="text-6xl mb-4">🎬</div>
-                        <h3 className="text-xl font-semibold text-gray-900 mb-2">
+                        <h3 className="text-xl font-semibold text-white mb-2">
                             No movies found
                         </h3>
-                        <p className="text-gray-600">
+                        <p className="text-[#9ca3af]">
                             {showSearchResults
                                 ? 'Try a different search term or browse popular movies'
                                 : 'No movies available at the moment'}
@@ -147,12 +147,12 @@ function DiscoverPageContent() {
 
                 {/* Semantic Search Info */}
                 {showSearchResults && movies && movies.length > 0 && (
-                    <div className="mt-12 p-6 bg-indigo-50 rounded-lg border border-indigo-200">
-                        <h3 className="text-lg font-semibold text-indigo-900 mb-2">
+                    <div className="mt-12 p-6 bg-[#1a1a2e]/40 rounded-lg border border-white/10 backdrop-blur-sm">
+                        <h3 className="text-lg font-semibold text-white mb-2">
                             🤖 How AI-Powered Search Works
                         </h3>
-                        <p className="text-indigo-800 text-sm leading-relaxed">
-                            We use <strong>Retrieval-Augmented Generation (RAG)</strong> combining semantic search with GPT-4.
+                        <p className="text-[#9ca3af] text-sm leading-relaxed">
+                            We use <strong className="text-white">Retrieval-Augmented Generation (RAG)</strong> combining semantic search with GPT-4.
                             Your query is converted into a vector embedding, matched against our movie database,
                             then GPT-4 analyzes enriched metadata (keywords, cast, crew, themes) to explain
                             <em> why</em> each movie fits your request. This gives you intelligent recommendations
@@ -168,8 +168,8 @@ function DiscoverPageContent() {
 export default function DiscoverPage() {
     return (
         <Suspense fallback={
-            <div className="min-h-screen bg-gray-50 flex items-center justify-center">
-                <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-indigo-600"></div>
+            <div className="min-h-screen bg-gradient-to-b from-[#0a0a0f] via-[#1a1a2e] to-[#0a0a0f] flex items-center justify-center">
+                <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-[#e50914]"></div>
             </div>
         }>
             <DiscoverPageContent />

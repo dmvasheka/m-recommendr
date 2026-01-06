@@ -3,7 +3,7 @@
 import { useState } from 'react'
 import Image from 'next/image'
 import Link from 'next/link'
-import { Navbar } from '@/components/Navbar'
+import { Navigation } from '@/components/Navigation'
 import { RatingStars } from '@/components/RatingStars'
 import { useAuth } from '@/lib/auth/AuthProvider'
 import { useWatchlist, useMarkAsWatched, useRemoveFromWatchlist } from '@/lib/api/hooks'
@@ -55,20 +55,20 @@ export default function WatchlistPage() {
     ]
 
     return (
-        <div className="min-h-screen bg-gray-50">
-            <Navbar />
+        <div className="min-h-screen bg-gradient-to-b from-[#0a0a0f] via-[#1a1a2e] to-[#0a0a0f]">
+            <Navigation />
 
-            <main className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+            <main className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8 pt-24">
                 {/* Header */}
                 <div className="mb-8">
-                    <h1 className="text-3xl font-bold text-gray-900 mb-2">My Watchlist</h1>
-                    <p className="text-gray-600">
+                    <h1 className="text-3xl font-bold text-white mb-2">My Watchlist</h1>
+                    <p className="text-[#9ca3af]">
                         Manage your movies and rate what you've watched
                     </p>
                 </div>
 
                 {/* Tabs */}
-                <div className="mb-8 border-b border-gray-200">
+                <div className="mb-8 border-b border-white/10">
                     <nav className="flex gap-8">
                         {tabs.map((tab) => (
                             <button
@@ -76,12 +76,12 @@ export default function WatchlistPage() {
                                 onClick={() => setActiveTab(tab.id)}
                                 className={`pb-4 border-b-2 transition-colors ${
                                     activeTab === tab.id
-                                        ? 'border-indigo-600 text-indigo-600 font-semibold'
-                                        : 'border-transparent text-gray-500 hover:text-gray-700'
+                                        ? 'border-[#e50914] text-white font-semibold'
+                                        : 'border-transparent text-[#9ca3af] hover:text-white'
                                 }`}
                             >
                                 {tab.label}
-                                <span className="ml-2 px-2 py-1 text-xs rounded-full bg-gray-100">
+                                <span className="ml-2 px-2 py-1 text-xs rounded-full bg-[#1a1a2e]/40 border border-white/10">
                                       {tab.count}
                                   </span>
                             </button>
@@ -92,7 +92,7 @@ export default function WatchlistPage() {
                 {/* Content */}
                 {isLoading ? (
                     <div className="flex justify-center items-center py-20">
-                        <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-indigo-600"></div>
+                        <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-[#e50914]"></div>
                     </div>
                 ) : filteredMovies && filteredMovies.length > 0 ? (
                     <div className="space-y-4">
@@ -112,7 +112,7 @@ export default function WatchlistPage() {
                             return (
                                 <div
                                     key={item.id}
-                                    className="bg-white rounded-lg shadow-sm hover:shadow-md transition-shadow p-4"
+                                    className="bg-[#1a1a2e]/40 border border-white/10 rounded-lg hover:border-[#e50914]/30 transition-all backdrop-blur-sm p-4"
                                 >
                                     <div className="flex gap-4">
                                         {/* Poster */}
@@ -130,14 +130,14 @@ export default function WatchlistPage() {
                                         {/* Info */}
                                         <div className="flex-1 min-w-0">
                                             <Link href={`/movies/${movie.id}`}>
-                                                <h3 className="text-lg font-semibold text-gray-900 hover:text-indigo-600 transition-colors">
+                                                <h3 className="text-lg font-semibold text-white hover:text-[#e50914] transition-colors">
                                                     {movie.title}
                                                 </h3>
                                             </Link>
-                                            <p className="text-sm text-gray-500 mb-2">{year}</p>
+                                            <p className="text-sm text-[#9ca3af] mb-2">{year}</p>
 
                                             {((movie as any).description || movie.overview) && (
-                                                <p className="text-sm text-gray-600 line-clamp-2 mb-3">
+                                                <p className="text-sm text-[#9ca3af] line-clamp-2 mb-3">
                                                     {(movie as any).description || movie.overview}
                                                 </p>
                                             )}
@@ -147,15 +147,15 @@ export default function WatchlistPage() {
                                                   <span
                                                       className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium ${
                                                           item.status === 'watched'
-                                                              ? 'bg-green-100 text-green-800'
-                                                              : 'bg-blue-100 text-blue-800'
+                                                              ? 'bg-green-500/20 text-green-400 border border-green-500/30'
+                                                              : 'bg-blue-500/20 text-blue-400 border border-blue-500/30'
                                                       }`}
                                                   >
                                                       {item.status === 'watched' ? '✓ Watched' : '📋 Planned'}
                                                   </span>
 
                                                 {item.status === 'watched' && item.watched_at && (
-                                                    <span className="text-xs text-gray-500">
+                                                    <span className="text-xs text-[#9ca3af]">
                                                           {new Date(item.watched_at).toLocaleDateString()}
                                                       </span>
                                                 )}
@@ -164,7 +164,7 @@ export default function WatchlistPage() {
                                             {/* Rating */}
                                             {item.status === 'watched' && item.rating ? (
                                                 <div className="mb-3">
-                                                    <p className="text-xs text-gray-500 mb-1">Your rating:</p>
+                                                    <p className="text-xs text-[#9ca3af] mb-1">Your rating:</p>
                                                     <RatingStars
                                                         rating={item.rating}
                                                         onRate={(rating) => handleRate(movie.id, rating)}
@@ -173,13 +173,13 @@ export default function WatchlistPage() {
                                                 </div>
                                             ) : item.status === 'planned' && (
                                                 <div className="mb-3">
-                                                    <p className="text-xs text-gray-500 mb-1">Rate this movie:</p>
+                                                    <p className="text-xs text-[#9ca3af] mb-1">Rate this movie:</p>
                                                     <RatingStars
                                                         rating={0}
                                                         onRate={(rating) => handleRate(movie.id, rating)}
                                                         size="sm"
                                                     />
-                                                    <p className="text-xs text-gray-400 mt-1">
+                                                    <p className="text-xs text-[#6b7280] mt-1">
                                                         Rating will mark it as watched
                                                     </p>
                                                 </div>
@@ -189,7 +189,7 @@ export default function WatchlistPage() {
                                             <div className="flex gap-2">
                                                 <button
                                                     onClick={() => handleRemove(movie.id)}
-                                                    className="text-sm text-red-600 hover:text-red-700 font-medium"
+                                                    className="text-sm text-red-400 hover:text-red-300 font-medium"
                                                     disabled={removeMutation.isPending}
                                                 >
                                                     {removeMutation.isPending ? 'Removing...' : 'Remove'}
@@ -206,14 +206,14 @@ export default function WatchlistPage() {
                         <div className="text-6xl mb-4">
                             {activeTab === 'watched' ? '🎬' : activeTab === 'planned' ? '📋' : '🍿'}
                         </div>
-                        <h3 className="text-xl font-semibold text-gray-900 mb-2">
+                        <h3 className="text-xl font-semibold text-white mb-2">
                             {activeTab === 'watched'
                                 ? 'No watched movies yet'
                                 : activeTab === 'planned'
                                     ? 'No planned movies'
                                     : 'Your watchlist is empty'}
                         </h3>
-                        <p className="text-gray-600 mb-8">
+                        <p className="text-[#9ca3af] mb-8">
                             {activeTab === 'watched'
                                 ? 'Start rating movies you\'ve watched to get personalized recommendations'
                                 : activeTab === 'planned'
@@ -222,7 +222,7 @@ export default function WatchlistPage() {
                         </p>
                         <Link
                             href="/discover"
-                            className="inline-block px-6 py-3 bg-indigo-600 text-white rounded-lg hover:bg-indigo-700 transition"
+                            className="inline-block px-6 py-3 bg-[#e50914] text-white rounded-lg hover:bg-[#e50914]/90 transition"
                         >
                             Discover Movies
                         </Link>

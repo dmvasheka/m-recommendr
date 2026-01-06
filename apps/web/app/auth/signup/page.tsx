@@ -1,130 +1,131 @@
-'use client';
+'use client'
 
-import { useState } from 'react';
-import { useRouter } from 'next/navigation';
-import Link from 'next/link';
-import { useAuth } from '@/lib/auth/AuthProvider';
+import { useState } from 'react'
+import { useRouter } from 'next/navigation'
+import Link from 'next/link'
+import { Sparkles } from 'lucide-react'
+import { useAuth } from '@/lib/auth/AuthProvider'
+import { Button } from '@/components/ui/button'
 
 export default function SignupPage() {
-    const [email, setEmail] = useState('');
-    const [password, setPassword] = useState('');
-    const [confirmPassword, setConfirmPassword] = useState('');
-    const [error, setError] = useState('');
-    const [loading, setLoading] = useState(false);
-    const router = useRouter();
-    const { signUp } = useAuth();
+    const [email, setEmail] = useState('')
+    const [password, setPassword] = useState('')
+    const [confirmPassword, setConfirmPassword] = useState('')
+    const [error, setError] = useState('')
+    const [loading, setLoading] = useState(false)
+    const router = useRouter()
+    const { signUp } = useAuth()
 
     const handleSignup = async (e: React.FormEvent) => {
-        e.preventDefault();
-        setError('');
+        e.preventDefault()
+        setError('')
 
         if (password !== confirmPassword) {
-            setError('Passwords do not match');
-            return;
+            setError('Passwords do not match')
+            return
         }
 
         if (password.length < 6) {
-            setError('Password must be at least 6 characters');
-            return;
+            setError('Password must be at least 6 characters')
+            return
         }
 
-        setLoading(true);
+        setLoading(true)
 
         try {
-            await signUp(email, password);
-            router.push('/discover');
+            await signUp(email, password)
+            router.push('/discover')
         } catch (err) {
-            setError(err instanceof Error ? err.message : 'Failed to sign up');
+            setError(err instanceof Error ? err.message : 'Failed to sign up')
         } finally {
-            setLoading(false);
+            setLoading(false)
         }
-    };
+    }
 
     return (
-        <div style={{ minHeight: '100vh', display: 'flex', alignItems: 'center', justifyContent: 'center', background: 'linear-gradient(to bottom right, #1e3a8a, #7c3aed)' }}>
-            <div style={{ background: 'white', padding: '2rem', borderRadius: '0.5rem', boxShadow: '0 10px 15px rgba(0,0,0,0.1)', width: '100%', maxWidth: '28rem' }}>
-                <h1 style={{ fontSize: '1.875rem', fontWeight: 'bold', marginBottom: '1.5rem', textAlign: 'center', color: '#1f2937' }}>
-                    Create Account
-                </h1>
+        <div className="min-h-screen bg-gradient-to-b from-[#0a0a0f] via-[#1a1a2e] to-[#0a0a0f] flex items-center justify-center px-4">
+            <div className="w-full max-w-md">
+                {/* Logo */}
+                <Link href="/" className="flex items-center justify-center gap-2 mb-8">
+                    <Sparkles className="h-8 w-8 text-[#e50914]" />
+                    <span className="text-2xl font-semibold text-white">Movie Recommendr</span>
+                </Link>
 
-                <form onSubmit={handleSignup} style={{ display: 'flex', flexDirection: 'column', gap: '1rem' }}>
-                    {error && (
-                        <div style={{ padding: '0.75rem', background: '#fee2e2', color: '#991b1b', borderRadius: '0.375rem', fontSize: '0.875rem' }}>
-                            {error}
+                {/* Card */}
+                <div className="bg-[#1a1a2e]/40 border border-white/10 backdrop-blur-sm rounded-xl p-8">
+                    <h1 className="text-3xl font-bold text-white mb-6 text-center">
+                        Create Account
+                    </h1>
+
+                    <form onSubmit={handleSignup} className="space-y-4">
+                        {error && (
+                            <div className="p-3 bg-red-500/20 border border-red-500/30 text-red-400 rounded-lg text-sm">
+                                {error}
+                            </div>
+                        )}
+
+                        <div>
+                            <label htmlFor="email" className="block text-sm font-medium text-white mb-2">
+                                Email
+                            </label>
+                            <input
+                                id="email"
+                                type="email"
+                                required
+                                value={email}
+                                onChange={(e) => setEmail(e.target.value)}
+                                className="w-full px-4 py-3 bg-[#1a1a2e]/60 border border-white/10 text-white placeholder:text-[#9ca3af] rounded-lg focus:outline-none focus:ring-2 focus:ring-[#e50914] focus:border-transparent"
+                                placeholder="you@example.com"
+                            />
                         </div>
-                    )}
 
-                    <div>
-                        <label htmlFor="email" style={{ display: 'block', fontSize: '0.875rem', fontWeight: '500', color: '#374151', marginBottom: '0.5rem' }}>
-                            Email
-                        </label>
-                        <input
-                            id="email"
-                            type="email"
-                            required
-                            value={email}
-                            onChange={(e) => setEmail(e.target.value)}
-                            style={{ width: '100%', padding: '0.5rem 0.75rem', border: '1px solid #d1d5db', borderRadius: '0.375rem', fontSize: '1rem' }}
-                            placeholder="you@example.com"
-                        />
-                    </div>
+                        <div>
+                            <label htmlFor="password" className="block text-sm font-medium text-white mb-2">
+                                Password
+                            </label>
+                            <input
+                                id="password"
+                                type="password"
+                                required
+                                value={password}
+                                onChange={(e) => setPassword(e.target.value)}
+                                className="w-full px-4 py-3 bg-[#1a1a2e]/60 border border-white/10 text-white placeholder:text-[#9ca3af] rounded-lg focus:outline-none focus:ring-2 focus:ring-[#e50914] focus:border-transparent"
+                                placeholder="••••••••"
+                            />
+                        </div>
 
-                    <div>
-                        <label htmlFor="password" style={{ display: 'block', fontSize: '0.875rem', fontWeight: '500', color: '#374151', marginBottom: '0.5rem' }}>
-                            Password
-                        </label>
-                        <input
-                            id="password"
-                            type="password"
-                            required
-                            value={password}
-                            onChange={(e) => setPassword(e.target.value)}
-                            style={{ width: '100%', padding: '0.5rem 0.75rem', border: '1px solid #d1d5db', borderRadius: '0.375rem', fontSize: '1rem' }}
-                            placeholder="••••••••"
-                        />
-                    </div>
+                        <div>
+                            <label htmlFor="confirmPassword" className="block text-sm font-medium text-white mb-2">
+                                Confirm Password
+                            </label>
+                            <input
+                                id="confirmPassword"
+                                type="password"
+                                required
+                                value={confirmPassword}
+                                onChange={(e) => setConfirmPassword(e.target.value)}
+                                className="w-full px-4 py-3 bg-[#1a1a2e]/60 border border-white/10 text-white placeholder:text-[#9ca3af] rounded-lg focus:outline-none focus:ring-2 focus:ring-[#e50914] focus:border-transparent"
+                                placeholder="••••••••"
+                            />
+                        </div>
 
-                    <div>
-                        <label htmlFor="confirmPassword" style={{ display: 'block', fontSize: '0.875rem', fontWeight: '500', color: '#374151', marginBottom: '0.5rem' }}>
-                            Confirm Password
-                        </label>
-                        <input
-                            id="confirmPassword"
-                            type="password"
-                            required
-                            value={confirmPassword}
-                            onChange={(e) => setConfirmPassword(e.target.value)}
-                            style={{ width: '100%', padding: '0.5rem 0.75rem', border: '1px solid #d1d5db', borderRadius: '0.375rem', fontSize: '1rem' }}
-                            placeholder="••••••••"
-                        />
-                    </div>
+                        <Button
+                            type="submit"
+                            disabled={loading}
+                            className="w-full bg-[#e50914] hover:bg-[#e50914]/90 text-white font-medium py-3 rounded-lg transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+                        >
+                            {loading ? 'Creating account...' : 'Sign Up'}
+                        </Button>
+                    </form>
 
-                    <button
-                        type="submit"
-                        disabled={loading}
-                        style={{
-                            width: '100%',
-                            padding: '0.625rem',
-                            background: loading ? '#9ca3af' : '#7c3aed',
-                            color: 'white',
-                            borderRadius: '0.375rem',
-                            fontWeight: '500',
-                            border: 'none',
-                            cursor: loading ? 'not-allowed' : 'pointer',
-                            transition: 'background 0.2s'
-                        }}
-                    >
-                        {loading ? 'Creating account...' : 'Sign Up'}
-                    </button>
-                </form>
-
-                <p style={{ marginTop: '1rem', textAlign: 'center', fontSize: '0.875rem', color: '#6b7280' }}>
-                    Already have an account?{' '}
-                    <Link href="/auth/login" style={{ color: '#7c3aed', fontWeight: '500' }}>
-                        Sign in
-                    </Link>
-                </p>
+                    <p className="mt-6 text-center text-sm text-[#9ca3af]">
+                        Already have an account?{' '}
+                        <Link href="/auth/login" className="text-[#e50914] font-medium hover:text-[#e50914]/90 transition-colors">
+                            Sign in
+                        </Link>
+                    </p>
+                </div>
             </div>
         </div>
-    );
+    )
 }

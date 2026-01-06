@@ -1,6 +1,7 @@
 'use client'
 
 import Link from "next/link"
+import Image from "next/image"
 import { Star } from "lucide-react"
 import type { Movie } from '@/lib/api/types'
 
@@ -19,11 +20,13 @@ export function NewMovieCard({ movie }: MovieCardProps) {
   return (
     <Link href={`/movie/${movie.id}`}>
       <div className="group relative overflow-hidden rounded-xl border border-white/5 bg-[#1a1a2e]/40 backdrop-blur-sm transition-all duration-300 hover:scale-[1.02] hover:border-[#e50914]/30 hover:shadow-[0_0_30px_rgba(229,9,20,0.15)]">
-        <div className="aspect-[2/3] overflow-hidden">
-          <img
+        <div className="aspect-[2/3] overflow-hidden relative">
+          <Image
             src={posterUrl}
             alt={movie.title}
-            className="h-full w-full object-cover transition-transform duration-500 group-hover:scale-110"
+            fill
+            className="object-cover transition-transform duration-500 group-hover:scale-110"
+            sizes="(max-width: 640px) 50vw, (max-width: 768px) 33vw, (max-width: 1024px) 25vw, 20vw"
           />
         </div>
 
