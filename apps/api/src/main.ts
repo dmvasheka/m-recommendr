@@ -1,8 +1,8 @@
 import { NestFactory } from '@nestjs/core';
 import { AppModule } from './app.module';
 import { Logger } from '@nestjs/common';
-import { setupBullBoard } from './queues/bull-board.setup';
-import { Queue } from 'bullmq';
+// import { setupBullBoard } from './queues/bull-board.setup'; // DISABLED: QueuesModule is disabled
+// import { Queue } from 'bullmq'; // DISABLED: QueuesModule is disabled
 
 // Load .env from root of monorepo (only in development)
 if (process.env.NODE_ENV !== 'production') {
@@ -24,19 +24,20 @@ async function bootstrap() {
     // Global API prefix
     app.setGlobalPrefix('api');
 
-    try {
-        const movieImportQueue = app.get<Queue>('BullQueue_movie-import');
-        const embeddingQueue = app.get<Queue>('BullQueue_embedding-generation');
+    // DISABLED: Bull Board UI - QueuesModule is disabled to reduce Redis operations
+    // try {
+    //     const movieImportQueue = app.get<Queue>('BullQueue_movie-import');
+    //     const embeddingQueue = app.get<Queue>('BullQueue_embedding-generation');
 
-        const serverAdapter = setupBullBoard([movieImportQueue, embeddingQueue]);
+    //     const serverAdapter = setupBullBoard([movieImportQueue, embeddingQueue]);
 
-        app.use('/admin/queues', serverAdapter.getRouter());
+    //     app.use('/admin/queues', serverAdapter.getRouter());
 
-        logger.log('📊 Bull Board UI available at: http://localhost:3001/admin/queues');
-    } catch (error) {
-        const errorMessage = error instanceof Error ? error.message : String(error);
-        logger.warn('⚠️  Bull Board setup failed:', errorMessage);
-    }
+    //     logger.log('📊 Bull Board UI available at: http://localhost:3001/admin/queues');
+    // } catch (error) {
+    //     const errorMessage = error instanceof Error ? error.message : String(error);
+    //     logger.warn('⚠️  Bull Board setup failed:', errorMessage);
+    // }
 
 
     const port = process.env.PORT || process.env.API_PORT || 3001;
