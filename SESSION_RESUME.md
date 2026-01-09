@@ -7,21 +7,38 @@
 
 ## 🚀 Quick Start (Resume Work)
 
+**Current Phase:** Post-MVP Improvements
+**Status:** Day 14 (Deployment) is 100% Complete! ✅
+
 ### Servers Status:
+- **Backend (Railway):** [https://api-production-9141.up.railway.app](https://api-production-9141.up.railway.app)
+- **Frontend (Vercel):** [https://m-recommendr-web-ip4u.vercel.app](https://m-recommendr-web-ip4u.vercel.app)
 
-**Backend API (NestJS):**
-```bash
-# If not running, start with:
-pnpm --filter api dev
-# Running on: http://localhost:3001
-```
+---
 
-**Frontend (Next.js):**
-```bash
-# If not running, start with:
-pnpm --filter web dev
-# Running on: http://localhost:3002
-```
+## ✅ What Was Completed (Latest):
+- ✅ **Day 13-14 (Deployment):** App is live on Railway and Vercel.
+- ✅ **AI Features:** All Day 11-12 features (RAG, Mood, Multi-movie, Explanations) are in the backend.
+
+---
+
+## 🎯 Next Steps: Improvements Phase
+
+### 1. Search Autocomplete (High Priority)
+- [ ] Create `/api/movies/autocomplete` endpoint.
+- [ ] Implement debounced UI in `SearchBar.tsx`.
+
+### 2. "Why This Movie?" UI (High Priority)
+- [ ] Add "Why this movie?" button to `MovieDetailsPage`.
+- [ ] Create modal/overlay for AI explanations using existing backend endpoint.
+
+### 3. Localization
+- [ ] Add i18n support (RU/UK/EN).
+
+---
+
+**Last Updated:** 2026-01-10
+**Progress:** MVP Complete. Starting Improvements stage.
 
 ---
 
