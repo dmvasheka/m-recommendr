@@ -49,11 +49,27 @@ export class TmdbController {
     }
 
     /**
-     * POST /tmdb/import/popular?count=20
-     * Import popular movies to our database
+     * @deprecated Use /tmdb/import instead
      */
     @Post('import/popular')
     async importPopularMovies(@Query('count') count?: string) {
+        return this.importMovies('popular', count);
+    }
+
+    /**
+     * POST /tmdb/import?category=...&count=...
+     * Import movies to our database by category
+     */
+    @Post('import')
+    async importMovies(
+        @Query('category') category: string,
+        @Query('count') count?: string,
+    ) {
+        const allowedCategories = ['popular', 'top_rated', 'upcoming', 'now_playing'];
+        if (!category || !allowedCategories.includes(category)) {
+            return { error: `Invalid or missing category. Allowed: ${allowedCategories.join(', ')}` };
+        }
+
         const movieCount = count ? parseInt(count, 10) : 20;
 
         if (movieCount > 100) {
@@ -61,8 +77,8 @@ export class TmdbController {
         }
 
         try {
-            this.logger.log(`Starting import of ${movieCount} popular movies...`);
-            const result = await this.tmdbService.importPopularMovies(movieCount);
+            this.logger.log(`Starting import of ${movieCount} ${category} movies...`);
+            const result = await this.tmdbService.importMovies(category, movieCount);
 
             return {
                 success: true,
@@ -73,7 +89,7 @@ export class TmdbController {
             };
         } catch (error) {
             const errorMessage = error instanceof Error ? error.message : String(error);
-            this.logger.error(`Failed to import popular movies: ${errorMessage}`);
+            this.logger.error(`Failed to import ${category} movies: ${errorMessage}`);
             return {
                 success: false,
                 error: errorMessage,

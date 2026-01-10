@@ -2,6 +2,7 @@ import { Injectable, Logger } from '@nestjs/common';
 import axios from 'axios';
 import { supabase } from '@repo/db';
 import type { MovieInsert } from '@repo/db';
+import { EmbeddingsService } from '../embeddings/embeddings.service'; // Import EmbeddingsService
 
 // TMDB API Response types
 export interface TmdbMovie {
@@ -39,7 +40,7 @@ export class TmdbService {
     private readonly baseUrl = 'https://api.themoviedb.org/3';
     private readonly imageBaseUrl = 'https://image.tmdb.org/t/p';
 
-    constructor() {
+    constructor(private readonly embeddingsService: EmbeddingsService) { // Inject EmbeddingsService
         if (!this.apiKey) {
             this.logger.error('TMDB_API_KEY is not set in environment variables');
         }
@@ -99,9 +100,37 @@ export class TmdbService {
      * Get popular movies
      */
     async getPopularMovies(page = 1): Promise<TmdbSearchResponse> {
+        return this.getMoviesByCategory('popular', page);
+    }
+
+    /**
+     * Get top rated movies
+     */
+    async getTopRatedMovies(page = 1): Promise<TmdbSearchResponse> {
+        return this.getMoviesByCategory('top_rated', page);
+    }
+
+    /**
+     * Get upcoming movies
+     */
+    async getUpcomingMovies(page = 1): Promise<TmdbSearchResponse> {
+        return this.getMoviesByCategory('upcoming', page);
+    }
+
+    /**
+     * Get now playing movies
+     */
+    async getNowPlayingMovies(page = 1): Promise<TmdbSearchResponse> {
+        return this.getMoviesByCategory('now_playing', page);
+    }
+
+    /**
+     * Generic method to fetch movies by category
+     */
+    private async getMoviesByCategory(category: string, page = 1): Promise<TmdbSearchResponse> {
         try {
             const response = await axios.get<TmdbSearchResponse>(
-                `${this.baseUrl}/movie/popular`,
+                `${this.baseUrl}/movie/${category}`,
                 {
                     params: {
                         api_key: this.apiKey,
@@ -111,11 +140,11 @@ export class TmdbService {
                 }
             );
 
-            this.logger.log(`Fetched ${response.data.results.length} popular movies (page ${page})`);
+            this.logger.log(`Fetched ${response.data.results.length} ${category} movies (page ${page})`);
             return response.data;
         } catch (error) {
             const errorMessage = error instanceof Error ? error.message : String(error);
-            this.logger.error(`Error fetching popular movies: ${errorMessage}`);
+            this.logger.error(`Error fetching ${category} movies: ${errorMessage}`);
             throw error;
         }
     }
@@ -245,11 +274,18 @@ export class TmdbService {
     }
 
     /**
-     * Import multiple popular movies to database
+     * @deprecated Use importMovies instead
      */
     async importPopularMovies(count: number, startPage = 1): Promise<{ imported: number; skipped: number }> {
+        return this.importMovies('popular', count, startPage);
+    }
+
+    /**
+     * Import multiple movies to database by category
+     */
+    async importMovies(category: string, count: number, startPage = 1): Promise<{ imported: number; skipped: number }> {
         try {
-            this.logger.log(`Importing ${count} popular movies from TMDB (starting page: ${startPage})`);
+            this.logger.log(`Importing ${count} ${category} movies from TMDB (starting page: ${startPage})`);
 
             let imported = 0;
             let skipped = 0;
@@ -257,17 +293,9 @@ export class TmdbService {
             const totalPages = Math.ceil(count / moviesPerPage);
 
             for (let page = startPage; page < startPage + totalPages; page++) {
-                const response = await axios.get(
-                    `${this.baseUrl}/movie/popular`,
-                    {
-                        params: {
-                            api_key: this.apiKey,
-                            page,
-                        },
-                    }
-                );
+                const response = await this.getMoviesByCategory(category, page);
 
-                const movies = response.data.results.slice(0, count - (imported + skipped));
+                const movies = response.results.slice(0, count - (imported + skipped));
 
                 for (const movie of movies) {
                     try {
@@ -287,12 +315,12 @@ export class TmdbService {
             }
 
             this.logger.log(`Import complete: ${imported} imported, ${skipped} skipped`);
+            await this.embeddingsService.generateAllMissingEmbeddings(); // Call embeddings service
             return { imported, skipped }; // 👈 Возвращаем результат
         } catch (error) {
             const errorMessage = error instanceof Error ? error.message : String(error);
-            this.logger.error(`Import popular movies error: ${errorMessage}`);
+            this.logger.error(`Import ${category} movies error: ${errorMessage}`);
             throw error;
         }
     }
 }
-
