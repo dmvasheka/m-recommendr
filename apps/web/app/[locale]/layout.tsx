@@ -5,7 +5,7 @@ import { Providers } from "@/lib/providers/Providers";
 import { NextIntlClientProvider } from 'next-intl';
 import { getMessages } from 'next-intl/server';
 import { notFound } from 'next/navigation';
-import { locales } from "@/navigation";
+import { routing } from "@/i18n/routing";
 
 const geistSans = localFont({
     src: "../fonts/GeistVF.woff",
@@ -23,26 +23,23 @@ export const metadata: Metadata = {
 
 export default async function RootLayout({
     children,
-    params,
+    params: { locale },
 }: {
     children: React.ReactNode;
-    params: Promise<{ locale: string }>;
+    params: { locale: string };
 }) {
-    const { locale } = await params;
-
     // Validate that the incoming `locale` parameter is valid
-    if (!locales.includes(locale as any)) {
+    if (!routing.locales.includes(locale as any)) {
         notFound();
     }
 
     // Providing all messages to the client
-    // side is the easiest way to get started
     const messages = await getMessages();
 
     return (
         <html lang={locale}>
         <body className={`${geistSans.variable} ${geistMono.variable} antialiased`}>
-        <NextIntlClientProvider messages={messages}>
+        <NextIntlClientProvider locale={locale} messages={messages}>
             <Providers>
                 {children}
             </Providers>

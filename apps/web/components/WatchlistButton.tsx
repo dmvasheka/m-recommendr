@@ -4,7 +4,7 @@ import { useState } from 'react'
 import { useAuth } from '@/lib/auth/AuthProvider'
 import { useAddToWatchlist, useRemoveFromWatchlist, useWatchlist } from '@/lib/api/hooks'
 import { useTranslations } from 'next-intl'
-import { useLocale } from 'next-intl'
+import { useRouter } from '@/navigation'
 
 interface WatchlistButtonProps {
     movieId: number
@@ -14,7 +14,7 @@ interface WatchlistButtonProps {
 export function WatchlistButton({ movieId, variant = 'button' }: WatchlistButtonProps) {
     const { user } = useAuth()
     const [isAdding, setIsAdding] = useState(false)
-    const locale = useLocale()
+    const router = useRouter()
     const t = useTranslations('Common.watchlist')
     const tCommon = useTranslations('Common')
 
@@ -29,8 +29,8 @@ export function WatchlistButton({ movieId, variant = 'button' }: WatchlistButton
         e.stopPropagation()
 
         if (!user) {
-            // Redirect to login with locale
-            window.location.href = `/${locale}/auth/login`
+            // Use localized router instead of window.location
+            router.push('/auth/login')
             return
         }
 

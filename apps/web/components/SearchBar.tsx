@@ -1,7 +1,8 @@
 'use client'
 
 import { useState, useEffect } from 'react'
-import { useRouter, useSearchParams } from 'next/navigation'
+import { useRouter, usePathname } from '@/navigation'
+import { useSearchParams } from 'next/navigation'
 
 interface SearchBarProps {
     placeholder?: string
@@ -39,6 +40,7 @@ export function SearchBar({
         e.preventDefault()
         if (query.trim()) {
             // Navigate to discovery page with search query
+            // Using localized router.push
             router.push(`/discover?q=${encodeURIComponent(query)}`)
         }
     }
@@ -51,7 +53,7 @@ export function SearchBar({
                     value={query}
                     onChange={(e) => setQuery(e.target.value)}
                     placeholder={placeholder}
-                    className="w-full px-4 py-3 pl-12 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-transparent"
+                    className="w-full px-4 py-3 pl-12 bg-white/10 border border-white/10 text-white rounded-lg focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-transparent placeholder:text-gray-400"
                 />
                 <svg
                     className="absolute left-4 top-1/2 -translate-y-1/2 w-5 h-5 text-gray-400"

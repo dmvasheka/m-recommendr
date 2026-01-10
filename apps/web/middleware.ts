@@ -1,29 +1,23 @@
 import createMiddleware from 'next-intl/middleware';
 import { type NextRequest } from 'next/server';
 import { updateSession } from './lib/supabase/middleware';
-import { locales, localePrefix } from './navigation';
+import { routing } from './i18n/routing';
 
-// 1. Создаем middleware для локализации
-const intlMiddleware = createMiddleware({
-    locales,
-    localePrefix,
-    defaultLocale: 'en'
-});
+const intlMiddleware = createMiddleware(routing);
 
 export default async function middleware(request: NextRequest) {
-    // 2. Сначала запускаем локализацию
-    // Это обработает редиректы типа /discover -> /en/discover
+    // 1. Сначала запускаем локализацию. 
+    // Она вернет NextResponse с нужными куками или редиректом.
     const response = intlMiddleware(request);
 
-    // 3. Затем обновляем сессию Supabase
-    // Мы передаем запрос, чтобы проверить авторизацию на уже локализованных путях
-    return await updateSession(request);
+    // 2. Затем передаем этот response в Supabase, 
+    // чтобы он обновил сессию (тоже через куки).
+    // Мы должны изменить updateSession, чтобы он принимал и возвращал response.
+    return await updateSession(request, response);
 }
 
 export const config = {
     matcher: [
-        // Пропускаем статику и API
         '/((?!api|_next/static|_next/image|favicon.ico|.*\.(?:svg|png|jpg|jpeg|gif|webp)$).*)',
     ],
 };
-

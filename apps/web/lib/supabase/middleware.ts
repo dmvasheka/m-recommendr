@@ -1,10 +1,9 @@
 import { createServerClient } from '@supabase/ssr'
 import { NextResponse, type NextRequest } from 'next/server'
 
-export async function updateSession(request: NextRequest) {
-    let supabaseResponse = NextResponse.next({
-        request,
-    })
+export async function updateSession(request: NextRequest, response: NextResponse) {
+    // Используем уже существующий response от intlMiddleware
+    let supabaseResponse = response;
 
     const supabase = createServerClient(
         process.env.NEXT_PUBLIC_SUPABASE_URL!,
@@ -16,11 +15,8 @@ export async function updateSession(request: NextRequest) {
                 },
                 setAll(cookiesToSet) {
                     cookiesToSet.forEach(({ name, value, options }) => request.cookies.set(name, value))
-                    supabaseResponse = NextResponse.next({
-                        request,
-                    })
-                    cookiesToSet.forEach(({ name, value,
-                                              options }) =>
+                    // Обновляем response с новыми куками Supabase
+                    cookiesToSet.forEach(({ name, value, options }) =>
                         supabaseResponse.cookies.set(name, value, options)
                     )
                 },
@@ -32,8 +28,7 @@ export async function updateSession(request: NextRequest) {
         data: { user },
     } = await supabase.auth.getUser()
 
-    // Protected routes that require authentication
-    // Note: next-intl middleware will have already run, so the pathname includes the locale
+    // Protected routes check
     const protectedRoutes = ['/discover', '/watchlist', '/recommendations', '/profile']
     const isProtectedRoute =
         protectedRoutes.some(route =>
@@ -41,9 +36,7 @@ export async function updateSession(request: NextRequest) {
         )
 
     if (isProtectedRoute && !user) {
-        // Redirect to login if accessing protected route without auth
         const url = request.nextUrl.clone()
-        // Extract locale from current path if present
         const localeMatch = request.nextUrl.pathname.match(/^\/([a-z]{2})\//);
         const locale = localeMatch ? localeMatch[1] : 'en';
         
