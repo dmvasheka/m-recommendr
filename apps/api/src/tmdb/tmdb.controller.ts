@@ -57,13 +57,14 @@ export class TmdbController {
     }
 
     /**
-     * POST /tmdb/import?category=...&count=...
+     * POST /tmdb/import?category=...&count=...&startPage=...
      * Import movies to our database by category
      */
     @Post('import')
     async importMovies(
         @Query('category') category: string,
         @Query('count') count?: string,
+        @Query('startPage') startPage?: string,
     ) {
         const allowedCategories = ['popular', 'top_rated', 'upcoming', 'now_playing'];
         if (!category || !allowedCategories.includes(category)) {
@@ -71,14 +72,15 @@ export class TmdbController {
         }
 
         const movieCount = count ? parseInt(count, 10) : 20;
+        const page = startPage ? parseInt(startPage, 10) : 1;
 
-        if (movieCount > 100) {
-            return { error: 'Count cannot exceed 100 movies at once' };
+        if (movieCount > 500) {
+            return { error: 'Count cannot exceed 500 movies at once' };
         }
 
         try {
-            this.logger.log(`Starting import of ${movieCount} ${category} movies...`);
-            const result = await this.tmdbService.importMovies(category, movieCount);
+            this.logger.log(`Starting import of ${movieCount} ${category} movies starting from page ${page}...`);
+            const result = await this.tmdbService.importMovies(category, movieCount, page);
 
             return {
                 success: true,
@@ -90,6 +92,42 @@ export class TmdbController {
         } catch (error) {
             const errorMessage = error instanceof Error ? error.message : String(error);
             this.logger.error(`Failed to import ${category} movies: ${errorMessage}`);
+            return {
+                success: false,
+                error: errorMessage,
+            };
+        }
+    }
+
+    /**
+     * POST /tmdb/import-year?year=2000&count=50
+     * Import movies from a specific year
+     */
+    @Post('import-year')
+    async importMoviesByYear(
+        @Query('year') year: string,
+        @Query('count') count?: string,
+    ) {
+        const yearNum = parseInt(year, 10);
+        if (isNaN(yearNum)) {
+            return { error: 'Invalid or missing year' };
+        }
+
+        const movieCount = count ? parseInt(count, 10) : 20;
+
+        try {
+            const result = await this.tmdbService.importMoviesByYear(yearNum, movieCount);
+            // After year import, trigger embedding generation for missing ones
+            await (this.tmdbService as any).embeddingsService.generateAllMissingEmbeddings();
+
+            return {
+                success: true,
+                year: yearNum,
+                imported: result.imported,
+                skipped: result.skipped,
+            };
+        } catch (error) {
+            const errorMessage = error instanceof Error ? error.message : String(error);
             return {
                 success: false,
                 error: errorMessage,

@@ -281,6 +281,71 @@ export class TmdbService {
     }
 
     /**
+     * Get movies by specific year using discover endpoint
+     */
+    async getMoviesByYear(year: number, page = 1): Promise<TmdbSearchResponse> {
+        try {
+            const response = await axios.get<TmdbSearchResponse>(
+                `${this.baseUrl}/discover/movie`,
+                {
+                    params: {
+                        api_key: this.apiKey,
+                        primary_release_year: year,
+                        sort_by: 'popularity.desc',
+                        page,
+                        language: 'en-US',
+                    },
+                }
+            );
+
+            this.logger.log(`Fetched ${response.data.results.length} movies for year ${year} (page ${page})`);
+            return response.data;
+        } catch (error) {
+            const errorMessage = error instanceof Error ? error.message : String(error);
+            this.logger.error(`Error fetching movies for year ${year}: ${errorMessage}`);
+            throw error;
+        }
+    }
+
+    /**
+     * Import movies for a specific year
+     */
+    async importMoviesByYear(year: number, count: number): Promise<{ imported: number; skipped: number }> {
+        try {
+            this.logger.log(`Importing ${count} movies from year ${year}`);
+
+            let imported = 0;
+            let skipped = 0;
+            const moviesPerPage = 20;
+            const totalPages = Math.ceil(count / moviesPerPage);
+
+            for (let page = 1; page <= totalPages; page++) {
+                const response = await this.getMoviesByYear(year, page);
+                const movies = response.results.slice(0, count - (imported + skipped));
+
+                for (const movie of movies) {
+                    try {
+                        await this.importMovieToDb(movie.id);
+                        imported++;
+                    } catch (error) {
+                        skipped++;
+                    }
+                    await new Promise(resolve => setTimeout(resolve, 100));
+                }
+
+                if (imported + skipped >= count) break;
+            }
+
+            this.logger.log(`Year ${year} complete: ${imported} imported, ${skipped} skipped`);
+            return { imported, skipped };
+        } catch (error) {
+            const errorMessage = error instanceof Error ? error.message : String(error);
+            this.logger.error(`Import movies for year ${year} error: ${errorMessage}`);
+            throw error;
+        }
+    }
+
+    /**
      * Import multiple movies to database by category
      */
     async importMovies(category: string, count: number, startPage = 1): Promise<{ imported: number; skipped: number }> {

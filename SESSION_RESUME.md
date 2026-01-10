@@ -1,53 +1,55 @@
-# Session Resume - Localization & Improvements
+# Session Resume - Localization & Data Scale-up
 
 **Date:** 2026-01-10
-**Status:** Localization 100% Complete | Improvements Phase Started 🚀
+**Status:** Localization 100% | Search Autocomplete 100% | Database scaled to 1675 movies 🚀
 
 ---
 
 ## 🚀 Quick Start (Resume Work)
 
 **Current Phase:** Improvements Phase
-**Task:** Search Autocomplete
+**Task:** "Why This Movie?" UI
 
 ### Servers Status:
 - **Backend (Railway):** [https://api-production-9141.up.railway.app](https://api-production-9141.up.railway.app)
 - **Frontend (Vercel):** [https://m-recommendr-web-ip4u.vercel.app](https://m-recommendr-web-ip4u.vercel.app)
-- **Local Dev:** API (3001), Web (3002) - Redis (Local)
+- **Local Dev:** API (3001), Web (3002) - Redis (Local on port 6379)
 
 ---
 
 ## ✅ What Was Completed (This Session):
 - ✅ **Localization (i18n):**
-    - Installed `next-intl` and configured request modules.
-    - Moved all routes into `app/[locale]` directory.
-    - Localized `Navbar`, `Navigation`, `MovieCard`, `SearchBar`, and `WatchlistButton`.
-    - Created `en.json` and `ru.json` with 100% coverage of existing text.
-    - Implemented locale-aware `Middleware` combining Auth and i18n.
-    - Added language switcher toggle.
-- ✅ **Database & Imports:**
-    - Performed batch imports for `top_rated`, `upcoming`, and `now_playing` categories.
-    - Current total movies in DB: 219.
-    - Verified automatic embedding generation for new imports.
-- ✅ **Local Environment:**
-    - Switched from Upstash to local Redis server to bypass quota limits.
+    - Fully implemented `next-intl` with `/en` and `/ru` prefixes.
+    - Fixed Next.js 14 layout conflicts and `TypeError: useContext` issues.
+    - Unified Auth and i18n Middleware.
+- ✅ **Search Autocomplete:**
+    - New backend endpoint `/api/movies/autocomplete` (fast SQL search).
+    - New UI dropdown in `SearchBar.tsx` with posters and metadata.
+- ✅ **Database Scaling:**
+    - Systematic import of movies from **1990 to 2024** (40 top movies per year).
+    - Total unique movies: **1675**.
+    - All movies have **OpenAI embeddings** generated.
+- ✅ **Environment:**
+    - Configured local Redis support to bypass Upstash limits.
+    - Fixed CORS origins for port 3002.
 
 ---
 
 ## 🎯 Next Steps: Improvements Phase
 
-### 1. Search Autocomplete (High Priority)
-- [ ] Create `/api/movies/autocomplete` endpoint in `MoviesController`.
-- [ ] Implement debounced UI in `SearchBar.tsx` with suggestions dropdown.
-
-### 2. "Why This Movie?" UI (High Priority)
+### 1. "Why This Movie?" UI (High Priority)
 - [ ] Add "Why this movie?" button to `MovieDetailsPage`.
-- [ ] Create modal/overlay for AI explanations using existing backend endpoint.
+- [ ] Create a modal or overlay that calls `POST /api/movies/:id/explain`.
+- [ ] Implement loading states for AI reasoning generation.
 
-### 3. Filters & Sorting
-- [ ] Add genre/year/rating filters to the `Discover` page.
+### 2. Search Filters
+- [ ] Add Year, Genre, and Rating filters to the `/discover` page.
+- [ ] Connect filters to the backend search query.
+
+### 3. Localization Polish
+- [ ] Translate AI-generated explanations if possible (or keep them in EN for now).
 
 ---
 
 **Last Updated:** 2026-01-10
-**Progress:** MVP + Localization Complete.
+**Progress:** Localization & Search Autocomplete Complete.
