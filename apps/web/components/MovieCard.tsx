@@ -13,7 +13,7 @@ interface MovieCardProps {
 export function MovieCard({ movie, showRating = true }: MovieCardProps) {
     const t = useTranslations('Common')
     // Handle both poster_url (full URL from backend) and poster_path (path only)
-    const posterUrl = (movie as any).poster_url
+    const posterUrl = movie.poster_url
         || (movie.poster_path ? `https://image.tmdb.org/t/p/w500${movie.poster_path}` : null)
         || '/placeholder-movie.jpg'
 

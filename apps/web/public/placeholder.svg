@@ -1,10 +1,8 @@
-<svg width="500" height="750" viewBox="0 0 500 750" fill="none" xmlns="http://www.w3.org/2000/svg">
+<svg width="500" height="750" xmlns="http://www.w3.org/2000/svg">
   <rect width="500" height="750" fill="#1a1a2e"/>
-  <rect x="150" y="275" width="200" height="200" rx="8" fill="#2d2d44"/>
-  <path d="M220 340C220 351.046 211.046 360 200 360C188.954 360 180 351.046 180 340C180 328.954 188.954 320 200 320C211.046 320 220 328.954 220 340Z" fill="#9ca3af"/>
-  <path d="M320 340C320 351.046 311.046 360 300 360C288.954 360 280 351.046 280 340C280 328.954 288.954 320 300 320C311.046 320 320 328.954 320 340Z" fill="#9ca3af"/>
-  <path d="M250 420C250 408.954 241.046 400 230 400H190C178.954 400 170 408.954 170 420C170 431.046 178.954 440 190 440H230C241.046 440 250 431.046 250 420Z" fill="#9ca3af"/>
-  <path d="M330 420C330 408.954 321.046 400 310 400H270C258.954 400 250 408.954 250 420C250 431.046 258.954 440 270 440H310C321.046 440 330 431.046 330 420Z" fill="#9ca3af"/>
-  <rect x="180" y="380" width="140" height="8" rx="4" fill="#9ca3af"/>
-  <text x="250" y="520" font-family="Arial, sans-serif" font-size="18" fill="#9ca3af" text-anchor="middle">No Image</text>
+  <g transform="translate(250, 375)">
+    <circle cx="0" cy="-30" r="40" fill="#e50914" opacity="0.5"/>
+    <path d="M -25 10 L 0 -15 L 25 10 L 20 10 L 20 40 L -20 40 L -20 10 Z" fill="#9ca3af" opacity="0.7"/>
+  </g>
+  <text x="250" y="450" text-anchor="middle" fill="#9ca3af" font-family="Arial, sans-serif" font-size="18">No Image</text>
 </svg>

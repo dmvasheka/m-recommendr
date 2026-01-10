@@ -12,9 +12,10 @@ interface MovieCardProps {
 
 export function NewMovieCard({ movie }: MovieCardProps) {
   const t = useTranslations('Common')
-  const posterUrl = movie.poster_path
-    ? `https://image.tmdb.org/t/p/w500${movie.poster_path}`
-    : '/placeholder.svg'
+  // Prefer poster_url (full URL from API), fallback to constructing from poster_path
+  const posterUrl = movie.poster_url
+    || (movie.poster_path ? `https://image.tmdb.org/t/p/w500${movie.poster_path}` : null)
+    || '/placeholder.svg'
 
   const rating = movie.vote_average ? (movie.vote_average / 2).toFixed(1) : '0.0'
   const year = movie.release_date ? new Date(movie.release_date).getFullYear() : t('na')

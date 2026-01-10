@@ -54,10 +54,10 @@ export default function MovieDetailsPage({ params }: PageProps) {
         )
     }
 
-    const backdropUrl = (movie as any).backdrop_url
+    const backdropUrl = movie.backdrop_url
         || (movie.backdrop_path ? `https://image.tmdb.org/t/p/original${movie.backdrop_path}` : null)
 
-    const posterUrl = (movie as any).poster_url
+    const posterUrl = movie.poster_url
         || (movie.poster_path ? `https://image.tmdb.org/t/p/w500${movie.poster_path}` : null)
         || '/placeholder-movie.jpg'
 
@@ -139,11 +139,11 @@ export default function MovieDetailsPage({ params }: PageProps) {
             </div>
 
             <main className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-12">
-                {((movie as any).description || movie.overview) && (
+                {(movie.description || movie.overview) && (
                     <section className="mb-12">
                         <h2 className="text-2xl font-bold text-white mb-4">{t('overview')}</h2>
                         <p className="text-[#9ca3af] text-lg leading-relaxed">
-                            {(movie as any).description || movie.overview}
+                            {movie.description || movie.overview}
                         </p>
                     </section>
                 )}
