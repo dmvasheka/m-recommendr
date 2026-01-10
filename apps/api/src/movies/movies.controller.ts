@@ -8,6 +8,38 @@ export class MoviesController {
     constructor(private readonly moviesService: MoviesService) {}
 
     /**
+     * GET /api/movies/autocomplete?q=query&limit=10
+     * Fast search for UI autocomplete
+     * MUST be before 'search' and ':id' to avoid conflicts
+     */
+    @Get('autocomplete')
+    async autocomplete(
+        @Query('q') query: string,
+        @Query('limit') limit?: string,
+    ) {
+        if (!query || query.length < 2) {
+            return { success: true, results: [] };
+        }
+
+        try {
+            const maxResults = limit ? parseInt(limit, 10) : 10;
+            const results = await this.moviesService.autocomplete(query, maxResults);
+
+            return {
+                success: true,
+                count: results.length,
+                results,
+            };
+        } catch (error) {
+            const errorMessage = error instanceof Error ? error.message : String(error);
+            return {
+                success: false,
+                error: errorMessage,
+            };
+        }
+    }
+
+    /**
      * GET /api/movies/search?q=query&limit=10
      * Semantic search for movies
      */
