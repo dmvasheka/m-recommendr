@@ -1,0 +1,130 @@
+{
+  "Navigation": {
+    "home": "Home",
+    "discover": "Discover",
+    "watchlist": "Watchlist",
+    "recommendations": "For You",
+    "discoverMovies": "Discover Movies",
+    "signIn": "Sign In",
+    "signUp": "Sign Up",
+    "signOut": "Sign Out"
+  },
+  "Discover": {
+    "title": "Discover Movies",
+    "popularSubtitle": "Popular movies and trending picks",
+    "searchResultsFor": "Search results for \"{query}\"",
+    "searchPlaceholder": "Search by title or describe what you want: 'uplifting adventure' or 'sci-fi thriller'...",
+    "aiTip": "💡🤖 AI-powered search: Use natural language or search by title - we'll find the perfect match",
+    "aiTitle": "AI Recommendations",
+    "foundCount": "Found {count} {count, plural, one {movie} other {movies}}",
+    "matchingSearch": " matching your search",
+    "noMoviesFound": "No movies found",
+    "noMoviesFoundDesc": "Try a different search term or browse popular movies",
+    "noMoviesAvailable": "No movies available at the moment",
+    "howItWorksTitle": "🤖 How AI-Powered Search Works",
+    "howItWorksDesc": "We use <strong class=\"text-white\">Retrieval-Augmented Generation (RAG)</strong> combining semantic search with GPT-4. Your query is converted into a vector embedding, matched against our movie database, then GPT-4 analyzes enriched metadata (keywords, cast, crew, themes) to explain <em>why</em> each movie fits your request. This gives you intelligent recommendations with context, not just keyword matching!"
+  },
+  "Common": {
+    "loading": "Loading...",
+    "na": "N/A",
+    "watchlist": {
+      "add": "Add to Watchlist",
+      "remove": "Remove from watchlist",
+      "in": "In Watchlist"
+    }
+  },
+  "Watchlist": {
+    "title": "My Watchlist",
+    "subtitle": "Manage your movies and rate what you've watched",
+    "tabs": {
+      "all": "All",
+      "planned": "Plan to Watch",
+      "watched": "Watched"
+    },
+    "status": {
+      "watched": "✓ Watched",
+      "planned": "📋 Planned"
+    },
+    "rateYour": "Your rating:",
+    "rateThis": "Rate this movie:",
+    "rateDesc": "Rating will mark it as watched",
+    "removing": "Removing...",
+    "remove": "Remove",
+    "empty": {
+      "watched": "No watched movies yet",
+      "watchedDesc": "Start rating movies you've watched to get personalized recommendations",
+      "planned": "No planned movies",
+      "plannedDesc": "Add movies you want to watch to your plan list",
+      "all": "Your watchlist is empty",
+      "allDesc": "Discover and add movies to start building your watchlist"
+    }
+  },
+  "Recommendations": {
+    "title": "For You",
+    "subtitle": "AI-powered recommendations based on your taste",
+    "profile": "Your Profile",
+    "watched": "Watched",
+    "movies": "movies",
+    "highlyRated": "Highly rated (≥7)",
+    "profileActive": "Profile Active",
+    "gettingStarted": "Getting Started",
+    "unlockTip": "💡 Rate at least one movie with 7+ stars to unlock personalized recommendations!",
+    "types": {
+      "hybrid": "🎯 Hybrid (Recommended)",
+      "personalized": "🧠 Pure AI Match",
+      "popular": "🔥 Popular"
+    },
+    "algorithms": {
+      "hybrid": "<strong>Hybrid Algorithm:</strong> Combines 70% similarity to your taste + 30% popularity. Best balance between personalization and quality.",
+      "personalized": "<strong>Pure AI Match:</strong> 100% based on vector similarity to your preferences. May include hidden gems you've never heard of.",
+      "popular": "<strong>Popular Movies:</strong> Trending and highly-rated movies. Great for discovering what everyone else is watching."
+    },
+    "count": "{count} {count, plural, one {recommendation} other {recommendations}} for you",
+    "empty": "No recommendations yet",
+    "emptyDesc": "Start by rating some movies you've watched to build your taste profile",
+    "howItWorks": {
+      "title": "🧠 How AI Recommendations Work",
+      "step1Title": "Watch & Rate",
+      "step1Desc": "Rate movies you've watched. The system focuses on your highly-rated movies (7+ stars) to understand what you love.",
+      "step2Title": "Profile Building",
+      "step2Desc": "Your ratings are converted into a 1536-dimensional \"taste vector\" using OpenAI embeddings. This captures themes, styles, and vibes you prefer.",
+      "step3Title": "Smart Matching",
+      "step3Desc": "We search our database of thousands of movies using vector similarity to find the closest matches to your taste profile.",
+      "proTip": "💡 <strong class=\"text-white\">Pro tip:</strong> The more movies you rate (especially with diverse genres), the better your recommendations become. The system automatically updates your profile whenever you add new ratings!"
+    }
+  },
+  "Auth": {
+    "loginTitle": "Welcome Back",
+    "signupTitle": "Create Account",
+    "email": "Email",
+    "password": "Password",
+    "confirmPassword": "Confirm Password",
+    "signingIn": "Signing in...",
+    "creatingAccount": "Creating account...",
+    "noAccount": "Don't have an account?",
+    "haveAccount": "Already have an account?",
+    "errors": {
+      "passwordsMatch": "Passwords do not match",
+      "passwordLength": "Password must be at least 6 characters",
+      "loginFailed": "Failed to sign in",
+      "signupFailed": "Failed to sign up"
+    }
+  },
+  "Chat": {
+    "title": "Movie Chat",
+    "subtitle": "Ask me anything about movies and get personalized recommendations",
+    "startTitle": "Start a conversation",
+    "startDesc": "Ask me for movie recommendations, or tell me what you're in the mood to watch. I'll use AI to find the perfect movies for you!",
+    "tryAsking": "Try asking:",
+    "placeholder": "Ask me about movies...",
+    "send": "Send",
+    "thinking": "Thinking...",
+    "footer": "Powered by AI • Ask about genres, moods, actors, or specific movies",
+    "error": "Sorry, I encountered an error. Please try again.",
+    "suggestions": {
+      "uplifting": "Something uplifting",
+      "sciFi": "Sci-fi with space",
+      "thrillers": "Good thrillers"
+    }
+  }
+}
