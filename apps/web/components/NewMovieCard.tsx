@@ -1,21 +1,23 @@
 'use client'
 
-import Link from "next/link"
+import { Link } from "@/navigation"
 import Image from "next/image"
 import { Star } from "lucide-react"
 import type { Movie } from '@/lib/api/types'
+import { useTranslations } from 'next-intl'
 
 interface MovieCardProps {
   movie: Movie
 }
 
 export function NewMovieCard({ movie }: MovieCardProps) {
+  const t = useTranslations('Common')
   const posterUrl = movie.poster_path
     ? `https://image.tmdb.org/t/p/w500${movie.poster_path}`
     : '/placeholder.svg'
 
   const rating = movie.vote_average ? (movie.vote_average / 2).toFixed(1) : '0.0'
-  const year = movie.release_date ? new Date(movie.release_date).getFullYear() : 'N/A'
+  const year = movie.release_date ? new Date(movie.release_date).getFullYear() : t('na')
 
   return (
     <Link href={`/movies/${movie.id}`}>

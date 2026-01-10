@@ -33,18 +33,22 @@ export async function updateSession(request: NextRequest) {
     } = await supabase.auth.getUser()
 
     // Protected routes that require authentication
+    // Note: next-intl middleware will have already run, so the pathname includes the locale
     const protectedRoutes = ['/discover', '/watchlist', '/recommendations', '/profile']
     const isProtectedRoute =
         protectedRoutes.some(route =>
-            request.nextUrl.pathname.startsWith(route)
+            request.nextUrl.pathname.match(new RegExp(`^/([a-z]{2})?${route}`))
         )
 
     if (isProtectedRoute && !user) {
         // Redirect to login if accessing protected route without auth
         const url = request.nextUrl.clone()
-        url.pathname = '/auth/login'
-        url.searchParams.set('redirectedFrom',
-            request.nextUrl.pathname)
+        // Extract locale from current path if present
+        const localeMatch = request.nextUrl.pathname.match(/^\/([a-z]{2})\//);
+        const locale = localeMatch ? localeMatch[1] : 'en';
+        
+        url.pathname = `/${locale}/auth/login`
+        url.searchParams.set('redirectedFrom', request.nextUrl.pathname)
         return NextResponse.redirect(url)
     }
 

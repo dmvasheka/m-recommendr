@@ -3,6 +3,8 @@
 import { useState } from 'react'
 import { useAuth } from '@/lib/auth/AuthProvider'
 import { useAddToWatchlist, useRemoveFromWatchlist, useWatchlist } from '@/lib/api/hooks'
+import { useTranslations } from 'next-intl'
+import { useLocale } from 'next-intl'
 
 interface WatchlistButtonProps {
     movieId: number
@@ -12,6 +14,9 @@ interface WatchlistButtonProps {
 export function WatchlistButton({ movieId, variant = 'button' }: WatchlistButtonProps) {
     const { user } = useAuth()
     const [isAdding, setIsAdding] = useState(false)
+    const locale = useLocale()
+    const t = useTranslations('Common.watchlist')
+    const tCommon = useTranslations('Common')
 
     const { data: watchlist } = useWatchlist(user?.id || '')
     const addMutation = useAddToWatchlist()
@@ -19,10 +24,13 @@ export function WatchlistButton({ movieId, variant = 'button' }: WatchlistButton
 
     const isInWatchlist = watchlist?.some(item => item.movie_id === movieId)
 
-    const handleToggle = async () => {
+    const handleToggle = async (e: React.MouseEvent) => {
+        e.preventDefault()
+        e.stopPropagation()
+
         if (!user) {
-            // Redirect to login
-            window.location.href = '/auth/login'
+            // Redirect to login with locale
+            window.location.href = `/${locale}/auth/login`
             return
         }
 
@@ -51,7 +59,7 @@ export function WatchlistButton({ movieId, variant = 'button' }: WatchlistButton
                 onClick={handleToggle}
                 disabled={isAdding}
                 className="p-2 rounded-full hover:bg-gray-100 transition-colors disabled:opacity-50"
-                title={isInWatchlist ? 'Remove from watchlist' : 'Add to watchlist'}
+                title={isInWatchlist ? t('remove') : t('add')}
             >
                 <svg
                     className={`w-6 h-6 ${isInWatchlist ? 'fill-indigo-600' : 'fill-none'} stroke-current`}
@@ -78,7 +86,7 @@ export function WatchlistButton({ movieId, variant = 'button' }: WatchlistButton
                     : 'bg-indigo-600 text-white hover:bg-indigo-700'
             }`}
         >
-            {isAdding ? 'Loading...' : isInWatchlist ? 'In Watchlist' : 'Add to Watchlist'}
+            {isAdding ? tCommon('loading') : isInWatchlist ? t('in') : t('add')}
         </button>
     )
 }
