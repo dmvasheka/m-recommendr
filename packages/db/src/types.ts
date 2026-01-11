@@ -100,6 +100,168 @@ export interface Database {
                     updated_at?: string
                 }
             }
+            tv_shows: {
+                Row: {
+                    id: number
+                    name: string
+                    overview: string | null
+                    poster_url: string | null
+                    backdrop_url: string | null
+                    genres: string[] | null
+                    first_air_date: string | null
+                    last_air_date: string | null
+                    vote_average: number | null
+                    vote_count: number | null
+                    popularity: number | null
+                    number_of_seasons: number | null
+                    number_of_episodes: number | null
+                    original_language: string | null
+                    origin_country: string[] | null
+                    status: string | null
+                    keywords: string[] | null
+                    tagline: string | null
+                    tv_cast: Json | null
+                    crew: Json | null
+                    production_companies: string[] | null
+                    embedding: number[] | null
+                    created_at: string
+                    updated_at: string
+                }
+                Insert: {
+                    id: number
+                    name: string
+                    overview?: string | null
+                    poster_url?: string | null
+                    backdrop_url?: string | null
+                    genres?: string[] | null
+                    first_air_date?: string | null
+                    last_air_date?: string | null
+                    vote_average?: number | null
+                    vote_count?: number | null
+                    popularity?: number | null
+                    number_of_seasons?: number | null
+                    number_of_episodes?: number | null
+                    original_language?: string | null
+                    origin_country?: string[] | null
+                    status?: string | null
+                    keywords?: string[] | null
+                    tagline?: string | null
+                    tv_cast?: Json | null
+                    crew?: Json | null
+                    production_companies?: string[] | null
+                    embedding?: number[] | null
+                    created_at?: string
+                    updated_at?: string
+                }
+                Update: {
+                    id?: number
+                    name?: string
+                    overview?: string | null
+                    poster_url?: string | null
+                    backdrop_url?: string | null
+                    genres?: string[] | null
+                    first_air_date?: string | null
+                    last_air_date?: string | null
+                    vote_average?: number | null
+                    vote_count?: number | null
+                    popularity?: number | null
+                    number_of_seasons?: number | null
+                    number_of_episodes?: number | null
+                    original_language?: string | null
+                    origin_country?: string[] | null
+                    status?: string | null
+                    keywords?: string[] | null
+                    tagline?: string | null
+                    tv_cast?: Json | null
+                    crew?: Json | null
+                    production_companies?: string[] | null
+                    embedding?: number[] | null
+                    created_at?: string
+                    updated_at?: string
+                }
+            }
+            tv_seasons: {
+                Row: {
+                    id: number
+                    tv_show_id: number
+                    season_number: number
+                    name: string | null
+                    overview: string | null
+                    poster_url: string | null
+                    air_date: string | null
+                    episode_count: number | null
+                    vote_average: number | null
+                    created_at: string
+                }
+                Insert: {
+                    id: number
+                    tv_show_id: number
+                    season_number: number
+                    name?: string | null
+                    overview?: string | null
+                    poster_url?: string | null
+                    air_date?: string | null
+                    episode_count?: number | null
+                    vote_average?: number | null
+                    created_at?: string
+                }
+                Update: {
+                    id?: number
+                    tv_show_id?: number
+                    season_number?: number
+                    name?: string | null
+                    overview?: string | null
+                    poster_url?: string | null
+                    air_date?: string | null
+                    episode_count?: number | null
+                    vote_average?: number | null
+                    created_at?: string
+                }
+            }
+            tv_episodes: {
+                Row: {
+                    id: number
+                    tv_show_id: number
+                    season_id: number
+                    episode_number: number
+                    name: string | null
+                    overview: string | null
+                    still_url: string | null
+                    air_date: string | null
+                    vote_average: number | null
+                    vote_count: number | null
+                    runtime: number | null
+                    created_at: string
+                }
+                Insert: {
+                    id: number
+                    tv_show_id: number
+                    season_id: number
+                    episode_number: number
+                    name?: string | null
+                    overview?: string | null
+                    still_url?: string | null
+                    air_date?: string | null
+                    vote_average?: number | null
+                    vote_count?: number | null
+                    runtime?: number | null
+                    created_at?: string
+                }
+                Update: {
+                    id?: number
+                    tv_show_id?: number
+                    season_id?: number
+                    episode_number?: number
+                    name?: string | null
+                    overview?: string | null
+                    still_url?: string | null
+                    air_date?: string | null
+                    vote_average?: number | null
+                    vote_count?: number | null
+                    runtime?: number | null
+                    created_at?: string
+                }
+            }
             user_watchlist: {
                 Row: {
                     user_id: string
@@ -124,6 +286,41 @@ export interface Database {
                     movie_id?: number
                     status?: 'planned' | 'watched'
                     rating?: number | null
+                    watched_at?: string | null
+                    created_at?: string
+                    updated_at?: string
+                }
+            }
+            user_tv_watchlist: {
+                Row: {
+                    user_id: string
+                    tv_show_id: number
+                    status: 'planned' | 'watching' | 'watched' | 'dropped'
+                    rating: number | null
+                    progress_season: number | null
+                    progress_episode: number | null
+                    watched_at: string | null
+                    created_at: string
+                    updated_at: string
+                }
+                Insert: {
+                    user_id: string
+                    tv_show_id: number
+                    status: 'planned' | 'watching' | 'watched' | 'dropped'
+                    rating?: number | null
+                    progress_season?: number | null
+                    progress_episode?: number | null
+                    watched_at?: string | null
+                    created_at?: string
+                    updated_at?: string
+                }
+                Update: {
+                    user_id?: string
+                    tv_show_id?: number
+                    status?: 'planned' | 'watching' | 'watched' | 'dropped'
+                    rating?: number | null
+                    progress_season?: number | null
+                    progress_episode?: number | null
                     watched_at?: string | null
                     created_at?: string
                     updated_at?: string
@@ -195,6 +392,23 @@ export interface Database {
                     similarity: number
                 }[]
             }
+            match_tv_shows: {
+                Args: {
+                    query_embedding: number[]
+                    match_count?: number
+                    filter_ids?: number[] | null
+                }
+                Returns: {
+                    id: number
+                    name: string
+                    overview: string | null
+                    poster_url: string | null
+                    backdrop_url: string | null
+                    vote_average: number | null
+                    popularity: number | null
+                    similarity: number
+                }[]
+            }
             match_movies_by_profile: {
                 Args: {
                     p_user_id: string
@@ -246,8 +460,16 @@ export interface Database {
 // Helper types for easier usage
 export type User = Database['public']['Tables']['users']['Row']
 export type Movie = Database['public']['Tables']['movies']['Row']
+export type TvShow = Database['public']['Tables']['tv_shows']['Row']
+export type TvSeason = Database['public']['Tables']['tv_seasons']['Row']
+export type TvEpisode = Database['public']['Tables']['tv_episodes']['Row']
 export type UserWatchlist = Database['public']['Tables']['user_watchlist']['Row']
+export type UserTvWatchlist = Database['public']['Tables']['user_tv_watchlist']['Row']
 export type UserProfile = Database['public']['Tables']['user_profiles']['Row']
 
 export type MovieInsert = Database['public']['Tables']['movies']['Insert']
 export type MovieUpdate = Database['public']['Tables']['movies']['Update']
+export type TvShowInsert = Database['public']['Tables']['tv_shows']['Insert']
+export type TvShowUpdate = Database['public']['Tables']['tv_shows']['Update']
+export type TvSeasonInsert = Database['public']['Tables']['tv_seasons']['Insert']
+export type TvEpisodeInsert = Database['public']['Tables']['tv_episodes']['Insert']

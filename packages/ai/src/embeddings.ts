@@ -79,3 +79,24 @@ export function createMovieEmbeddingText(movie: {
     return parts.join('\n\n');
 }
 
+/**
+ * Create TV Show embedding text from TV Show data
+ */
+export function createTvShowEmbeddingText(tvShow: {
+    name: string;
+    overview?: string | null;
+    genres?: string[] | null;
+}): string {
+    const parts: string[] = [tvShow.name];
+
+    if (tvShow.overview) {
+        parts.push(tvShow.overview);
+    }
+
+    if (tvShow.genres && tvShow.genres.length > 0) {
+        parts.push(`Genres: ${tvShow.genres.join(', ')}`);
+    }
+
+    return parts.join('\n\n');
+}
+
