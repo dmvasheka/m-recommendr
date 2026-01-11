@@ -1,21 +1,25 @@
 // Movie types
 export interface Movie {
     id: number
-    tmdb_id: number
+    tmdb_id?: number
     title: string
-    overview: string | null
-    poster_path: string | null
-    backdrop_path: string | null
+    overview?: string | null
+    description?: string | null // API returns 'description' instead of 'overview'
+    poster_path?: string | null
+    poster_url?: string | null // API returns full URL
+    backdrop_path?: string | null
+    backdrop_url?: string | null // API returns full URL
     release_date: string | null
     vote_average: number | null
-    vote_count: number | null
-    popularity: number | null
+    vote_count?: number | null
+    popularity?: number | null
     genres: string[] | null
-    runtime: number | null
-    original_language: string | null
-    embedding: number[] | null
-    created_at: string
-    updated_at: string
+    runtime?: number | null
+    original_language?: string | null
+    embedding?: number[] | null
+    created_at?: string
+    updated_at?: string
+    similarity?: number // For recommendation responses
 }
 
 // Watchlist types

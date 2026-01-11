@@ -16,9 +16,25 @@ async function bootstrap() {
     const logger = new Logger('Bootstrap');
 
     // Enable CORS for frontend access (supports multiple origins)
+    const allowedOrigins = process.env.CORS_ORIGIN?.split(',').map(origin => origin.trim()) || ['http://localhost:3002'];
     app.enableCors({
-        origin: process.env.CORS_ORIGIN?.split(',') || ['http://localhost:3002'],
+        origin: (origin, callback) => {
+            // Reject requests with no origin when credentials are enabled (CSRF protection)
+            if (!origin) {
+                logger.warn('Blocked request with no Origin header (credentials enabled)');
+                return callback(new Error('Not allowed by CORS'));
+            }
+
+            if (allowedOrigins.includes(origin)) {
+                callback(null, true);
+            } else {
+                logger.warn(`Blocked CORS request from origin: ${origin}`);
+                callback(new Error('Not allowed by CORS'));
+            }
+        },
         credentials: true,
+        methods: 'GET,HEAD,PUT,PATCH,POST,DELETE,OPTIONS',
+        allowedHeaders: 'Content-Type,Authorization,Accept',
     });
 
     // Global API prefix

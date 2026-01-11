@@ -2,17 +2,21 @@
 
 import { useState } from 'react'
 import Image from 'next/image'
-import Link from 'next/link'
 import { Navigation } from '@/components/Navigation'
 import { RatingStars } from '@/components/RatingStars'
 import { useAuth } from '@/lib/auth/AuthProvider'
 import { useWatchlist, useMarkAsWatched, useRemoveFromWatchlist } from '@/lib/api/hooks'
+import { useTranslations } from 'next-intl'
+import { Link } from '@/navigation'
 
 type FilterTab = 'all' | 'planned' | 'watched'
 
 export default function WatchlistPage() {
     const { user } = useAuth()
     const [activeTab, setActiveTab] = useState<FilterTab>('all')
+    const t = useTranslations('Watchlist')
+    const tCommon = useTranslations('Common')
+    const tNav = useTranslations('Navigation')
 
     const { data: allMovies, isLoading } = useWatchlist(user?.id || '')
     const markAsWatchedMutation = useMarkAsWatched()
@@ -49,9 +53,9 @@ export default function WatchlistPage() {
     }
 
     const tabs: { id: FilterTab; label: string; count: number }[] = [
-        { id: 'all', label: 'All', count: allMovies?.length || 0 },
-        { id: 'planned', label: 'Plan to Watch', count: allMovies?.filter(m => m.status === 'planned').length || 0 },
-        { id: 'watched', label: 'Watched', count: allMovies?.filter(m => m.status === 'watched').length || 0 },
+        { id: 'all', label: t('tabs.all'), count: allMovies?.length || 0 },
+        { id: 'planned', label: t('tabs.planned'), count: allMovies?.filter(m => m.status === 'planned').length || 0 },
+        { id: 'watched', label: t('tabs.watched'), count: allMovies?.filter(m => m.status === 'watched').length || 0 },
     ]
 
     return (
@@ -61,9 +65,9 @@ export default function WatchlistPage() {
             <main className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8 pt-24">
                 {/* Header */}
                 <div className="mb-8">
-                    <h1 className="text-3xl font-bold text-white mb-2">My Watchlist</h1>
+                    <h1 className="text-3xl font-bold text-white mb-2">{t('title')}</h1>
                     <p className="text-[#9ca3af]">
-                        Manage your movies and rate what you've watched
+                        {t('subtitle')}
                     </p>
                 </div>
 
@@ -107,7 +111,7 @@ export default function WatchlistPage() {
 
                             const year = movie.release_date
                                 ? new Date(movie.release_date).getFullYear()
-                                : 'N/A'
+                                : tCommon('na')
 
                             return (
                                 <div
@@ -151,7 +155,7 @@ export default function WatchlistPage() {
                                                               : 'bg-blue-500/20 text-blue-400 border border-blue-500/30'
                                                       }`}
                                                   >
-                                                      {item.status === 'watched' ? '✓ Watched' : '📋 Planned'}
+                                                      {item.status === 'watched' ? t('status.watched') : t('status.planned')}
                                                   </span>
 
                                                 {item.status === 'watched' && item.watched_at && (
@@ -164,7 +168,7 @@ export default function WatchlistPage() {
                                             {/* Rating */}
                                             {item.status === 'watched' && item.rating ? (
                                                 <div className="mb-3">
-                                                    <p className="text-xs text-[#9ca3af] mb-1">Your rating:</p>
+                                                    <p className="text-xs text-[#9ca3af] mb-1">{t('rateYour')}</p>
                                                     <RatingStars
                                                         rating={item.rating}
                                                         onRate={(rating) => handleRate(movie.id, rating)}
@@ -173,14 +177,14 @@ export default function WatchlistPage() {
                                                 </div>
                                             ) : item.status === 'planned' && (
                                                 <div className="mb-3">
-                                                    <p className="text-xs text-[#9ca3af] mb-1">Rate this movie:</p>
+                                                    <p className="text-xs text-[#9ca3af] mb-1">{t('rateThis')}</p>
                                                     <RatingStars
                                                         rating={0}
                                                         onRate={(rating) => handleRate(movie.id, rating)}
                                                         size="sm"
                                                     />
                                                     <p className="text-xs text-[#6b7280] mt-1">
-                                                        Rating will mark it as watched
+                                                        {t('rateDesc')}
                                                     </p>
                                                 </div>
                                             )}
@@ -192,7 +196,7 @@ export default function WatchlistPage() {
                                                     className="text-sm text-red-400 hover:text-red-300 font-medium"
                                                     disabled={removeMutation.isPending}
                                                 >
-                                                    {removeMutation.isPending ? 'Removing...' : 'Remove'}
+                                                    {removeMutation.isPending ? t('removing') : t('remove')}
                                                 </button>
                                             </div>
                                         </div>
@@ -208,23 +212,23 @@ export default function WatchlistPage() {
                         </div>
                         <h3 className="text-xl font-semibold text-white mb-2">
                             {activeTab === 'watched'
-                                ? 'No watched movies yet'
+                                ? t('empty.watched')
                                 : activeTab === 'planned'
-                                    ? 'No planned movies'
-                                    : 'Your watchlist is empty'}
+                                    ? t('empty.planned')
+                                    : t('empty.all')}
                         </h3>
                         <p className="text-[#9ca3af] mb-8">
                             {activeTab === 'watched'
-                                ? 'Start rating movies you\'ve watched to get personalized recommendations'
+                                ? t('empty.watchedDesc')
                                 : activeTab === 'planned'
-                                    ? 'Add movies you want to watch to your plan list'
-                                    : 'Discover and add movies to start building your watchlist'}
+                                    ? t('empty.plannedDesc')
+                                    : t('empty.allDesc')}
                         </p>
                         <Link
                             href="/discover"
                             className="inline-block px-6 py-3 bg-[#e50914] text-white rounded-lg hover:bg-[#e50914]/90 transition"
                         >
-                            Discover Movies
+                            {tNav('discoverMovies')}
                         </Link>
                     </div>
                 )}

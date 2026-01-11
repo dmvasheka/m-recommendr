@@ -19,8 +19,17 @@ export function useMovies(page = 1, pageSize = 20) {
 export function useMovie(id: number) {
     return useQuery({
         queryKey: ['movie', id],
-        queryFn: () => api.getMovieById(id),
+        queryFn: () => api.getMovie(id),
         enabled: !!id,
+    })
+}
+
+export function useAutocomplete(query: string, limit = 5) {
+    return useQuery({
+        queryKey: ['autocomplete', query, limit],
+        queryFn: () => api.autocompleteMovies(query, limit),
+        enabled: query.length >= 2,
+        staleTime: 60 * 1000, // Cache for 1 minute
     })
 }
 
@@ -39,6 +48,7 @@ export function useSimilarMovies(params: SimilarMoviesParams) {
         enabled: !!params.movieId,
     })
 }
+
 
 // Watchlist
 export function useWatchlist(userId: string, status?: 'planned' | 'watched') {

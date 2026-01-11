@@ -1,25 +1,34 @@
 'use client'
 
-import Link from "next/link"
-import { useRouter } from "next/navigation"
 import { Search, Sparkles, Bookmark } from "lucide-react"
 import { Button } from "@/components/ui/button"
 import { NewMovieCard } from "@/components/NewMovieCard"
 import { usePopularMovies } from "@/lib/api/hooks"
 import { useAuth } from "@/lib/auth/AuthProvider"
 import { useState } from "react"
+import { useTranslations, useLocale } from 'next-intl'
+import { Link, useRouter } from '@/navigation'
 
 export default function Page() {
   const router = useRouter()
+  const locale = useLocale()
   const { user } = useAuth()
   const [searchQuery, setSearchQuery] = useState('')
-  const { data: popularMovies, isLoading } = usePopularMovies(16)
+  const { data: popularMovies, isLoading } = usePopularMovies(20)
+  
+  const tNav = useTranslations('Navigation')
+  const tHome = useTranslations('Home')
 
   const handleSearch = (e: React.FormEvent) => {
     e.preventDefault()
     if (searchQuery.trim()) {
       router.push(`/discover?q=${encodeURIComponent(searchQuery)}`)
     }
+  }
+
+  const toggleLocale = () => {
+    const nextLocale = locale === 'en' ? 'ru' : 'en'
+    router.replace('/', { locale: nextLocale })
   }
 
   return (
@@ -36,7 +45,7 @@ export default function Page() {
               href="/discover"
               className="text-sm sm:text-base text-[#9ca3af] hover:text-white transition-colors"
             >
-              Discover
+              {tNav('discover')}
             </Link>
             {user && (
               <Link
@@ -44,18 +53,25 @@ export default function Page() {
                 className="flex items-center gap-2 text-sm sm:text-base text-[#9ca3af] hover:text-white transition-colors"
               >
                 <Bookmark className="h-4 w-4" />
-                <span className="hidden sm:inline">Watchlist</span>
+                <span className="hidden sm:inline">{tNav('watchlist')}</span>
               </Link>
             )}
           </div>
           <div className="flex items-center gap-3">
+            <button
+                onClick={toggleLocale}
+                className="px-2 py-1 text-xs font-bold border border-white/20 rounded text-white hover:bg-white/10 uppercase mr-2"
+            >
+                {locale === 'en' ? 'ru' : 'en'}
+            </button>
+
             {user ? (
               <>
                 <Link
                   href="/recommendations"
                   className="hidden sm:block text-sm text-[#9ca3af] hover:text-white transition-colors"
                 >
-                  Recommendations
+                  {tNav('recommendations')}
                 </Link>
                 <Link
                   href="/chat"
@@ -70,7 +86,7 @@ export default function Page() {
                   variant="outline"
                   className="border-white/10 bg-transparent text-sm sm:text-base text-white hover:bg-white/5"
                 >
-                  Sign In
+                  {tNav('signIn')}
                 </Button>
               </Link>
             )}
@@ -92,16 +108,16 @@ export default function Page() {
 
           {/* Headline */}
           <h1 className="mb-3 sm:mb-4 text-3xl sm:text-4xl lg:text-5xl font-bold text-balance tracking-tight text-white">
-            Discover Movies
+            {tHome('title')}
             <span className="bg-gradient-to-r from-[#e50914] to-[#b20710] bg-clip-text text-transparent">
               {" "}
-              Powered by AI
+              {tHome('titleAccent')}
             </span>
           </h1>
 
           {/* Subheading */}
           <p className="mb-5 sm:mb-6 text-sm sm:text-base text-balance text-[#9ca3af]">
-            Intelligent recommendations based on your taste
+            {tHome('subtitle')}
           </p>
 
           {/* Search Bar */}
@@ -114,7 +130,7 @@ export default function Page() {
                   type="text"
                   value={searchQuery}
                   onChange={(e) => setSearchQuery(e.target.value)}
-                  placeholder="Search by title or describe what you want..."
+                  placeholder={tHome('searchPlaceholder')}
                   className="flex-1 bg-transparent text-sm sm:text-base text-white placeholder:text-[#9ca3af] focus:outline-none"
                 />
               </div>
@@ -123,7 +139,7 @@ export default function Page() {
                 size="sm"
                 className="h-10 sm:h-9 rounded-lg bg-gradient-to-r from-[#f59e0b] to-[#d97706] px-6 text-sm font-semibold text-white shadow-[0_0_20px_rgba(245,158,11,0.2)] transition-all duration-300 hover:shadow-[0_0_30px_rgba(245,158,11,0.4)]"
               >
-                Search
+                {tHome('searchButton')}
               </Button>
             </div>
           </form>
@@ -133,7 +149,7 @@ export default function Page() {
       {/* Featured Movies Section */}
       <section className="px-4 pb-16 pt-4 sm:px-6 sm:pb-24 sm:pt-8">
         <div className="mx-auto max-w-7xl">
-          <h2 className="mb-6 sm:mb-8 text-2xl sm:text-3xl font-bold text-white">Trending Now</h2>
+          <h2 className="mb-6 sm:mb-8 text-2xl sm:text-3xl font-bold text-white">{tHome('trending')}</h2>
 
           {isLoading ? (
             <div className="flex justify-center items-center py-20">
@@ -147,7 +163,7 @@ export default function Page() {
             </div>
           ) : (
             <div className="text-center py-20">
-              <p className="text-[#9ca3af]">No movies available</p>
+              <p className="text-[#9ca3af]">{tHome('noMovies')}</p>
             </div>
           )}
         </div>
@@ -163,16 +179,16 @@ export default function Page() {
             </div>
             <div className="flex flex-wrap justify-center gap-4 sm:gap-6 text-sm text-[#9ca3af]">
               <Link href="/discover" className="transition-colors hover:text-white">
-                Discover
+                {tNav('discover')}
               </Link>
               <Link href="/recommendations" className="transition-colors hover:text-white">
-                Recommendations
+                {tNav('recommendations')}
               </Link>
               <Link href="/chat" className="transition-colors hover:text-white">
                 AI Chat
               </Link>
               <Link href="/watchlist" className="transition-colors hover:text-white">
-                Watchlist
+                {tNav('watchlist')}
               </Link>
             </div>
           </div>

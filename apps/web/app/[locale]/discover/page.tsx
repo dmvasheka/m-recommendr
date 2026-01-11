@@ -2,11 +2,12 @@
 
 import { useState, useEffect, Suspense } from 'react'
 import { useSearchParams } from 'next/navigation'
-import { Navigation } from '@/components/Navigation'
+import { Navbar } from '@/components/Navbar'
 import { SearchBar } from '@/components/SearchBar'
 import { NewMovieCard } from '@/components/NewMovieCard'
 import { useSearchMovies, usePopularMovies, useSendChatMessage } from '@/lib/api/hooks'
 import { useAuth } from '@/lib/auth/AuthProvider'
+import { useTranslations } from 'next-intl'
 
 function DiscoverPageContent() {
     const searchParams = useSearchParams()
@@ -15,6 +16,7 @@ function DiscoverPageContent() {
     const { user } = useAuth()
     const [aiExplanation, setAiExplanation] = useState('')
     const sendChatMessage = useSendChatMessage()
+    const t = useTranslations('Discover')
 
 
     // Update search query when URL changes
@@ -63,29 +65,29 @@ function DiscoverPageContent() {
 
     return (
         <div className="min-h-screen bg-gradient-to-b from-[#0a0a0f] via-[#1a1a2e] to-[#0a0a0f]">
-            <Navigation />
+            <Navbar />
 
-            <main className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8 pt-24">
+            <main className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8 pt-8">
                 {/* Header */}
                 <div className="mb-8">
                     <h1 className="text-3xl font-bold text-white mb-2">
-                        Discover Movies
+                        {t('title')}
                     </h1>
                     <p className="text-[#9ca3af]">
                         {showSearchResults
-                            ? `Search results for "${searchQuery}"`
-                            : 'Popular movies and trending picks'}
+                            ? t('searchResultsFor', { query: searchQuery })
+                            : t('popularSubtitle')}
                     </p>
                 </div>
 
                 {/* Search Bar */}
                 <div className="mb-8">
                     <SearchBar
-                        placeholder="Search by title or describe what you want: 'uplifting adventure' or 'sci-fi thriller'..."
+                        placeholder={t('searchPlaceholder')}
                         defaultValue={initialQuery}
                     />
                     <p className="mt-2 text-sm text-[#9ca3af]">
-                        💡🤖 AI-powered search: Use natural language or search by title - we'll find the perfect match
+                        {t('aiTip')}
                     </p>
                 </div>
                 {/* AI Explanation */}
@@ -95,17 +97,25 @@ function DiscoverPageContent() {
                             <div className="text-2xl">🤖</div>
                             <div className="flex-1">
                                 <h3 className="font-semibold text-white mb-2">
-                                    AI Recommendations
+                                    {t('aiTitle')}
                                 </h3>
                                 <div className="text-sm text-[#9ca3af] prose prose-sm max-w-none">
                                     {aiExplanation.split('\n').map((line, i) => {
-                                        const boldFormatted = line.replace(/\*\*(.+?)\*\*/g, '<strong class="text-white">$1</strong>')
+                                        // Parse **bold** markdown safely
+                                        const parts = line.split(/(\*\*[^*]+\*\*)/g)
                                         return (
-                                            <p
-                                                key={i}
-                                                className="mb-2 last:mb-0"
-                                                dangerouslySetInnerHTML={{ __html: boldFormatted }}
-                                            />
+                                            <p key={i} className="mb-2 last:mb-0">
+                                                {parts.map((part, j) => {
+                                                    if (part.startsWith('**') && part.endsWith('**')) {
+                                                        return (
+                                                            <strong key={j} className="text-white">
+                                                                {part.slice(2, -2)}
+                                                            </strong>
+                                                        )
+                                                    }
+                                                    return <span key={j}>{part}</span>
+                                                })}
+                                            </p>
                                         )
                                     })}
                                 </div>
@@ -122,8 +132,8 @@ function DiscoverPageContent() {
                 ) : movies && movies.length > 0 ? (
                     <>
                         <div className="mb-4 text-sm text-[#9ca3af]">
-                            Found {movies.length} movie{movies.length !== 1 ? 's' : ''}
-                            {showSearchResults && ' matching your search'}
+                            {t('foundCount', { count: movies.length })}
+                            {showSearchResults && t('matchingSearch')}
                         </div>
                         <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 gap-4 sm:gap-6">
                             {movies.map((movie) => (
@@ -135,12 +145,12 @@ function DiscoverPageContent() {
                     <div className="text-center py-20">
                         <div className="text-6xl mb-4">🎬</div>
                         <h3 className="text-xl font-semibold text-white mb-2">
-                            No movies found
+                            {t('noMoviesFound')}
                         </h3>
                         <p className="text-[#9ca3af]">
                             {showSearchResults
-                                ? 'Try a different search term or browse popular movies'
-                                : 'No movies available at the moment'}
+                                ? t('noMoviesFoundDesc')
+                                : t('noMoviesAvailable')}
                         </p>
                     </div>
                 )}
@@ -149,14 +159,14 @@ function DiscoverPageContent() {
                 {showSearchResults && movies && movies.length > 0 && (
                     <div className="mt-12 p-6 bg-[#1a1a2e]/40 rounded-lg border border-white/10 backdrop-blur-sm">
                         <h3 className="text-lg font-semibold text-white mb-2">
-                            🤖 How AI-Powered Search Works
+                            {t('howItWorksTitle')}
                         </h3>
                         <p className="text-[#9ca3af] text-sm leading-relaxed">
-                            We use <strong className="text-white">Retrieval-Augmented Generation (RAG)</strong> combining semantic search with GPT-4.
-                            Your query is converted into a vector embedding, matched against our movie database,
-                            then GPT-4 analyzes enriched metadata (keywords, cast, crew, themes) to explain
-                            <em> why</em> each movie fits your request. This gives you intelligent recommendations
-                            with context, not just keyword matching!
+                            {t.rich('howItWorksDesc', {
+                                strong: (children) => <strong className="text-white">{children}</strong>,
+                                em: (children) => <em>{children}</em>,
+                                br: () => <br />
+                            })}
                         </p>
                     </div>
                 )}

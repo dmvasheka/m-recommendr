@@ -1,0 +1,95 @@
+
+> api@1.0.0 dev /home/user/projects/m-recommendr/apps/api
+> ts-node -r tsconfig-paths/register src/main.ts
+
+[dotenv@17.2.3] injecting env (0) from ../../.env -- tip: ✅ audit secrets and track compliance: https://dotenvx.com/ops
+[dotenv@17.2.3] injecting env (0) from ../../.env -- tip: ⚙️  override existing env vars with { override: true }
+[dotenv@17.2.3] injecting env (0) from ../../.env -- tip: ⚙️  load multiple .env files with { path: ['.env.local', '.env'] }
+[32m[Nest] 17407  - [39m01/10/2026, 1:52:57 PM [32m    LOG[39m [38;5;3m[NestFactory] [39m[32mStarting Nest application...[39m
+[32m[Nest] 17407  - [39m01/10/2026, 1:52:57 PM [32m    LOG[39m [38;5;3m[RedisService] [39m[32m🔗 Connecting to Redis via URL[39m
+[32m[Nest] 17407  - [39m01/10/2026, 1:52:57 PM [32m    LOG[39m [38;5;3m[InstanceLoader] [39m[32mAppModule dependencies initialized[39m[38;5;3m +2ms[39m
+[32m[Nest] 17407  - [39m01/10/2026, 1:52:57 PM [32m    LOG[39m [38;5;3m[InstanceLoader] [39m[32mRedisModule dependencies initialized[39m[38;5;3m +0ms[39m
+[32m[Nest] 17407  - [39m01/10/2026, 1:52:57 PM [32m    LOG[39m [38;5;3m[InstanceLoader] [39m[32mEmbeddingsModule dependencies initialized[39m[38;5;3m +0ms[39m
+[32m[Nest] 17407  - [39m01/10/2026, 1:52:57 PM [32m    LOG[39m [38;5;3m[InstanceLoader] [39m[32mWatchlistModule dependencies initialized[39m[38;5;3m +1ms[39m
+[32m[Nest] 17407  - [39m01/10/2026, 1:52:57 PM [32m    LOG[39m [38;5;3m[InstanceLoader] [39m[32mChatModule dependencies initialized[39m[38;5;3m +0ms[39m
+[32m[Nest] 17407  - [39m01/10/2026, 1:52:57 PM [32m    LOG[39m [38;5;3m[InstanceLoader] [39m[32mTmdbModule dependencies initialized[39m[38;5;3m +0ms[39m
+[32m[Nest] 17407  - [39m01/10/2026, 1:52:57 PM [32m    LOG[39m [38;5;3m[InstanceLoader] [39m[32mMoviesModule dependencies initialized[39m[38;5;3m +0ms[39m
+[32m[Nest] 17407  - [39m01/10/2026, 1:52:57 PM [32m    LOG[39m [38;5;3m[InstanceLoader] [39m[32mRecommendationsModule dependencies initialized[39m[38;5;3m +0ms[39m
+[32m[Nest] 17407  - [39m01/10/2026, 1:52:57 PM [32m    LOG[39m [38;5;3m[RoutesResolver] [39m[32mTmdbController {/api/tmdb}:[39m[38;5;3m +4ms[39m
+[32m[Nest] 17407  - [39m01/10/2026, 1:52:57 PM [32m    LOG[39m [38;5;3m[RouterExplorer] [39m[32mMapped {/api/tmdb/search, GET} route[39m[38;5;3m +3ms[39m
+[32m[Nest] 17407  - [39m01/10/2026, 1:52:57 PM [32m    LOG[39m [38;5;3m[RouterExplorer] [39m[32mMapped {/api/tmdb/movie/:id, GET} route[39m[38;5;3m +0ms[39m
+[32m[Nest] 17407  - [39m01/10/2026, 1:52:57 PM [32m    LOG[39m [38;5;3m[RouterExplorer] [39m[32mMapped {/api/tmdb/popular, GET} route[39m[38;5;3m +1ms[39m
+[32m[Nest] 17407  - [39m01/10/2026, 1:52:57 PM [32m    LOG[39m [38;5;3m[RouterExplorer] [39m[32mMapped {/api/tmdb/import/popular, POST} route[39m[38;5;3m +0ms[39m
+[32m[Nest] 17407  - [39m01/10/2026, 1:52:57 PM [32m    LOG[39m [38;5;3m[RouterExplorer] [39m[32mMapped {/api/tmdb/import, POST} route[39m[38;5;3m +0ms[39m
+[32m[Nest] 17407  - [39m01/10/2026, 1:52:57 PM [32m    LOG[39m [38;5;3m[RouterExplorer] [39m[32mMapped {/api/tmdb/import/:id, POST} route[39m[38;5;3m +0ms[39m
+[32m[Nest] 17407  - [39m01/10/2026, 1:52:57 PM [32m    LOG[39m [38;5;3m[RouterExplorer] [39m[32mMapped {/api/tmdb/health, GET} route[39m[38;5;3m +1ms[39m
+[32m[Nest] 17407  - [39m01/10/2026, 1:52:57 PM [32m    LOG[39m [38;5;3m[RoutesResolver] [39m[32mEmbeddingsController {/api/embeddings}:[39m[38;5;3m +0ms[39m
+[32m[Nest] 17407  - [39m01/10/2026, 1:52:57 PM [32m    LOG[39m [38;5;3m[RouterExplorer] [39m[32mMapped {/api/embeddings/movie/:id, POST} route[39m[38;5;3m +0ms[39m
+[32m[Nest] 17407  - [39m01/10/2026, 1:52:57 PM [32m    LOG[39m [38;5;3m[RouterExplorer] [39m[32mMapped {/api/embeddings/generate-all, POST} route[39m[38;5;3m +0ms[39m
+[32m[Nest] 17407  - [39m01/10/2026, 1:52:57 PM [32m    LOG[39m [38;5;3m[RouterExplorer] [39m[32mMapped {/api/embeddings/regenerate/:id, POST} route[39m[38;5;3m +0ms[39m
+[32m[Nest] 17407  - [39m01/10/2026, 1:52:57 PM [32m    LOG[39m [38;5;3m[RoutesResolver] [39m[32mMoviesController {/api/movies}:[39m[38;5;3m +0ms[39m
+[32m[Nest] 17407  - [39m01/10/2026, 1:52:57 PM [32m    LOG[39m [38;5;3m[RouterExplorer] [39m[32mMapped {/api/movies/search, GET} route[39m[38;5;3m +1ms[39m
+[32m[Nest] 17407  - [39m01/10/2026, 1:52:57 PM [32m    LOG[39m [38;5;3m[RouterExplorer] [39m[32mMapped {/api/movies/:id/similar, GET} route[39m[38;5;3m +0ms[39m
+[32m[Nest] 17407  - [39m01/10/2026, 1:52:57 PM [32m    LOG[39m [38;5;3m[RouterExplorer] [39m[32mMapped {/api/movies/:id, GET} route[39m[38;5;3m +0ms[39m
+[32m[Nest] 17407  - [39m01/10/2026, 1:52:57 PM [32m    LOG[39m [38;5;3m[RouterExplorer] [39m[32mMapped {/api/movies, GET} route[39m[38;5;3m +0ms[39m
+[32m[Nest] 17407  - [39m01/10/2026, 1:52:57 PM [32m    LOG[39m [38;5;3m[RouterExplorer] [39m[32mMapped {/api/movies/similar-to-multiple, POST} route[39m[38;5;3m +0ms[39m
+[32m[Nest] 17407  - [39m01/10/2026, 1:52:57 PM [32m    LOG[39m [38;5;3m[RouterExplorer] [39m[32mMapped {/api/movies/:id/explain, POST} route[39m[38;5;3m +0ms[39m
+[32m[Nest] 17407  - [39m01/10/2026, 1:52:57 PM [32m    LOG[39m [38;5;3m[RoutesResolver] [39m[32mWatchlistController {/api/watchlist}:[39m[38;5;3m +0ms[39m
+[32m[Nest] 17407  - [39m01/10/2026, 1:52:57 PM [32m    LOG[39m [38;5;3m[RouterExplorer] [39m[32mMapped {/api/watchlist/add, POST} route[39m[38;5;3m +0ms[39m
+[32m[Nest] 17407  - [39m01/10/2026, 1:52:57 PM [32m    LOG[39m [38;5;3m[RouterExplorer] [39m[32mMapped {/api/watchlist/watched, POST} route[39m[38;5;3m +1ms[39m
+[32m[Nest] 17407  - [39m01/10/2026, 1:52:57 PM [32m    LOG[39m [38;5;3m[RouterExplorer] [39m[32mMapped {/api/watchlist, GET} route[39m[38;5;3m +0ms[39m
+[32m[Nest] 17407  - [39m01/10/2026, 1:52:57 PM [32m    LOG[39m [38;5;3m[RouterExplorer] [39m[32mMapped {/api/watchlist/:movieId, DELETE} route[39m[38;5;3m +0ms[39m
+[32m[Nest] 17407  - [39m01/10/2026, 1:52:57 PM [32m    LOG[39m [38;5;3m[RoutesResolver] [39m[32mRecommendationsController {/api/recommendations}:[39m[38;5;3m +0ms[39m
+[32m[Nest] 17407  - [39m01/10/2026, 1:52:57 PM [32m    LOG[39m [38;5;3m[RouterExplorer] [39m[32mMapped {/api/recommendations, GET} route[39m[38;5;3m +0ms[39m
+[32m[Nest] 17407  - [39m01/10/2026, 1:52:57 PM [32m    LOG[39m [38;5;3m[RouterExplorer] [39m[32mMapped {/api/recommendations/hybrid, GET} route[39m[38;5;3m +0ms[39m
+[32m[Nest] 17407  - [39m01/10/2026, 1:52:57 PM [32m    LOG[39m [38;5;3m[RouterExplorer] [39m[32mMapped {/api/recommendations/popular, GET} route[39m[38;5;3m +0ms[39m
+[32m[Nest] 17407  - [39m01/10/2026, 1:52:57 PM [32m    LOG[39m [38;5;3m[RouterExplorer] [39m[32mMapped {/api/recommendations/update-profile, POST} route[39m[38;5;3m +0ms[39m
+[32m[Nest] 17407  - [39m01/10/2026, 1:52:57 PM [32m    LOG[39m [38;5;3m[RoutesResolver] [39m[32mChatController {/api/chat}:[39m[38;5;3m +1ms[39m
+[32m[Nest] 17407  - [39m01/10/2026, 1:52:57 PM [32m    LOG[39m [38;5;3m[RouterExplorer] [39m[32mMapped {/api/chat, POST} route[39m[38;5;3m +0ms[39m
+[32m[Nest] 17407  - [39m01/10/2026, 1:52:57 PM [32m    LOG[39m [38;5;3m[RouterExplorer] [39m[32mMapped {/api/chat/history/:userId, GET} route[39m[38;5;3m +0ms[39m
+[32m[Nest] 17407  - [39m01/10/2026, 1:52:57 PM [32m    LOG[39m [38;5;3m[RouterExplorer] [39m[32mMapped {/api/chat/clear/:userId, DELETE} route[39m[38;5;3m +0ms[39m
+[32m[Nest] 17407  - [39m01/10/2026, 1:52:57 PM [32m    LOG[39m [38;5;3m[NestApplication] [39m[32mNest application successfully started[39m[38;5;3m +3ms[39m
+[32m[Nest] 17407  - [39m01/10/2026, 1:52:57 PM [32m    LOG[39m [38;5;3m[Bootstrap] [39m[32m🚀 API Server running on port: 3001[39m
+[32m[Nest] 17407  - [39m01/10/2026, 1:52:57 PM [32m    LOG[39m [38;5;3m[Bootstrap] [39m[32m📚 TMDB endpoints: http://localhost:3001/api/tmdb[39m
+[31m[Nest] 17407  - [39m01/10/2026, 1:52:57 PM [31m  ERROR[39m [38;5;3m[RedisService] [39m[31m❌ Redis connection error:[39m
+getaddrinfo ENOTFOUND your-instance.upstash.io
+[31m[Nest] 17407  - [39m01/10/2026, 1:52:57 PM [31m  ERROR[39m [38;5;3m[RedisService] [39m[31m❌ Redis connection error:[39m
+getaddrinfo ENOTFOUND your-instance.upstash.io
+[31m[Nest] 17407  - [39m01/10/2026, 1:52:57 PM [31m  ERROR[39m [38;5;3m[RedisService] [39m[31m❌ Redis connection error:[39m
+getaddrinfo ENOTFOUND your-instance.upstash.io
+[31m[Nest] 17407  - [39m01/10/2026, 1:52:58 PM [31m  ERROR[39m [38;5;3m[RedisService] [39m[31m❌ Redis connection error:[39m
+getaddrinfo ENOTFOUND your-instance.upstash.io
+[31m[Nest] 17407  - [39m01/10/2026, 1:52:58 PM [31m  ERROR[39m [38;5;3m[RedisService] [39m[31m❌ Redis connection error:[39m
+getaddrinfo ENOTFOUND your-instance.upstash.io
+[31m[Nest] 17407  - [39m01/10/2026, 1:52:58 PM [31m  ERROR[39m [38;5;3m[RedisService] [39m[31m❌ Redis connection error:[39m
+getaddrinfo ENOTFOUND your-instance.upstash.io
+[31m[Nest] 17407  - [39m01/10/2026, 1:52:58 PM [31m  ERROR[39m [38;5;3m[RedisService] [39m[31m❌ Redis connection error:[39m
+getaddrinfo ENOTFOUND your-instance.upstash.io
+[31m[Nest] 17407  - [39m01/10/2026, 1:52:59 PM [31m  ERROR[39m [38;5;3m[RedisService] [39m[31m❌ Redis connection error:[39m
+getaddrinfo ENOTFOUND your-instance.upstash.io
+[31m[Nest] 17407  - [39m01/10/2026, 1:52:59 PM [31m  ERROR[39m [38;5;3m[RedisService] [39m[31m❌ Redis connection error:[39m
+getaddrinfo ENOTFOUND your-instance.upstash.io
+[31m[Nest] 17407  - [39m01/10/2026, 1:53:00 PM [31m  ERROR[39m [38;5;3m[RedisService] [39m[31m❌ Redis connection error:[39m
+getaddrinfo ENOTFOUND your-instance.upstash.io
+[31m[Nest] 17407  - [39m01/10/2026, 1:53:00 PM [31m  ERROR[39m [38;5;3m[RedisService] [39m[31m❌ Redis connection error:[39m
+getaddrinfo ENOTFOUND your-instance.upstash.io
+[31m[Nest] 17407  - [39m01/10/2026, 1:53:01 PM [31m  ERROR[39m [38;5;3m[RedisService] [39m[31m❌ Redis connection error:[39m
+getaddrinfo ENOTFOUND your-instance.upstash.io
+[31m[Nest] 17407  - [39m01/10/2026, 1:53:01 PM [31m  ERROR[39m [38;5;3m[RedisService] [39m[31m❌ Redis connection error:[39m
+getaddrinfo ENOTFOUND your-instance.upstash.io
+[31m[Nest] 17407  - [39m01/10/2026, 1:53:02 PM [31m  ERROR[39m [38;5;3m[RedisService] [39m[31m❌ Redis connection error:[39m
+getaddrinfo ENOTFOUND your-instance.upstash.io
+[31m[Nest] 17407  - [39m01/10/2026, 1:53:03 PM [31m  ERROR[39m [38;5;3m[RedisService] [39m[31m❌ Redis connection error:[39m
+getaddrinfo ENOTFOUND your-instance.upstash.io
+[31m[Nest] 17407  - [39m01/10/2026, 1:53:03 PM [31m  ERROR[39m [38;5;3m[RedisService] [39m[31m❌ Redis connection error:[39m
+getaddrinfo ENOTFOUND your-instance.upstash.io
+[31m[Nest] 17407  - [39m01/10/2026, 1:53:04 PM [31m  ERROR[39m [38;5;3m[RedisService] [39m[31m❌ Redis connection error:[39m
+getaddrinfo ENOTFOUND your-instance.upstash.io
+[31m[Nest] 17407  - [39m01/10/2026, 1:53:05 PM [31m  ERROR[39m [38;5;3m[RedisService] [39m[31m❌ Redis connection error:[39m
+getaddrinfo ENOTFOUND your-instance.upstash.io
+[31m[Nest] 17407  - [39m01/10/2026, 1:53:06 PM [31m  ERROR[39m [38;5;3m[RedisService] [39m[31m❌ Redis connection error:[39m
+getaddrinfo ENOTFOUND your-instance.upstash.io
+[31m[Nest] 17407  - [39m01/10/2026, 1:53:07 PM [31m  ERROR[39m [38;5;3m[RedisService] [39m[31m❌ Redis connection error:[39m
+getaddrinfo ENOTFOUND your-instance.upstash.io
+[31m[Nest] 17407  - [39m01/10/2026, 1:53:08 PM [31m  ERROR[39m [38;5;3m[RedisService] [39m[31m❌ Redis connection error:[39m
+getaddrinfo ENOTFOUND your-instance.upstash.io

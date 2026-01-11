@@ -1,0 +1,60 @@
+
+> web@0.1.0 dev /home/user/projects/m-recommendr/apps/web
+> next dev --port 3002
+
+  ▲ Next.js 14.2.35
+  - Local:        http://localhost:3002
+
+ ✓ Starting...
+ ✓ Ready in 1698ms
+<w> [webpack.cache.PackFileCacheStrategy/webpack.FileSystemInfo] Parsing of /home/user/projects/m-recommendr/node_modules/.pnpm/next-intl@4.7.0_@swc+helpers@0.5.15_next@14.2.35_react-dom@18.3.1_react@18.3.1__react@18.3.1__ei4qvhzoetprteyukcejfdbz2m/node_modules/next-intl/dist/esm/production/extractor/format/index.js for build dependencies failed at 'import(t)'.
+<w> Build dependencies behind this expression are ignored and might cause incorrect cache invalidation.
+ ✓ Compiled /middleware in 243ms (262 modules)
+ ○ Compiling /[locale] ...
+ ✓ Compiled /[locale] in 3.1s (1080 modules)
+<w> [webpack.cache.PackFileCacheStrategy/webpack.FileSystemInfo] Parsing of /home/user/projects/m-recommendr/node_modules/.pnpm/next-intl@4.7.0_@swc+helpers@0.5.15_next@14.2.35_react-dom@18.3.1_react@18.3.1__react@18.3.1__ei4qvhzoetprteyukcejfdbz2m/node_modules/next-intl/dist/esm/production/extractor/format/index.js for build dependencies failed at 'import(t)'.
+<w> Build dependencies behind this expression are ignored and might cause incorrect cache invalidation.
+ GET /en 200 in 3557ms
+ ○ Compiling /favicon.ico ...
+ ✓ Compiled /favicon.ico in 1909ms (1065 modules)
+ ✓ Compiled in 0ms (609 modules)
+ ✓ Compiled in 654ms (1083 modules)
+ GET /en/.well-known/appspecific/com.chrome.devtools.json 404 in 2813ms
+ GET /favicon.ico 200 in 2630ms
+ GET /favicon.ico 200 in 7ms
+ ✓ Compiled in 136ms (488 modules)
+ ✓ Compiled in 101ms (486 modules)
+ ✓ Compiled in 95ms (486 modules)
+ GET /en 200 in 99ms
+ ✓ Compiled /_not-found in 317ms (1051 modules)
+ GET /en/.well-known/appspecific/com.chrome.devtools.json 404 in 398ms
+ ✓ Compiled /favicon.ico in 122ms (609 modules)
+ GET /favicon.ico 200 in 169ms
+ GET /favicon.ico 200 in 5ms
+ GET /en 200 in 119ms
+ GET /en/.well-known/appspecific/com.chrome.devtools.json 404 in 17ms
+ GET /favicon.ico 200 in 16ms
+ GET /favicon.ico 200 in 4ms
+ ✓ Compiled in 198ms (488 modules)
+ ✓ Compiled in 426ms (1062 modules)
+ ✓ Compiled in 165ms (1062 modules)
+ GET /en 200 in 142ms
+ ✓ Compiled /_not-found in 347ms (1051 modules)
+ GET /en/.well-known/appspecific/com.chrome.devtools.json 404 in 415ms
+ ✓ Compiled /favicon.ico in 98ms (609 modules)
+ GET /favicon.ico 200 in 207ms
+ GET /favicon.ico 200 in 7ms
+ GET /en 200 in 140ms
+ GET /en/.well-known/appspecific/com.chrome.devtools.json 404 in 17ms
+ GET /favicon.ico 200 in 14ms
+ GET /favicon.ico 200 in 4ms
+ GET /en 200 in 105ms
+ GET /en/.well-known/appspecific/com.chrome.devtools.json 404 in 18ms
+ GET /favicon.ico 200 in 15ms
+ GET /favicon.ico 200 in 4ms
+ ○ Compiling /[locale]/auth/login ...
+ ✓ Compiled /[locale]/auth/login in 629ms (1091 modules)
+   Reload env: .env.local
+ ✓ Compiled in 309ms (1318 modules)
+ ELIFECYCLE  Command failed.
+[?25h

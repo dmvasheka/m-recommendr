@@ -1,7 +1,6 @@
 'use client'
 
 import { useState } from 'react'
-import Link from 'next/link'
 import { Navigation } from '@/components/Navigation'
 import { NewMovieCard } from '@/components/NewMovieCard'
 import { useAuth } from '@/lib/auth/AuthProvider'
@@ -11,12 +10,16 @@ import {
     usePopularMovies,
     useWatchlist,
 } from '@/lib/api/hooks'
+import { useTranslations } from 'next-intl'
+import { Link } from '@/navigation'
 
 type RecommendationType = 'personalized' | 'hybrid' | 'popular'
 
 export default function RecommendationsPage() {
     const { user } = useAuth()
     const [recType, setRecType] = useState<RecommendationType>('hybrid')
+    const t = useTranslations('Recommendations')
+    const tNav = useTranslations('Navigation')
 
     // Fetch different recommendation types
     const { data: personalizedRecs, isLoading: isPersonalizedLoading } = useRecommendations(
@@ -65,9 +68,9 @@ export default function RecommendationsPage() {
             <main className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8 pt-24">
                 {/* Header */}
                 <div className="mb-8">
-                    <h1 className="text-3xl font-bold text-white mb-2">For You</h1>
+                    <h1 className="text-3xl font-bold text-white mb-2">{t('title')}</h1>
                     <p className="text-[#9ca3af]">
-                        AI-powered recommendations based on your taste
+                        {t('subtitle')}
                     </p>
                 </div>
 
@@ -75,15 +78,15 @@ export default function RecommendationsPage() {
                 <div className="mb-8 bg-gradient-to-r from-[#e50914]/20 to-[#f59e0b]/20 border border-[#e50914]/30 rounded-lg p-6 text-white backdrop-blur-sm">
                     <div className="flex items-center justify-between">
                         <div>
-                            <h2 className="text-xl font-semibold mb-2">Your Profile</h2>
+                            <h2 className="text-xl font-semibold mb-2">{t('profile')}</h2>
                             <div className="flex gap-6 text-sm">
                                 <div>
-                                    <span className="opacity-90">Watched:</span>{' '}
-                                    <strong>{watchedCount}</strong> movies
+                                    <span className="opacity-90">{t('watched')}:</span>{' '}
+                                    <strong>{watchedCount}</strong> {t('movies')}
                                 </div>
                                 <div>
-                                    <span className="opacity-90">Highly rated (≥7):</span>{' '}
-                                    <strong>{ratedCount}</strong> movies
+                                    <span className="opacity-90">{t('highlyRated')}:</span>{' '}
+                                    <strong>{ratedCount}</strong> {t('movies')}
                                 </div>
                             </div>
                         </div>
@@ -91,12 +94,12 @@ export default function RecommendationsPage() {
                             {hasProfile ? (
                                 <div>
                                     <div className="text-3xl mb-1">✨</div>
-                                    <div className="text-sm opacity-90">Profile Active</div>
+                                    <div className="text-sm opacity-90">{t('profileActive')}</div>
                                 </div>
                             ) : (
                                 <div>
                                     <div className="text-3xl mb-1">🌱</div>
-                                    <div className="text-sm opacity-90">Getting Started</div>
+                                    <div className="text-sm opacity-90">{t('gettingStarted')}</div>
                                 </div>
                             )}
                         </div>
@@ -105,7 +108,7 @@ export default function RecommendationsPage() {
                     {!hasProfile && (
                         <div className="mt-4 pt-4 border-t border-white/20">
                             <p className="text-sm opacity-90">
-                                💡 Rate at least one movie with 7+ stars to unlock personalized recommendations!
+                                {t('unlockTip')}
                             </p>
                         </div>
                     )}
@@ -123,7 +126,7 @@ export default function RecommendationsPage() {
                                         : 'bg-[#1a1a2e]/40 text-[#9ca3af] hover:bg-[#1a1a2e]/60 border border-white/10'
                                 }`}
                             >
-                                🎯 Hybrid (Recommended)
+                                {t('types.hybrid')}
                             </button>
                             <button
                                 onClick={() => setRecType('personalized')}
@@ -133,7 +136,7 @@ export default function RecommendationsPage() {
                                         : 'bg-[#1a1a2e]/40 text-[#9ca3af] hover:bg-[#1a1a2e]/60 border border-white/10'
                                 }`}
                             >
-                                🧠 Pure AI Match
+                                {t('types.personalized')}
                             </button>
                             <button
                                 onClick={() => setRecType('popular')}
@@ -143,31 +146,18 @@ export default function RecommendationsPage() {
                                         : 'bg-[#1a1a2e]/40 text-[#9ca3af] hover:bg-[#1a1a2e]/60 border border-white/10'
                                 }`}
                             >
-                                🔥 Popular
+                                {t('types.popular')}
                             </button>
                         </div>
 
                         {/* Algorithm Explanation */}
                         <div className="mt-4 p-4 bg-[#1a1a2e]/40 rounded-lg border border-white/10 backdrop-blur-sm">
                             <p className="text-sm text-[#9ca3af]">
-                                {recType === 'hybrid' && (
-                                    <>
-                                        <strong>Hybrid Algorithm:</strong> Combines 70% similarity to your taste + 30% popularity.
-                                        Best balance between personalization and quality.
-                                    </>
-                                )}
-                                {recType === 'personalized' && (
-                                    <>
-                                        <strong>Pure AI Match:</strong> 100% based on vector similarity to your preferences.
-                                        May include hidden gems you've never heard of.
-                                    </>
-                                )}
-                                {recType === 'popular' && (
-                                    <>
-                                        <strong>Popular Movies:</strong> Trending and highly-rated movies.
-                                        Great for discovering what everyone else is watching.
-                                    </>
-                                )}
+                                {t.rich(`algorithms.${recType}`, {
+                                    strong: (children) => <strong className="text-white">{children}</strong>,
+                                    em: (children) => <em>{children}</em>,
+                                    br: () => <br />
+                                })}
                             </p>
                         </div>
                     </div>
@@ -181,7 +171,7 @@ export default function RecommendationsPage() {
                 ) : normalizedMovies && normalizedMovies.length > 0 ? (
                     <>
                         <div className="mb-4 text-sm text-[#9ca3af]">
-                            {normalizedMovies.length} recommendation{normalizedMovies.length !== 1 ? 's' : ''} for you
+                            {t('count', { count: normalizedMovies.length })}
                         </div>
                         <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 gap-4 sm:gap-6">
                             {normalizedMovies.map((movie) => (
@@ -193,16 +183,16 @@ export default function RecommendationsPage() {
                     <div className="text-center py-20">
                         <div className="text-6xl mb-4">🎬</div>
                         <h3 className="text-xl font-semibold text-white mb-2">
-                            No recommendations yet
+                            {t('empty')}
                         </h3>
                         <p className="text-[#9ca3af] mb-8">
-                            Start by rating some movies you've watched to build your taste profile
+                            {t('emptyDesc')}
                         </p>
                         <Link
                             href="/discover"
                             className="inline-block px-6 py-3 bg-[#e50914] text-white rounded-lg hover:bg-[#e50914]/90 transition"
                         >
-                            Discover Movies
+                            {tNav('discoverMovies')}
                         </Link>
                     </div>
                 )}
@@ -210,40 +200,39 @@ export default function RecommendationsPage() {
                 {/* How It Works Section */}
                 <div className="mt-12 bg-[#1a1a2e]/40 rounded-lg p-8 border border-white/10 backdrop-blur-sm">
                     <h3 className="text-2xl font-bold text-white mb-4">
-                        🧠 How AI Recommendations Work
+                        {t('howItWorks.title')}
                     </h3>
                     <div className="grid md:grid-cols-3 gap-6">
                         <div>
                             <div className="text-3xl mb-2">1️⃣</div>
-                            <h4 className="font-semibold text-white mb-2">Watch & Rate</h4>
+                            <h4 className="font-semibold text-white mb-2">{t('howItWorks.step1Title')}</h4>
                             <p className="text-sm text-[#9ca3af]">
-                                Rate movies you've watched. The system focuses on your highly-rated movies (7+ stars)
-                                to understand what you love.
+                                {t('howItWorks.step1Desc')}
                             </p>
                         </div>
                         <div>
                             <div className="text-3xl mb-2">2️⃣</div>
-                            <h4 className="font-semibold text-white mb-2">Profile Building</h4>
+                            <h4 className="font-semibold text-white mb-2">{t('howItWorks.step2Title')}</h4>
                             <p className="text-sm text-[#9ca3af]">
-                                Your ratings are converted into a 1536-dimensional "taste vector" using OpenAI embeddings.
-                                This captures themes, styles, and vibes you prefer.
+                                {t('howItWorks.step2Desc')}
                             </p>
                         </div>
                         <div>
                             <div className="text-3xl mb-2">3️⃣</div>
-                            <h4 className="font-semibold text-white mb-2">Smart Matching</h4>
+                            <h4 className="font-semibold text-white mb-2">{t('howItWorks.step3Title')}</h4>
                             <p className="text-sm text-[#9ca3af]">
-                                We search our database of {currentRecs?.length || 'thousands of'} movies using vector
-                                similarity to find the closest matches to your taste profile.
+                                {t('howItWorks.step3Desc')}
                             </p>
                         </div>
                     </div>
 
                     <div className="mt-6 pt-6 border-t border-white/10">
                         <p className="text-sm text-[#9ca3af]">
-                            💡 <strong className="text-white">Pro tip:</strong> The more movies you rate (especially with diverse genres),
-                            the better your recommendations become. The system automatically updates your profile
-                            whenever you add new ratings!
+                            {t.rich('howItWorks.proTip', {
+                                strong: (children) => <strong className="text-white">{children}</strong>,
+                                em: (children) => <em>{children}</em>,
+                                br: () => <br />
+                            })}
                         </p>
                     </div>
                 </div>

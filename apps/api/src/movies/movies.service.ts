@@ -297,4 +297,41 @@ export class MoviesService {
             throw error;
         }
     }
+
+    /**
+     * Fast prefix/substring search for autocomplete
+     */
+    async autocomplete(query: string, limit = 10): Promise<Movie[]> {
+        try {
+            // Sanitize query: escape special LIKE characters and trim
+            const sanitizedQuery = query
+                .replace(/[%_]/g, '\\$&')
+                .trim();
+
+            if (!sanitizedQuery) {
+                return [];
+            }
+
+            this.logger.log(`Autocomplete for: "${sanitizedQuery}"`);
+
+            // Search by title using ilike (case-insensitive substring)
+            // We order by popularity to show most relevant movies first
+            const { data, error } = await supabase
+                .from('movies')
+                .select('id, title, poster_url, release_date, vote_average')
+                .ilike('title', `%${sanitizedQuery}%`)
+                .order('popularity', { ascending: false })
+                .limit(limit);
+
+            if (error) {
+                throw error;
+            }
+
+            return (data as Movie[]) || [];
+        } catch (error) {
+            const errorMessage = error instanceof Error ? error.message : String(error);
+            this.logger.error(`Autocomplete error: ${errorMessage}`);
+            throw error;
+        }
+    }
 }
