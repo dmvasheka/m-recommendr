@@ -19,9 +19,10 @@ async function bootstrap() {
     const allowedOrigins = process.env.CORS_ORIGIN?.split(',').map(origin => origin.trim()) || ['http://localhost:3002'];
     app.enableCors({
         origin: (origin, callback) => {
-            // Allow requests with no origin (like mobile apps, Postman, curl)
+            // Reject requests with no origin when credentials are enabled (CSRF protection)
             if (!origin) {
-                return callback(null, true);
+                logger.warn('Blocked request with no Origin header (credentials enabled)');
+                return callback(new Error('Not allowed by CORS'));
             }
 
             if (allowedOrigins.includes(origin)) {
