@@ -152,8 +152,12 @@ export default function RecommendationsPage() {
 
                         {/* Algorithm Explanation */}
                         <div className="mt-4 p-4 bg-[#1a1a2e]/40 rounded-lg border border-white/10 backdrop-blur-sm">
-                            <p className="text-sm text-[#9ca3af]" 
-                               dangerouslySetInnerHTML={{ __html: t.raw(`algorithms.${recType}`) }}>
+                            <p className="text-sm text-[#9ca3af]">
+                                {t.rich(`algorithms.${recType}`, {
+                                    strong: (children) => <strong className="text-white">{children}</strong>,
+                                    em: (children) => <em>{children}</em>,
+                                    br: () => <br />
+                                })}
                             </p>
                         </div>
                     </div>
@@ -223,8 +227,12 @@ export default function RecommendationsPage() {
                     </div>
 
                     <div className="mt-6 pt-6 border-t border-white/10">
-                        <p className="text-sm text-[#9ca3af]" 
-                           dangerouslySetInnerHTML={{ __html: t.raw('howItWorks.proTip') }}>
+                        <p className="text-sm text-[#9ca3af]">
+                            {t.rich('howItWorks.proTip', {
+                                strong: (children) => <strong className="text-white">{children}</strong>,
+                                em: (children) => <em>{children}</em>,
+                                br: () => <br />
+                            })}
                         </p>
                     </div>
                 </div>

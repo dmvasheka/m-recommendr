@@ -31,7 +31,7 @@
     "noMoviesFoundDesc": "Try a different search term or browse popular movies",
     "noMoviesAvailable": "No movies available at the moment",
     "howItWorksTitle": "🤖 How AI-Powered Search Works",
-    "howItWorksDesc": "We use <strong class=\"text-white\">Retrieval-Augmented Generation (RAG)</strong> combining semantic search with GPT-4. Your query is converted into a vector embedding, matched against our movie database, then GPT-4 analyzes enriched metadata (keywords, cast, crew, themes) to explain <em>why</em> each movie fits your request. This gives you intelligent recommendations with context, not just keyword matching!"
+    "howItWorksDesc": "We use <strong>Retrieval-Augmented Generation (RAG)</strong> combining semantic search with GPT-4. Your query is converted into a vector embedding, matched against our movie database, then GPT-4 analyzes enriched metadata (keywords, cast, crew, themes) to explain <em>why</em> each movie fits your request. This gives you intelligent recommendations with context, not just keyword matching!"
   },
   "Common": {
     "loading": "Loading...",
@@ -110,7 +110,7 @@
       "step2Desc": "Your ratings are converted into a 1536-dimensional \"taste vector\" using OpenAI embeddings. This captures themes, styles, and vibes you prefer.",
       "step3Title": "Smart Matching",
       "step3Desc": "We search our database of thousands of movies using vector similarity to find the closest matches to your taste profile.",
-      "proTip": "💡 <strong class=\"text-white\">Pro tip:</strong> The more movies you rate (especially with diverse genres), the better your recommendations become. The system automatically updates your profile whenever you add new ratings!"
+      "proTip": "💡 <strong>Pro tip:</strong> The more movies you rate (especially with diverse genres), the better your recommendations become. The system automatically updates your profile whenever you add new ratings!"
     }
   },
   "Auth": {

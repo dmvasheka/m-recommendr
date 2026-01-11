@@ -101,13 +101,21 @@ function DiscoverPageContent() {
                                 </h3>
                                 <div className="text-sm text-[#9ca3af] prose prose-sm max-w-none">
                                     {aiExplanation.split('\n').map((line, i) => {
-                                        const boldFormatted = line.replace(/\*\*(.+?)\*\*/g, '<strong class="text-white">$1</strong>')
+                                        // Parse **bold** markdown safely
+                                        const parts = line.split(/(\*\*[^*]+\*\*)/g)
                                         return (
-                                            <p
-                                                key={i}
-                                                className="mb-2 last:mb-0"
-                                                dangerouslySetInnerHTML={{ __html: boldFormatted }}
-                                            />
+                                            <p key={i} className="mb-2 last:mb-0">
+                                                {parts.map((part, j) => {
+                                                    if (part.startsWith('**') && part.endsWith('**')) {
+                                                        return (
+                                                            <strong key={j} className="text-white">
+                                                                {part.slice(2, -2)}
+                                                            </strong>
+                                                        )
+                                                    }
+                                                    return <span key={j}>{part}</span>
+                                                })}
+                                            </p>
                                         )
                                     })}
                                 </div>
@@ -153,8 +161,12 @@ function DiscoverPageContent() {
                         <h3 className="text-lg font-semibold text-white mb-2">
                             {t('howItWorksTitle')}
                         </h3>
-                        <p className="text-[#9ca3af] text-sm leading-relaxed" 
-                           dangerouslySetInnerHTML={{ __html: t.raw('howItWorksDesc') }}>
+                        <p className="text-[#9ca3af] text-sm leading-relaxed">
+                            {t.rich('howItWorksDesc', {
+                                strong: (children) => <strong className="text-white">{children}</strong>,
+                                em: (children) => <em>{children}</em>,
+                                br: () => <br />
+                            })}
                         </p>
                     </div>
                 )}

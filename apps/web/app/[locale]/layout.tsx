@@ -3,7 +3,7 @@ import localFont from "next/font/local";
 import "../globals.css";
 import { Providers } from "@/lib/providers/Providers";
 import { NextIntlClientProvider } from 'next-intl';
-import { getMessages } from 'next-intl/server';
+import { getMessages, setRequestLocale } from 'next-intl/server';
 import { notFound } from 'next/navigation';
 import { routing } from "@/i18n/routing";
 
@@ -32,6 +32,9 @@ export default async function RootLayout({
     if (!routing.locales.includes(locale as any)) {
         notFound();
     }
+
+    // Set the request locale context
+    await setRequestLocale(locale);
 
     // Providing all messages to the client
     const messages = await getMessages();
