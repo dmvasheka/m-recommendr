@@ -83,6 +83,13 @@ export interface TmdbSearchResponse {
     total_results: number;
 }
 
+export interface TmdbTvSearchResponse {
+    page: number;
+    results: TmdbTvShow[];
+    total_pages: number;
+    total_results: number;
+}
+
 @Injectable()
 export class TmdbService {
     private readonly logger = new Logger(TmdbService.name);
@@ -122,9 +129,9 @@ export class TmdbService {
     /**
      * Search TV shows by query string
      */
-    async searchTV(query: string, page = 1): Promise<TmdbSearchResponse> {
+    async searchTV(query: string, page = 1): Promise<TmdbTvSearchResponse> {
         try {
-            const response = await axios.get<TmdbSearchResponse>(
+            const response = await axios.get<TmdbTvSearchResponse>(
                 `${this.baseUrl}/search/tv`,
                 {
                     params: {
@@ -206,9 +213,9 @@ export class TmdbService {
         return this.getMoviesByCategory('popular', page);
     }
 
-    async getPopularTV(page = 1): Promise<TmdbSearchResponse> {
+    async getPopularTV(page = 1): Promise<TmdbTvSearchResponse> {
         try {
-            const response = await axios.get<TmdbSearchResponse>(
+            const response = await axios.get<TmdbTvSearchResponse>(
                 `${this.baseUrl}/tv/popular`,
                 {
                     params: {
@@ -275,9 +282,9 @@ export class TmdbService {
     /**
      * Generic method to fetch TV by category
      */
-    private async getTVByCategory(category: string, page = 1): Promise<TmdbSearchResponse> {
+    private async getTVByCategory(category: string, page = 1): Promise<TmdbTvSearchResponse> {
         try {
-            const response = await axios.get<TmdbSearchResponse>(
+            const response = await axios.get<TmdbTvSearchResponse>(
                 `${this.baseUrl}/tv/${category}`,
                 {
                     params: {
@@ -679,9 +686,9 @@ export class TmdbService {
     /**
      * Get TV shows by specific year using discover endpoint
      */
-    async getTvShowsByYear(year: number, page = 1): Promise<TmdbSearchResponse> {
+    async getTvShowsByYear(year: number, page = 1): Promise<TmdbTvSearchResponse> {
         try {
-            const response = await axios.get<TmdbSearchResponse>(
+            const response = await axios.get<TmdbTvSearchResponse>(
                 `${this.baseUrl}/discover/tv`,
                 {
                     params: {

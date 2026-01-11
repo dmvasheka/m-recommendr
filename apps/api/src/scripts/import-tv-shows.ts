@@ -10,7 +10,7 @@ async function bootstrap() {
   const app = await NestFactory.createApplicationContext(AppModule);
   const tmdbService = app.get(TmdbService);
 
-  const startYear = 2005;
+  const startYear = 2010;
   const endYear = new Date().getFullYear(); // 2026
   const countPerYear = 50; // Import top 50 shows per year
 
