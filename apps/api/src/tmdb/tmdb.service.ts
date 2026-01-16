@@ -97,9 +97,11 @@ export class TmdbService {
     private readonly baseUrl = 'https://api.themoviedb.org/3';
     private readonly imageBaseUrl = 'https://image.tmdb.org/t/p';
 
-    constructor(private readonly embeddingsService: EmbeddingsService) { // Inject EmbeddingsService
+    constructor(private readonly embeddingsService: EmbeddingsService) {}
+
+    onModuleInit() {
         if (!this.apiKey) {
-            this.logger.error('TMDB_API_KEY is not set in environment variables');
+            throw new Error('TMDB_API_KEY is not set in environment variables');
         }
     }
 
@@ -117,11 +119,13 @@ export class TmdbService {
                         page,
                         language: 'en-US',
                     },
+                    timeout: 10000,
                 }
             );
             return response.data;
         } catch (error) {
-            this.logger.error(`Error searching movies: ${error}`);
+            const errorMessage = error instanceof Error ? error.message : String(error);
+            this.logger.error(`Error searching movies: ${errorMessage}`);
             throw error;
         }
     }
@@ -140,11 +144,13 @@ export class TmdbService {
                         page,
                         language: 'en-US',
                     },
+                    timeout: 10000,
                 }
             );
             return response.data;
         } catch (error) {
-            this.logger.error(`Error searching TV: ${error}`);
+            const errorMessage = error instanceof Error ? error.message : String(error);
+            this.logger.error(`Error searching TV: ${errorMessage}`);
             throw error;
         }
     }
@@ -161,11 +167,13 @@ export class TmdbService {
                         api_key: this.apiKey,
                         language: 'en-US',
                     },
+                    timeout: 10000,
                 }
             );
             return response.data;
         } catch (error) {
-            this.logger.error(`Error getting movie details: ${error}`);
+            const errorMessage = error instanceof Error ? error.message : String(error);
+            this.logger.error(`Error getting movie details: ${errorMessage}`);
             throw error;
         }
     }
@@ -182,11 +190,13 @@ export class TmdbService {
                         api_key: this.apiKey,
                         language: 'en-US',
                     },
+                    timeout: 10000,
                 }
             );
             return response.data;
         } catch (error) {
-            this.logger.error(`Error getting TV details: ${error}`);
+            const errorMessage = error instanceof Error ? error.message : String(error);
+            this.logger.error(`Error getting TV details: ${errorMessage}`);
             throw error;
         }
     }
@@ -200,11 +210,13 @@ export class TmdbService {
                         api_key: this.apiKey,
                         language: 'en-US',
                     },
+                    timeout: 10000,
                 }
             );
             return response.data;
         } catch (error) {
-            this.logger.error(`Error getting TV season: ${error}`);
+            const errorMessage = error instanceof Error ? error.message : String(error);
+            this.logger.error(`Error getting TV season: ${errorMessage}`);
             throw error;
         }
     }
@@ -252,6 +264,7 @@ export class TmdbService {
                         page,
                         language: 'en-US',
                     },
+                    timeout: 10000,
                 }
             );
 
@@ -277,6 +290,7 @@ export class TmdbService {
                         page,
                         language: 'en-US',
                     },
+                    timeout: 10000,
                 }
             );
 
@@ -300,6 +314,7 @@ export class TmdbService {
                     params: {
                         api_key: this.apiKey,
                     },
+                    timeout: 10000,
                 }
             );
 
@@ -325,6 +340,7 @@ export class TmdbService {
                     params: {
                         api_key: this.apiKey,
                     },
+                    timeout: 10000,
                 }
             );
 
@@ -359,7 +375,7 @@ export class TmdbService {
         try {
             const response = await axios.get(
                 `${this.baseUrl}/tv/${tvId}/keywords`,
-                { params: { api_key: this.apiKey } }
+                { params: { api_key: this.apiKey }, timeout: 10000 }
             );
             return (response.data.results || []).map((k: any) => k.name);
         } catch (error) {
@@ -375,7 +391,7 @@ export class TmdbService {
         try {
             const response = await axios.get(
                 `${this.baseUrl}/tv/${tvId}/credits`,
-                { params: { api_key: this.apiKey } }
+                { params: { api_key: this.apiKey }, timeout: 10000 }
             );
             return {
                 cast: (response.data.cast || []).slice(0, 5).map((c: any) => ({
