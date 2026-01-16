@@ -1,9 +1,14 @@
 # Movie Recommendr - AI Context & Guidelines
 
 ## 1. Project Overview
-**Name:** Movie Recommendr
-**Description:** A movie recommendation platform using RAG (Retrieval-Augmented Generation), vector embeddings, and LLM-based reasoning.
-**Architecture:** Monorepo using Turborepo.
+**Name:** Movie Recommendr (Movies & TV)
+**Description:** A movie and TV show recommendation platform using RAG (Retrieval-Augmented Generation), vector embeddings, and LLM-based reasoning. TV functionality is fully integrated with support for seasons, episodes, and semantic search across both formats.
+**Architecture:** Monorepo using Turborepo. The codebase contains integrated services for both movie and TV data management, indexing, and retrieval.
+
+### Core TV Artifacts
+- **Database Schema:** Tables for `tv_shows`, `tv_seasons`, and `tv_episodes`.
+- **Embeddings:** Vector embeddings generated for TV shows to enable semantic matching.
+- **API Endpoints:** TV-specific routes for discovery, details, and recommendations.
 
 ## 2. Tech Stack
 
@@ -34,6 +39,7 @@
 - **Completed:**
   - Core Infrastructure (Monorepo, Supabase, Auth).
   - TMDB Data Import (Top 40 movies/year 1990-2024).
+  - TV Show Data Import (seasons/episodes), embeddings generated, DB schema updated for shows.
   - Vector Embeddings (100% coverage).
   - Localization (EN/RU).
   - Basic Search & Autocomplete.

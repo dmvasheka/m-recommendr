@@ -9,6 +9,9 @@ export default function GlobalError({
 }: {
   error: Error & { digest?: string };
 }) {
+  // Log the error to production logs
+  console.error('Global Error:', error, error.digest ? { digest: error.digest } : '');
+
   return (
     <html lang="en">
       <body>
