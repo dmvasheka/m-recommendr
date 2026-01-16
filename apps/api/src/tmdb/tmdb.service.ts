@@ -414,7 +414,7 @@ export class TmdbService {
     /**
      * Import TV Show to DB
      */
-    async importTvShowToDb(tvId: number): Promise<TvShowInsert> {
+    async importTvShowToDb(tvId: number, background: boolean = true): Promise<TvShowInsert> {
         try {
             const tmdbTv = await this.getTVDetails(tvId);
             const [keywords, credits] = await Promise.all([
@@ -457,19 +457,27 @@ export class TmdbService {
 
             this.logger.log(`✅ Imported TV Show: ${tvData.name} (ID: ${tvData.id})`);
 
-            // Import seasons and episodes
-            if (tvData.number_of_seasons && tvData.number_of_seasons > 0) {
-                // Run in background to not block the response? 
-                // Better to await to ensure complete data for now, or make it optional.
-                // We'll await it to ensure DB is consistent.
-                await this.importTvSeasons(tvData.id, tvData.number_of_seasons);
-            }
+            // Define background tasks logic
+            const performBackgroundTasks = async () => {
+                try {
+                    // Import seasons and episodes
+                    if (tvData.number_of_seasons && tvData.number_of_seasons > 0) {
+                        await this.importTvSeasons(tvData.id, tvData.number_of_seasons);
+                    }
 
-            // Generate embedding for the new TV Show
-            try {
-                await this.embeddingsService.generateTvShowEmbedding(tvData.id);
-            } catch (e) {
-                this.logger.warn(`Failed to generate embedding for TV ${tvData.id}: ${e}`);
+                    // Generate embedding for the new TV Show
+                    await this.embeddingsService.generateTvShowEmbedding(tvData.id);
+                } catch (e) {
+                    const bgError = e instanceof Error ? e.message : String(e);
+                    this.logger.error(`Background task failed for TV ${tvData.id}: ${bgError}`);
+                }
+            };
+
+            // Execute based on background flag
+            if (background) {
+                performBackgroundTasks(); // Fire and forget
+            } else {
+                await performBackgroundTasks(); // Wait for completion
             }
 
             return data;
