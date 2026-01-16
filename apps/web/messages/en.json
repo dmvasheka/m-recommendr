@@ -123,9 +123,11 @@
     "creatingAccount": "Creating account...",
     "noAccount": "Do not have an account?",
     "haveAccount": "Already have an account?",
+    "locale": "en",
     "errors": {
       "passwordsMatch": "Passwords do not match",
       "passwordLength": "Password must be at least 6 characters",
+      "passwordWeak": "Password does not meet security requirements",
       "loginFailed": "Failed to sign in",
       "signupFailed": "Failed to sign up"
     }
