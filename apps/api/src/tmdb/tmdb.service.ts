@@ -684,6 +684,15 @@ export class TmdbService {
     }
 
     /**
+     * Import movies for a specific year and generate embeddings
+     */
+    async importMoviesByYearWithEmbeddings(year: number, count: number): Promise<{ imported: number; skipped: number }> {
+        const result = await this.importMoviesByYear(year, count);
+        await this.embeddingsService.generateAllMissingEmbeddings();
+        return result;
+    }
+
+    /**
      * Get TV shows by specific year using discover endpoint
      */
     async getTvShowsByYear(year: number, page = 1): Promise<TmdbTvSearchResponse> {

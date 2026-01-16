@@ -81,14 +81,21 @@ export default function ChatPage() {
     const formatMessageContent = (content: string) => {
         // Simple markdown-like formatting for bold titles
         return content.split('\n').map((line, i) => {
-            // Bold text between **
-            const boldFormatted = line.replace(/\*\*(.+?)\*\*/g, '<strong>$1</strong>')
+            // Split by bold markers and render safely
+            const parts = line.split(/(\*\*[^*]+\*\*)/g)
             return (
-                <p
-                    key={i}
-                    className="mb-2 last:mb-0"
-                    dangerouslySetInnerHTML={{ __html: boldFormatted }}
-                />
+                <p key={i} className="mb-2 last:mb-0">
+                    {parts.map((part, j) => {
+                        if (part.startsWith('**') && part.endsWith('**')) {
+                            return (
+                                <strong key={j} className="text-white">
+                                    {part.slice(2, -2)}
+                                </strong>
+                            )
+                        }
+                        return <span key={j}>{part}</span>
+                    })}
+                </p>
             )
         })
     }

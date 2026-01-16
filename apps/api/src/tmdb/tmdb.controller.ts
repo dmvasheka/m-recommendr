@@ -116,9 +116,7 @@ export class TmdbController {
         const movieCount = count ? parseInt(count, 10) : 20;
 
         try {
-            const result = await this.tmdbService.importMoviesByYear(yearNum, movieCount);
-            // After year import, trigger embedding generation for missing ones
-            await (this.tmdbService as any).embeddingsService.generateAllMissingEmbeddings();
+            const result = await this.tmdbService.importMoviesByYearWithEmbeddings(yearNum, movieCount);
 
             return {
                 success: true,
