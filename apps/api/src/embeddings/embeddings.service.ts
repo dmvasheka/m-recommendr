@@ -1,7 +1,7 @@
 import { Injectable, Logger } from '@nestjs/common';
-import { generateEmbedding, generateEmbeddingsBatch, createMovieEmbeddingText } from '@repo/ai';
+import { generateEmbedding, generateEmbeddingsBatch, createMovieEmbeddingText, createTvShowEmbeddingText } from '@repo/ai';
 import { supabase } from '@repo/db';
-import type { Movie } from '@repo/db';
+import type { Movie, TvShow } from '@repo/db';
 
 @Injectable()
 export class EmbeddingsService {
@@ -137,5 +137,125 @@ export class EmbeddingsService {
     async regenerateMovieEmbedding(movieId: number): Promise<void> {
         this.logger.log(`Regenerating embedding for movie ${movieId}...`);
         await this.generateMovieEmbedding(movieId);
+    }
+
+    /**
+     * Generate embedding for a single TV Show and update in database
+     */
+    async generateTvShowEmbedding(tvId: number): Promise<void> {
+        try {
+            // 1. Get TV Show from database
+            const { data: tvShow, error: fetchError } = await supabase
+                .from('tv_shows')
+                .select('*')
+                .eq('id', tvId)
+                .single();
+
+            if (fetchError || !tvShow) {
+                throw new Error(`TV Show ${tvId} not found`);
+            }
+
+            // Type assertion
+            const typedTvShow = tvShow as TvShow;
+
+            // 2. Create embedding text
+            const embeddingText = createTvShowEmbeddingText({
+                name: typedTvShow.name,
+                overview: typedTvShow.overview,
+                genres: typedTvShow.genres,
+            });
+
+            this.logger.log(`Generating embedding for TV: ${typedTvShow.name}`);
+
+            // 3. Generate embedding
+            const embedding = await generateEmbedding(embeddingText);
+
+            // 4. Update TV Show with embedding
+            const { error: updateError } = await (supabase
+                .from('tv_shows')
+                .update as any)({ embedding: JSON.stringify(embedding) })
+                .eq('id', tvId);
+
+            if (updateError) {
+                throw updateError;
+            }
+
+            this.logger.log(`✅ Embedding generated for TV: ${typedTvShow.name}`);
+        } catch (error) {
+            const errorMessage = error instanceof Error ? error.message : String(error);
+            this.logger.error(`Error generating embedding for TV ${tvId}: ${errorMessage}`);
+            throw error;
+        }
+    }
+
+    /**
+     * Generate embeddings for all TV Shows without embeddings
+     */
+    async generateAllMissingTvEmbeddings(): Promise<{ processed: number; failed: number }> {
+        try {
+            // 1. Get all TV Shows without embeddings
+            const { data: tvShows, error: fetchError } = await supabase
+                .from('tv_shows')
+                .select('*')
+                .is('embedding', null);
+
+            if (fetchError) {
+                throw fetchError;
+            }
+
+            if (!tvShows || tvShows.length === 0) {
+                this.logger.log('No TV Shows without embeddings found');
+                return { processed: 0, failed: 0 };
+            }
+
+            // Type assertion
+            const typedTvShows = tvShows as TvShow[];
+
+            this.logger.log(`Found ${typedTvShows.length} TV Shows without embeddings`);
+
+            // 2. Prepare embedding texts
+            const tvTexts = typedTvShows.map(tv =>
+                createTvShowEmbeddingText({
+                    name: tv.name,
+                    overview: tv.overview,
+                    genres: tv.genres,
+                })
+            );
+
+            // 3. Generate embeddings in batch
+            this.logger.log('Generating TV embeddings batch...');
+            const embeddings = await generateEmbeddingsBatch(tvTexts, 50);
+
+            // 4. Update TV Shows in database
+            let processed = 0;
+            let failed = 0;
+
+            for (let i = 0; i < typedTvShows.length; i++) {
+                try {
+                    const { error: updateError } = await (supabase
+                        .from('tv_shows')
+                        .update as any)({ embedding: JSON.stringify(embeddings[i]) })
+                        .eq('id', typedTvShows[i].id);
+
+                    if (updateError) {
+                        throw updateError;
+                    }
+
+                    processed++;
+                    this.logger.log(`[${i + 1}/${typedTvShows.length}] ✅ TV: ${typedTvShows[i].name}`);
+                } catch (error) {
+                    failed++;
+                    const errorMessage = error instanceof Error ? error.message : String(error);
+                    this.logger.error(`Failed to update TV ${typedTvShows[i].name}: ${errorMessage}`);
+                }
+            }
+
+            this.logger.log(`✅ TV Batch complete: ${processed} processed, ${failed} failed`);
+            return { processed, failed };
+        } catch (error) {
+            const errorMessage = error instanceof Error ? error.message : String(error);
+            this.logger.error(`Error in TV batch generation: ${errorMessage}`);
+            throw error;
+        }
     }
 }

@@ -290,8 +290,13 @@
   - [ ] Автоматический logout при неактивности (timeout)
   - [ ] "Remember me" функционал с refresh tokens
   - [ ] Logout на всех устройствах
-- [ ] **Password security**
-  - [ ] Проверка силы пароля (минимум 8 символов, цифры, спецсимволы)
+- [x] **Password security** ✅ **РЕАЛИЗОВАНО 2026-01-16**
+  - [x] Строгая валидация пароля (минимум 12 символов, требование разных типов)
+  - [x] Индикатор силы пароля с визуальной обратной связью
+  - [x] Защита от распространенных паролей (top 100)
+  - [x] Проверка на sequential и repeated символы
+  - [x] Детальные сообщения об ошибках на RU/EN
+  - [x] Real-time валидация при вводе
   - [ ] Password reset flow с email верификацией
   - [ ] Защита от brute force (rate limiting на login)
 
@@ -381,18 +386,29 @@
 - [ ] **Environment isolation**
   - [ ] Separate database для dev/staging/production
   - [ ] Separate API keys для каждого окружения
-- [ ] **Secrets management**
-  - [ ] Railway/Vercel secrets вместо .env файлов
-  - [ ] Ротация секретов каждые 90 дней
+- [x] **Secrets management** ✅ **РЕАЛИЗОВАНО 2026-01-16**
+  - [x] Comprehensive security audit проведен (SECURITY_AUDIT_REPORT.md)
+  - [x] Выявлены все exposed secrets (4 critical, 2 high-risk)
+  - [x] Создан KEY_ROTATION_GUIDE.md с пошаговыми инструкциями
+  - [x] Обновлен .env.example с безопасными шаблонами
+  - [x] Подтверждено что .env* в .gitignore
+  - [x] Проверено что нет hardcoded secrets в коде
+  - [ ] ⚠️ **ACTION REQUIRED**: Ротация exposed ключей (Supabase, OpenAI, GitHub)
   - [ ] Проверка на случайные коммиты секретов (git-secrets)
+  - [ ] Настройка автоматической ротации каждые 90 дней
 - [ ] **DDoS Protection**
   - [ ] Cloudflare или Railway built-in DDoS protection
   - [ ] Rate limiting на infrastructure уровне
-- [ ] **Security headers**
-  - [ ] X-Frame-Options (защита от clickjacking)
-  - [ ] X-Content-Type-Options
-  - [ ] Referrer-Policy
-  - [ ] Permissions-Policy
+- [x] **Security headers** ✅ **РЕАЛИЗОВАНО 2026-01-16**
+  - [x] Content-Security-Policy (CSP) для защиты от XSS
+  - [x] X-Frame-Options (защита от clickjacking)
+  - [x] X-Content-Type-Options (защита от MIME sniffing)
+  - [x] X-XSS-Protection (legacy XSS фильтр)
+  - [x] Referrer-Policy (контроль referrer information)
+  - [x] Permissions-Policy (ограничение browser features)
+  - [x] Strict-Transport-Security / HSTS (force HTTPS в production)
+  - [x] Тестовый скрипт для проверки заголовков (test-security-headers.js)
+  - [x] Документация (SECURITY_HEADERS.md)
 
 #### 8.8 Security Testing
 - [ ] **Automated security scans**

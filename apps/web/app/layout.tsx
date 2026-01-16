@@ -1,34 +1,11 @@
-import type { Metadata } from "next";
-import localFont from "next/font/local";
-import "./globals.css";
-import { Providers } from "@/lib/providers/Providers";
+import { ReactNode } from 'react';
 
-const geistSans = localFont({
-    src: "./fonts/GeistVF.woff",
-    variable: "--font-geist-sans",
-});
-const geistMono = localFont({
-    src: "./fonts/GeistMonoVF.woff",
-    variable: "--font-geist-mono",
-});
-
-export const metadata: Metadata = {
-    title: "Movie Recommendr - AI-Powered Movie Recommendations",
-    description: "Discover your next favorite movie with AI-powered personalized recommendations",
-};
-
-export default function RootLayout({
-                                       children,
-                                   }: Readonly<{
-    children: React.ReactNode;
-}>) {
-    return (
-        <html lang="en">
-        <body className={`${geistSans.variable} ${geistMono.variable} antialiased`}>
-        <Providers>
-            {children}
-        </Providers>
-        </body>
-        </html>
-    );
+// Это корневой лейаут. В Next.js 14 он обязан содержать теги html и body,
+// чтобы предотвратить ошибку "missing required error components".
+export default function RootLayout({ children }: { children: ReactNode }) {
+  return (
+    <html lang="en">
+      <body>{children}</body>
+    </html>
+  );
 }

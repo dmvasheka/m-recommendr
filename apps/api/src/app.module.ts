@@ -7,6 +7,7 @@ import { RecommendationsModule } from './recommendations/recommendations.module'
 import { RedisModule } from './redis/redis.module';
 // import { QueuesModule } from './queues/queues.module'; // DISABLED: BullMQ workers consuming too much Redis operations (500k/day)
 import { ChatModule } from './chat/chat.module';
+import { TvShowsModule } from './tv-shows/tv-shows.module';
 
 @Module({
     imports: [
@@ -18,6 +19,7 @@ import { ChatModule } from './chat/chat.module';
         RedisModule,
         // QueuesModule, // DISABLED: BullMQ workers consuming too much Redis operations (500k/day)
         ChatModule,
+        TvShowsModule,
     ],
     controllers: [],
     providers: [],

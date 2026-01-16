@@ -4,8 +4,24 @@ import { ChatService } from './chat.service';
 @Controller('chat')
 export class ChatController {
     private readonly logger = new Logger(ChatController.name);
+    private readonly MAX_LIMIT = 100;
+    private readonly DEFAULT_HISTORY_LIMIT = 20;
 
     constructor(private readonly chatService: ChatService) {}
+
+    /**
+     * Parse and validate limit parameter
+     */
+    private parseLimit(limit: string | undefined, defaultValue: number = this.DEFAULT_HISTORY_LIMIT): number {
+        if (!limit) return defaultValue;
+
+        const parsed = parseInt(limit, 10);
+        if (isNaN(parsed) || !isFinite(parsed) || parsed < 1) {
+            return defaultValue;
+        }
+
+        return Math.min(parsed, this.MAX_LIMIT);
+    }
 
     /**
      * POST /api/chat
@@ -55,9 +71,10 @@ export class ChatController {
         @Query('limit') limit?: string
     ) {
         try {
+            const validatedLimit = this.parseLimit(limit);
             const history = await this.chatService.getConversationHistory(
                 userId,
-                limit ? parseInt(limit) : 20
+                validatedLimit
             );
 
             return {

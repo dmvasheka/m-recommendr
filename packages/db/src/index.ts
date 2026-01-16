@@ -10,4 +10,12 @@ export type {
     UserProfile,
     MovieInsert,
     MovieUpdate,
+    TvShow,
+    TvShowInsert,
+    TvShowUpdate,
+    TvSeason,
+    TvSeasonInsert,
+    TvEpisode,
+    TvEpisodeInsert,
+    UserTvWatchlist,
 } from './types';

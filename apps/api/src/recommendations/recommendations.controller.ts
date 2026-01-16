@@ -4,11 +4,25 @@ import { RecommendationsService } from './recommendations.service';
 
 @Controller('recommendations')
 export class RecommendationsController {
-    private readonly logger = new
-    Logger(RecommendationsController.name);
+    private readonly logger = new Logger(RecommendationsController.name);
+    private readonly MAX_LIMIT = 50;
+    private readonly DEFAULT_LIMIT = 10;
 
-    constructor(private readonly recommendationsService:
-                RecommendationsService) {}
+    constructor(private readonly recommendationsService: RecommendationsService) {}
+
+    /**
+     * Parse and validate limit parameter
+     */
+    private parseLimit(limit: string | undefined, defaultValue: number = this.DEFAULT_LIMIT): number {
+        if (!limit) return defaultValue;
+
+        const parsed = parseInt(limit, 10);
+        if (isNaN(parsed) || !isFinite(parsed) || parsed < 1) {
+            return defaultValue;
+        }
+
+        return Math.min(parsed, this.MAX_LIMIT);
+    }
 
     /**
      * GET /api/recommendations?user_id=xxx&limit=10
@@ -21,15 +35,14 @@ export class RecommendationsController {
     ) {
         if (!userId) {
             return { error: 'Query parameter "user_id" is required' };
-            }
+        }
 
-            try {
-                const maxResults = limit ? parseInt(limit, 10)
-                    : 10;
-                const results = await this.recommendationsService.getPersonalizedRecommendations(
-                    userId,
-                    maxResults,
-                );
+        try {
+            const maxResults = this.parseLimit(limit);
+            const results = await this.recommendationsService.getPersonalizedRecommendations(
+                userId,
+                maxResults,
+            );
 
                 return {
                     success: true,
@@ -59,18 +72,16 @@ export class RecommendationsController {
             @Query('user_id') userId: string,
         @Query('limit') limit?: string,
     ) {
-            if (!userId) {
-                return { error: 'Query parameter "user_id" is required' };
-                }
+        if (!userId) {
+            return { error: 'Query parameter "user_id" is required' };
+        }
 
-                try {
-                    const maxResults = limit ? parseInt(limit, 10)
-                        : 10;
-                    const results = await
-                        this.recommendationsService.getHybridRecommendations(
-                            userId,
-                            maxResults,
-                        );
+        try {
+            const maxResults = this.parseLimit(limit);
+            const results = await this.recommendationsService.getHybridRecommendations(
+                userId,
+                maxResults,
+            );
 
                     return {
                         success: true,
@@ -94,15 +105,13 @@ export class RecommendationsController {
              * Get popular movies (fallback for users without
              profile)
              */
-        @Get('popular')
-        async getPopularRecommendations(@Query('limit') limit?: string) {
-                try {
-                    const maxResults = limit ? parseInt(limit, 10)
-                        : 10;
-                    const results = await
-                        this.recommendationsService.getPopularRecommendations(
-                            maxResults,
-                        );
+    @Get('popular')
+    async getPopularRecommendations(@Query('limit') limit?: string) {
+        try {
+            const maxResults = this.parseLimit(limit);
+            const results = await this.recommendationsService.getPopularRecommendations(
+                maxResults,
+            );
 
                     return {
                         success: true,

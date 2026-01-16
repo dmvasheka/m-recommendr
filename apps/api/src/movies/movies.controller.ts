@@ -4,8 +4,56 @@ import {MoviesService, SearchResult} from './movies.service';
 @Controller('movies')
 export class MoviesController {
     private readonly logger = new Logger(MoviesController.name);
+    private readonly MAX_LIMIT = 50;
+    private readonly DEFAULT_LIMIT = 10;
 
     constructor(private readonly moviesService: MoviesService) {}
+
+    /**
+     * Parse and validate limit parameter
+     */
+    private parseLimit(limit: string | undefined, defaultValue: number = this.DEFAULT_LIMIT): number {
+        if (!limit) return defaultValue;
+
+        const parsed = parseInt(limit, 10);
+        if (isNaN(parsed) || !isFinite(parsed) || parsed < 1) {
+            return defaultValue;
+        }
+
+        return Math.min(parsed, this.MAX_LIMIT);
+    }
+
+    /**
+     * GET /api/movies/autocomplete?q=query&limit=10
+     * Fast search for UI autocomplete
+     * MUST be before 'search' and ':id' to avoid conflicts
+     */
+    @Get('autocomplete')
+    async autocomplete(
+        @Query('q') query: string,
+        @Query('limit') limit?: string,
+    ) {
+        if (!query || query.length < 2) {
+            return { success: true, results: [] };
+        }
+
+        try {
+            const maxResults = this.parseLimit(limit);
+            const results = await this.moviesService.autocomplete(query, maxResults);
+
+            return {
+                success: true,
+                count: results.length,
+                results,
+            };
+        } catch (error) {
+            const errorMessage = error instanceof Error ? error.message : String(error);
+            return {
+                success: false,
+                error: errorMessage,
+            };
+        }
+    }
 
     /**
      * GET /api/movies/search?q=query&limit=10
@@ -21,9 +69,8 @@ export class MoviesController {
         }
 
         try {
-            const maxResults = limit ? parseInt(limit, 10) : 10;
-            const results = await this.moviesService.searchMovies(query,
-                maxResults);
+            const maxResults = this.parseLimit(limit);
+            const results = await this.moviesService.searchMovies(query, maxResults);
 
             return {
                 success: true,
@@ -57,9 +104,8 @@ export class MoviesController {
         }
 
         try {
-            const maxResults = limit ? parseInt(limit, 10) : 10;
-            const results = await this.moviesService.getSimilarMovies(movieId,
-                maxResults);
+            const maxResults = this.parseLimit(limit);
+            const results = await this.moviesService.getSimilarMovies(movieId, maxResults);
 
             return {
                 success: true,
@@ -124,11 +170,10 @@ export class MoviesController {
         @Query('pageSize') pageSize?: string,
     ) {
         try {
-            const pageNum = page ? parseInt(page, 10) : 1;
-            const pageSizeNum = pageSize ? parseInt(pageSize, 10) : 20;
+            const pageNum = page ? Math.max(1, parseInt(page, 10) || 1) : 1;
+            const pageSizeNum = this.parseLimit(pageSize, 20);
 
-            const { movies, total } = await this.moviesService.getAllMovies(pageNum,
-                pageSizeNum);
+            const { movies, total } = await this.moviesService.getAllMovies(pageNum, pageSizeNum);
 
             return {
                 success: true,
@@ -153,8 +198,9 @@ export class MoviesController {
     async getSimilarToMultiple(
         @Body() body: { movieIds: number[]; limit?: number }
     ): Promise<SearchResult[]> {
-        const { movieIds, limit = 10 } = body;
-        return this.moviesService.getSimilarToMultiple(movieIds, limit);
+        const { movieIds, limit } = body;
+        const validatedLimit = this.parseLimit(limit?.toString());
+        return this.moviesService.getSimilarToMultiple(movieIds, validatedLimit);
     }
 
     /**

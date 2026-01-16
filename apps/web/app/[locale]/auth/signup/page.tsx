@@ -1,30 +1,50 @@
 'use client'
 
 import { useState } from 'react'
-import { useRouter } from 'next/navigation'
-import Link from 'next/link'
 import { Sparkles } from 'lucide-react'
 import { useAuth } from '@/lib/auth/AuthProvider'
 import { Button } from '@/components/ui/button'
+import { useTranslations } from 'next-intl'
+import { Link, useRouter } from '@/navigation'
+import { PasswordStrengthIndicator, usePasswordValidation } from '@/components/PasswordStrengthIndicator'
 
-export default function LoginPage() {
+export default function SignupPage() {
     const [email, setEmail] = useState('')
     const [password, setPassword] = useState('')
+    const [confirmPassword, setConfirmPassword] = useState('')
     const [error, setError] = useState('')
     const [loading, setLoading] = useState(false)
     const router = useRouter()
-    const { signIn } = useAuth()
+    const { signUp } = useAuth()
+    const t = useTranslations('Auth')
+    const tNav = useTranslations('Navigation')
 
-    const handleLogin = async (e: React.FormEvent) => {
+    // Password validation
+    const passwordValidation = usePasswordValidation(password)
+
+    const handleSignup = async (e: React.FormEvent) => {
         e.preventDefault()
         setError('')
+
+        // Validate password match
+        if (password !== confirmPassword) {
+            setError(t('errors.passwordsMatch'))
+            return
+        }
+
+        // Validate password strength
+        if (!passwordValidation.isValid) {
+            setError(passwordValidation.errors[0] || t('errors.passwordWeak'))
+            return
+        }
+
         setLoading(true)
 
         try {
-            await signIn(email, password)
+            await signUp(email, password)
             router.push('/discover')
         } catch (err) {
-            setError(err instanceof Error ? err.message : 'Failed to sign in')
+            setError(err instanceof Error ? err.message : t('errors.signupFailed'))
         } finally {
             setLoading(false)
         }
@@ -42,10 +62,10 @@ export default function LoginPage() {
                 {/* Card */}
                 <div className="bg-[#1a1a2e]/40 border border-white/10 backdrop-blur-sm rounded-xl p-8">
                     <h1 className="text-3xl font-bold text-white mb-6 text-center">
-                        Welcome Back
+                        {t('signupTitle')}
                     </h1>
 
-                    <form onSubmit={handleLogin} className="space-y-4">
+                    <form onSubmit={handleSignup} className="space-y-4">
                         {error && (
                             <div className="p-3 bg-red-500/20 border border-red-500/30 text-red-400 rounded-lg text-sm">
                                 {error}
@@ -54,7 +74,7 @@ export default function LoginPage() {
 
                         <div>
                             <label htmlFor="email" className="block text-sm font-medium text-white mb-2">
-                                Email
+                                {t('email')}
                             </label>
                             <input
                                 id="email"
@@ -69,7 +89,7 @@ export default function LoginPage() {
 
                         <div>
                             <label htmlFor="password" className="block text-sm font-medium text-white mb-2">
-                                Password
+                                {t('password')}
                             </label>
                             <input
                                 id="password"
@@ -77,6 +97,25 @@ export default function LoginPage() {
                                 required
                                 value={password}
                                 onChange={(e) => setPassword(e.target.value)}
+                                className="w-full px-4 py-3 bg-[#1a1a2e]/60 border border-white/10 text-white placeholder:text-[#9ca3af] rounded-lg focus:outline-none focus:ring-2 focus:ring-[#e50914] focus:border-transparent"
+                                placeholder="••••••••••••"
+                            />
+                            <PasswordStrengthIndicator
+                                password={password}
+                                locale={t('locale')}
+                            />
+                        </div>
+
+                        <div>
+                            <label htmlFor="confirmPassword" className="block text-sm font-medium text-white mb-2">
+                                {t('confirmPassword')}
+                            </label>
+                            <input
+                                id="confirmPassword"
+                                type="password"
+                                required
+                                value={confirmPassword}
+                                onChange={(e) => setConfirmPassword(e.target.value)}
                                 className="w-full px-4 py-3 bg-[#1a1a2e]/60 border border-white/10 text-white placeholder:text-[#9ca3af] rounded-lg focus:outline-none focus:ring-2 focus:ring-[#e50914] focus:border-transparent"
                                 placeholder="••••••••"
                             />
@@ -87,14 +126,14 @@ export default function LoginPage() {
                             disabled={loading}
                             className="w-full bg-[#e50914] hover:bg-[#e50914]/90 text-white font-medium py-3 rounded-lg transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
                         >
-                            {loading ? 'Signing in...' : 'Sign In'}
+                            {loading ? t('creatingAccount') : tNav('signUp')}
                         </Button>
                     </form>
 
                     <p className="mt-6 text-center text-sm text-[#9ca3af]">
-                        Don't have an account?{' '}
-                        <Link href="/auth/signup" className="text-[#e50914] font-medium hover:text-[#e50914]/90 transition-colors">
-                            Sign up
+                        {t('haveAccount')}{' '}
+                        <Link href="/auth/login" className="text-[#e50914] font-medium hover:text-[#e50914]/90 transition-colors">
+                            {tNav('signIn')}
                         </Link>
                     </p>
                 </div>

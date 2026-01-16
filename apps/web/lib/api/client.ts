@@ -39,11 +39,16 @@ class ApiClient {
         return response.movies || []
     }
 
-    async getMovieById(id: number): Promise<Movie> {
-        const response = await this.fetch<{ success: boolean; movie: Movie }>(
-            `/api/movies/${id}`
+    async getMovie(id: number): Promise<Movie> {
+        const data = await this.fetch<{ success: boolean; movie: Movie }>(`/api/movies/${id}`)
+        return data.movie
+    }
+
+    async autocompleteMovies(query: string, limit = 5): Promise<Movie[]> {
+        const data = await this.fetch<{ success: boolean; results: Movie[] }>(
+            `/api/movies/autocomplete?q=${encodeURIComponent(query)}&limit=${limit}`
         )
-        return response.movie
+        return data.results
     }
 
     async searchMovies({ query, limit = 10 }: SearchMoviesParams): Promise<Movie[]> {
@@ -59,6 +64,7 @@ class ApiClient {
         )
         return response.results || []
     }
+
 
     // Watchlist
     async getWatchlist(userId: string, status?: 'planned' | 'watched'): Promise<WatchlistItem[]> {
