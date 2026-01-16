@@ -3,16 +3,17 @@ import {routing} from './routing';
  
 export default getRequestConfig(async ({locale}) => {
   // Validate that the incoming `locale` parameter is valid
-  if (!routing.locales.includes(locale as any)) {
-    locale = routing.defaultLocale;
-  }
- 
-  // Мы используем динамический импорт. 
+  // Ensure we always have a valid string locale
+  const validLocale = (locale && routing.locales.includes(locale as any)
+    ? locale
+    : routing.defaultLocale) as string;
+
+  // Мы используем динамический импорт.
   // Важно: в режиме dev Next.js может кэшировать пустые модули.
-  const messages = (await import(`../messages/${locale}.json`)).default;
+  const messages = (await import(`../messages/${validLocale}.json`)).default;
 
   return {
-    locale,
+    locale: validLocale,
     messages
   };
 });
