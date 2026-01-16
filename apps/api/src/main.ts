@@ -19,10 +19,11 @@ async function bootstrap() {
     const allowedOrigins = process.env.CORS_ORIGIN?.split(',').map(origin => origin.trim()) || ['http://localhost:3002'];
     app.enableCors({
         origin: (origin, callback) => {
-            // Reject requests with no origin when credentials are enabled (CSRF protection)
+            // Allow requests with no origin (same-origin, server-to-server, non-browser clients)
+            // Note: CSRF protection should be handled separately via tokens or SameSite cookies
             if (!origin) {
-                logger.warn('Blocked request with no Origin header (credentials enabled)');
-                return callback(new Error('Not allowed by CORS'));
+                logger.debug('Allowing request with no Origin header (same-origin or non-browser client)');
+                return callback(null, true);
             }
 
             if (allowedOrigins.includes(origin)) {
