@@ -388,11 +388,16 @@
 - [ ] **DDoS Protection**
   - [ ] Cloudflare или Railway built-in DDoS protection
   - [ ] Rate limiting на infrastructure уровне
-- [ ] **Security headers**
-  - [ ] X-Frame-Options (защита от clickjacking)
-  - [ ] X-Content-Type-Options
-  - [ ] Referrer-Policy
-  - [ ] Permissions-Policy
+- [x] **Security headers** ✅ **РЕАЛИЗОВАНО 2026-01-16**
+  - [x] Content-Security-Policy (CSP) для защиты от XSS
+  - [x] X-Frame-Options (защита от clickjacking)
+  - [x] X-Content-Type-Options (защита от MIME sniffing)
+  - [x] X-XSS-Protection (legacy XSS фильтр)
+  - [x] Referrer-Policy (контроль referrer information)
+  - [x] Permissions-Policy (ограничение browser features)
+  - [x] Strict-Transport-Security / HSTS (force HTTPS в production)
+  - [x] Тестовый скрипт для проверки заголовков (test-security-headers.js)
+  - [x] Документация (SECURITY_HEADERS.md)
 
 #### 8.8 Security Testing
 - [ ] **Automated security scans**
