@@ -376,7 +376,7 @@ export interface Database {
         Functions: {
             match_movies: {
                 Args: {
-                    query_embedding: number[]
+                    query_embedding: string
                     match_count?: number
                     filter_ids?: number[] | null
                 }
@@ -394,7 +394,7 @@ export interface Database {
             }
             match_tv_shows: {
                 Args: {
-                    query_embedding: number[]
+                    query_embedding: string
                     match_count?: number
                     filter_ids?: number[] | null
                 }
