@@ -214,22 +214,7 @@ export class TmdbService {
     }
 
     async getPopularTV(page = 1): Promise<TmdbTvSearchResponse> {
-        try {
-            const response = await axios.get<TmdbTvSearchResponse>(
-                `${this.baseUrl}/tv/popular`,
-                {
-                    params: {
-                        api_key: this.apiKey,
-                        page,
-                        language: 'en-US',
-                    },
-                }
-            );
-            return response.data;
-        } catch (error) {
-            this.logger.error(`Error getting popular TV: ${error}`);
-            throw error;
-        }
+        return this.getTVByCategory('popular', page);
     }
 
 
