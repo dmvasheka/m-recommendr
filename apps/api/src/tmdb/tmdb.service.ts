@@ -783,6 +783,13 @@ export class TmdbService {
             }
 
             this.logger.log(`Year ${year} complete: ${imported} imported, ${skipped} skipped`);
+
+            // Generate embeddings for newly imported movies
+            if (imported > 0) {
+                this.logger.log(`🧠 Generating embeddings for ${imported} new movies...`);
+                await this.embeddingsService.generateAllMissingEmbeddings();
+            }
+
             return { imported, skipped };
         } catch (error) {
             const errorMessage = error instanceof Error ? error.message : String(error);
@@ -828,20 +835,36 @@ export class TmdbService {
     }
 
     /**
-     * Import TV shows for a specific year
+     * Import TV shows for a specific year with progress tracking
      */
-    async importTvShowsByYear(year: number, count: number): Promise<{ imported: number; skipped: number }> {
+    async importTvShowsByYear(year: number, count: number, startPage?: number): Promise<{ imported: number; skipped: number; lastPage: number }> {
         try {
-            this.logger.log(`Importing ${count} TV shows from year ${year}`);
+            // Get next page from progress tracker if startPage not provided
+            const nextPage = startPage || (this.importProgressService
+                ? await this.importProgressService.getNextPage('tv_shows', 'by_year', year)
+                : 1);
+
+            this.logger.log(`Importing ${count} TV shows from year ${year} (starting page: ${nextPage})`);
 
             let imported = 0;
             let skipped = 0;
             const tvShowsPerPage = 20;
             const totalPages = Math.ceil(count / tvShowsPerPage);
+            let lastProcessedPage = nextPage - 1;
 
-            for (let page = 1; page <= totalPages; page++) {
+            for (let page = nextPage; page < nextPage + totalPages; page++) {
+                this.logger.debug(`Processing page ${page}...`);
+
                 const response = await this.getTvShowsByYear(year, page);
+
+                if (!response.results || response.results.length === 0) {
+                    this.logger.warn(`No more results for year ${year} at page ${page}`);
+                    break;
+                }
+
                 const tvShows = response.results.slice(0, count - (imported + skipped));
+                let pageImported = 0;
+                let pageSkipped = 0;
 
                 for (const tvShow of tvShows) {
                     try {
@@ -850,17 +873,20 @@ export class TmdbService {
                             .from('tv_shows')
                             .select('id')
                             .eq('id', tvShow.id)
-                            .single();
+                            .maybeSingle();
 
-                        if (!existing) {
-                            await this.importTvShowToDb(tvShow.id);
-                            imported++;
-                            this.logger.log(`Imported: ${tvShow.name} (${imported + skipped}/${count})`);
-                        } else {
+                        if (existing) {
+                            pageSkipped++;
                             skipped++;
                             this.logger.debug(`Skipped: ${tvShow.name} (already exists)`);
+                        } else {
+                            await this.importTvShowToDb(tvShow.id);
+                            pageImported++;
+                            imported++;
+                            this.logger.log(`Imported: ${tvShow.name} (${imported}/${count})`);
                         }
                     } catch (error) {
+                        pageSkipped++;
                         skipped++;
                         this.logger.warn(`Failed to import ${tvShow.name}: ${error}`);
                     }
@@ -868,11 +894,38 @@ export class TmdbService {
                     await new Promise(resolve => setTimeout(resolve, 200));
                 }
 
+                lastProcessedPage = page;
+
+                // Update progress after each page
+                if (this.importProgressService) {
+                    await this.importProgressService.updateProgress(
+                        'tv_shows',
+                        'by_year',
+                        page,
+                        pageImported,
+                        pageSkipped,
+                        year
+                    );
+                }
+
+                // If all TV shows on this page were skipped (duplicates),
+                // consider moving to next year
+                if (pageImported === 0 && pageSkipped > 0) {
+                    this.logger.warn(`Page ${page}: All ${pageSkipped} TV shows skipped (duplicates). Consider switching year.`);
+                }
+
                 if (imported + skipped >= count) break;
             }
 
-            this.logger.log(`Year ${year} complete: ${imported} imported, ${skipped} skipped`);
-            return { imported, skipped };
+            this.logger.log(`Year ${year} complete: ${imported} imported, ${skipped} skipped, last page: ${lastProcessedPage}`);
+
+            // Generate embeddings for newly imported TV shows
+            if (imported > 0) {
+                this.logger.log(`🧠 Generating embeddings for ${imported} new TV shows...`);
+                await this.embeddingsService.generateAllMissingTvEmbeddings();
+            }
+
+            return { imported, skipped, lastPage: lastProcessedPage };
         } catch (error) {
             const errorMessage = error instanceof Error ? error.message : String(error);
             this.logger.error(`Import TV shows for year ${year} error: ${errorMessage}`);

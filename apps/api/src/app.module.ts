@@ -5,7 +5,7 @@ import { MoviesModule } from './movies/movies.module';
 import { WatchlistModule } from './watchlist/watchlist.module';
 import { RecommendationsModule } from './recommendations/recommendations.module';
 import { RedisModule } from './redis/redis.module';
-// import { QueuesModule } from './queues/queues.module'; // DISABLED: BullMQ workers consuming too much Redis operations (500k/day)
+import { QueuesModule } from './queues/queues.module';
 import { ChatModule } from './chat/chat.module';
 import { TvShowsModule } from './tv-shows/tv-shows.module';
 
@@ -17,7 +17,7 @@ import { TvShowsModule } from './tv-shows/tv-shows.module';
         WatchlistModule,
         RecommendationsModule,
         RedisModule,
-        // QueuesModule, // DISABLED: BullMQ workers consuming too much Redis operations (500k/day)
+        QueuesModule,
         ChatModule,
         TvShowsModule,
     ],
