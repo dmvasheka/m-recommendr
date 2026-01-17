@@ -1,8 +1,9 @@
-import { Injectable, Logger } from '@nestjs/common';
+import { Injectable, Logger, Optional, Inject } from '@nestjs/common';
 import axios from 'axios';
 import { supabase } from '@repo/db';
 import type { MovieInsert, TvShowInsert, TvSeasonInsert, TvEpisodeInsert, TvSeason, TvEpisode } from '@repo/db';
 import { EmbeddingsService } from '../embeddings/embeddings.service'; // Import EmbeddingsService
+import { ImportProgressService } from './import-progress.service';
 
 // TMDB API Response types
 export interface TmdbMovie {
@@ -96,8 +97,16 @@ export class TmdbService {
     private readonly apiKey = process.env.TMDB_API_KEY;
     private readonly baseUrl = 'https://api.themoviedb.org/3';
     private readonly imageBaseUrl = 'https://image.tmdb.org/t/p';
+    // Primary language for TMDB API requests
+    private readonly primaryLanguage = process.env.TMDB_LANGUAGE || 'en-US';
 
-    constructor(private readonly embeddingsService: EmbeddingsService) {}
+    // Languages to fetch for translations (priority order)
+    private readonly translationLanguages = ['en-US', 'ru-RU', 'uk-UA'];
+
+    constructor(
+        private readonly embeddingsService: EmbeddingsService,
+        @Optional() private readonly importProgressService?: ImportProgressService,
+    ) {}
 
     onModuleInit() {
         if (!this.apiKey) {
@@ -117,7 +126,7 @@ export class TmdbService {
                         api_key: this.apiKey,
                         query,
                         page,
-                        language: 'en-US',
+                        language: this.primaryLanguage,
                     },
                     timeout: 10000,
                 }
@@ -142,7 +151,7 @@ export class TmdbService {
                         api_key: this.apiKey,
                         query,
                         page,
-                        language: 'en-US',
+                        language: this.primaryLanguage,
                     },
                     timeout: 10000,
                 }
@@ -165,7 +174,7 @@ export class TmdbService {
                 {
                     params: {
                         api_key: this.apiKey,
-                        language: 'en-US',
+                        language: this.primaryLanguage,
                     },
                     timeout: 10000,
                 }
@@ -188,7 +197,7 @@ export class TmdbService {
                 {
                     params: {
                         api_key: this.apiKey,
-                        language: 'en-US',
+                        language: this.primaryLanguage,
                     },
                     timeout: 10000,
                 }
@@ -208,7 +217,7 @@ export class TmdbService {
                 {
                     params: {
                         api_key: this.apiKey,
-                        language: 'en-US',
+                        language: this.primaryLanguage,
                     },
                     timeout: 10000,
                 }
@@ -262,7 +271,7 @@ export class TmdbService {
                     params: {
                         api_key: this.apiKey,
                         page,
-                        language: 'en-US',
+                        language: this.primaryLanguage,
                     },
                     timeout: 10000,
                 }
@@ -288,7 +297,7 @@ export class TmdbService {
                     params: {
                         api_key: this.apiKey,
                         page,
-                        language: 'en-US',
+                        language: this.primaryLanguage,
                     },
                     timeout: 10000,
                 }
@@ -301,6 +310,93 @@ export class TmdbService {
             this.logger.error(`Error fetching ${category} TV shows: ${errorMessage}`);
             throw error;
         }
+    }
+
+    /**
+     * Fetch movie translations in multiple languages
+     */
+    async getMovieTranslations(movieId: number): Promise<Record<string, any>> {
+        const translations: Record<string, any> = {};
+
+        this.logger.log(`🌐 Fetching translations for movie ${movieId} in languages: ${this.translationLanguages.join(', ')}`);
+
+        for (const lang of this.translationLanguages) {
+            try {
+                const response = await axios.get<TmdbMovieDetails>(
+                    `${this.baseUrl}/movie/${movieId}`,
+                    {
+                        params: {
+                            api_key: this.apiKey,
+                            language: lang,
+                        },
+                        timeout: 10000,
+                    }
+                );
+
+                const data = response.data;
+                const langCode = lang.split('-')[0]; // 'en-US' -> 'en', 'ru-RU' -> 'ru'
+
+                translations[langCode] = {
+                    title: data.title,
+                    description: data.overview || null,
+                    tagline: data.tagline || null,
+                };
+
+                this.logger.log(`✅ Fetched ${langCode} translation for movie ${movieId}: "${data.title}"`);
+
+                // Small delay between requests
+                await new Promise(resolve => setTimeout(resolve, 100));
+            } catch (error) {
+                const errorMessage = error instanceof Error ? error.message : String(error);
+                this.logger.error(`❌ Could not fetch ${lang} translation for movie ${movieId}: ${errorMessage}`);
+            }
+        }
+
+        this.logger.log(`📦 Returning ${Object.keys(translations).length} translations for movie ${movieId}`);
+        return translations;
+    }
+
+    /**
+     * Fetch TV show translations in multiple languages
+     */
+    async getTvTranslations(tvId: number): Promise<Record<string, any>> {
+        const translations: Record<string, any> = {};
+
+        this.logger.log(`🌐 Fetching translations for TV ${tvId} in languages: ${this.translationLanguages.join(', ')}`);
+
+        for (const lang of this.translationLanguages) {
+            try {
+                const response = await axios.get<TmdbTvDetails>(
+                    `${this.baseUrl}/tv/${tvId}`,
+                    {
+                        params: {
+                            api_key: this.apiKey,
+                            language: lang,
+                        },
+                        timeout: 10000,
+                    }
+                );
+
+                const data = response.data;
+                const langCode = lang.split('-')[0]; // 'en-US' -> 'en'
+
+                translations[langCode] = {
+                    name: data.name,
+                    overview: data.overview || null,
+                    tagline: data.tagline || null,
+                };
+
+                this.logger.log(`✅ Fetched ${langCode} translation for TV ${tvId}: "${data.name}"`);
+
+                await new Promise(resolve => setTimeout(resolve, 100));
+            } catch (error) {
+                const errorMessage = error instanceof Error ? error.message : String(error);
+                this.logger.error(`❌ Could not fetch ${lang} translation for TV ${tvId}: ${errorMessage}`);
+            }
+        }
+
+        this.logger.log(`📦 Returning ${Object.keys(translations).length} translations for TV ${tvId}`);
+        return translations;
     }
 
     /**
@@ -412,14 +508,15 @@ export class TmdbService {
     }
 
     /**
-     * Import TV Show to DB
+     * Import TV Show to DB with translations
      */
     async importTvShowToDb(tvId: number, background: boolean = true): Promise<TvShowInsert> {
         try {
             const tmdbTv = await this.getTVDetails(tvId);
-            const [keywords, credits] = await Promise.all([
+            const [keywords, credits, translations] = await Promise.all([
                 this.getTvKeywords(tvId),
                 this.getTvCredits(tvId),
+                this.getTvTranslations(tvId),
             ]);
 
             const tvData: TvShowInsert = {
@@ -445,6 +542,7 @@ export class TmdbService {
                 crew: credits.crew.length > 0 ? JSON.stringify(credits.crew) : null,
                 production_companies: tmdbTv.production_companies?.map((c: any) => c.name) || null,
                 embedding: null,
+                translations: translations as any, // 🆕 Store translations for multiple languages
             };
 
             const { data, error } = await supabase
@@ -560,15 +658,16 @@ export class TmdbService {
     }
 
     /**
-     * Import movie from TMDB to our database
+     * Import movie from TMDB to our database with translations
      */
     async importMovieToDb(movieId: number): Promise<MovieInsert> {
         try {
             // 1. Get full movie details from TMDB
             const tmdbMovie = await this.getMovieDetails(movieId);
-            const [keywords, credits] = await Promise.all([
+            const [keywords, credits, translations] = await Promise.all([
                 this.getMovieKeywords(movieId),
                 this.getMovieCredits(movieId),
+                this.getMovieTranslations(movieId),
             ]);
 
             // 2. Transform TMDB data to our database format
@@ -596,7 +695,7 @@ export class TmdbService {
                 movie_cast: credits.cast.length > 0 ? JSON.stringify(credits.cast) : null,
                 crew: credits.crew.length > 0 ? JSON.stringify(credits.crew) : null,
                 production_companies: tmdbMovie.production_companies?.map((c: any) => c.name) || null,
-
+                translations: translations as any, // 🆕 Store translations for multiple languages
             };
 
             // 3. Insert or update in database
@@ -640,7 +739,7 @@ export class TmdbService {
                         primary_release_year: year,
                         sort_by: 'popularity.desc',
                         page,
-                        language: 'en-US',
+                        language: this.primaryLanguage,
                     },
                 }
             );
@@ -714,7 +813,7 @@ export class TmdbService {
                         first_air_date_year: year,
                         sort_by: 'popularity.desc',
                         page,
-                        language: 'en-US',
+                        language: this.primaryLanguage,
                     },
                 }
             );
@@ -782,42 +881,100 @@ export class TmdbService {
     }
 
     /**
-     * Import multiple movies to database by category
+     * Import multiple movies to database by category with progress tracking
      */
-    async importMovies(category: string, count: number, startPage = 1): Promise<{ imported: number; skipped: number }> {
+    async importMovies(
+        category: string,
+        count: number,
+        startPage?: number
+    ): Promise<{ imported: number; skipped: number; lastPage: number }> {
         try {
-            this.logger.log(`Importing ${count} ${category} movies from TMDB (starting page: ${startPage})`);
+            // Get next page from progress tracker if startPage not provided
+            const nextPage = startPage || (this.importProgressService
+                ? await this.importProgressService.getNextPage('movies', category)
+                : 1);
+
+            this.logger.log(`Importing ${count} ${category} movies from TMDB (starting page: ${nextPage})`);
 
             let imported = 0;
             let skipped = 0;
             const moviesPerPage = 20;
             const totalPages = Math.ceil(count / moviesPerPage);
+            let lastProcessedPage = nextPage - 1;
 
-            for (let page = startPage; page < startPage + totalPages; page++) {
+            for (let page = nextPage; page < nextPage + totalPages; page++) {
+                this.logger.debug(`Processing page ${page}...`);
+
                 const response = await this.getMoviesByCategory(category, page);
 
+                if (!response.results || response.results.length === 0) {
+                    this.logger.warn(`No more results for ${category} at page ${page}`);
+                    break;
+                }
+
                 const movies = response.results.slice(0, count - (imported + skipped));
+                let pageImported = 0;
+                let pageSkipped = 0;
 
                 for (const movie of movies) {
                     try {
-                        await this.importMovieToDb(movie.id);
-                        imported++;
-                        this.logger.log(`Imported: ${movie.title} (${imported}/${count})`);
+                        // Check if movie already exists before importing
+                        const { data: existing } = await supabase
+                            .from('movies')
+                            .select('id')
+                            .eq('id', movie.id)
+                            .maybeSingle();
+
+                        if (existing) {
+                            pageSkipped++;
+                            skipped++;
+                            this.logger.debug(`Skipped: ${movie.title} (already exists)`);
+                        } else {
+                            await this.importMovieToDb(movie.id);
+                            pageImported++;
+                            imported++;
+                            this.logger.log(`Imported: ${movie.title} (${imported}/${count})`);
+                        }
                     } catch (error) {
+                        pageSkipped++;
                         skipped++;
-                        this.logger.warn(`Skipped: ${movie.title} (already exists or error)`);
+                        this.logger.warn(`Failed: ${movie.title}`);
                     }
 
-                    // Rate limiting: небольшая задержка между запросами
-                    await new Promise(resolve => setTimeout(resolve, 100));
+                    // Rate limiting: delay between requests
+                    await new Promise(resolve => setTimeout(resolve, 250));
+                }
+
+                lastProcessedPage = page;
+
+                // Update progress after each page
+                if (this.importProgressService) {
+                    await this.importProgressService.updateProgress(
+                        'movies',
+                        category,
+                        page,
+                        pageImported,
+                        pageSkipped
+                    );
+                }
+
+                // If all movies on this page were skipped (duplicates),
+                // consider moving to next category/year
+                if (pageImported === 0 && pageSkipped > 0) {
+                    this.logger.warn(`Page ${page}: All ${pageSkipped} movies skipped (duplicates). Consider switching category/year.`);
                 }
 
                 if (imported + skipped >= count) break;
             }
 
-            this.logger.log(`Import complete: ${imported} imported, ${skipped} skipped`);
-            await this.embeddingsService.generateAllMissingEmbeddings(); // Call embeddings service
-            return { imported, skipped }; // 👈 Возвращаем результат
+            this.logger.log(`Import complete: ${imported} imported, ${skipped} skipped, last page: ${lastProcessedPage}`);
+
+            // Generate embeddings for newly imported movies
+            if (imported > 0) {
+                await this.embeddingsService.generateAllMissingEmbeddings();
+            }
+
+            return { imported, skipped, lastPage: lastProcessedPage };
         } catch (error) {
             const errorMessage = error instanceof Error ? error.message : String(error);
             this.logger.error(`Import ${category} movies error: ${errorMessage}`);

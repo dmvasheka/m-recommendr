@@ -52,6 +52,7 @@ export interface Database {
                     movie_cast: Json | null
                     crew: Json | null
                     production_companies: string[] | null
+                    translations: Json | null
                     created_at: string
                     updated_at: string
                 }
@@ -74,6 +75,7 @@ export interface Database {
                     movie_cast?: Json | null
                     crew?: Json | null
                     production_companies?: string[] | null
+                    translations?: Json | null
                     created_at?: string
                     updated_at?: string
                 }
@@ -96,6 +98,7 @@ export interface Database {
                     movie_cast?: Json | null
                     crew?: Json | null
                     production_companies?: string[] | null
+                    translations?: Json | null
                     created_at?: string
                     updated_at?: string
                 }
@@ -124,6 +127,7 @@ export interface Database {
                     crew: Json | null
                     production_companies: string[] | null
                     embedding: number[] | null
+                    translations: Json | null
                     created_at: string
                     updated_at: string
                 }
@@ -150,6 +154,7 @@ export interface Database {
                     crew?: Json | null
                     production_companies?: string[] | null
                     embedding?: number[] | null
+                    translations?: Json | null
                     created_at?: string
                     updated_at?: string
                 }
@@ -176,6 +181,7 @@ export interface Database {
                     crew?: Json | null
                     production_companies?: string[] | null
                     embedding?: number[] | null
+                    translations?: Json | null
                     created_at?: string
                     updated_at?: string
                 }
