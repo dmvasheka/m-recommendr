@@ -241,6 +241,132 @@ export class QueuesController {
     }
 
     /**
+     * POST /api/queues/rotational-movie-import
+     * Запустить ротационный импорт фильмов (автоматически выбирает следующую категорию)
+     */
+    @Post('rotational-movie-import')
+    async rotationalMovieImport(@Body() body: { count?: number }) {
+        try {
+            const count = body.count || 50;
+            const job = await this.queuesService.addRotationalMovieImportJob(count);
+
+            return {
+                success: true,
+                message: 'Rotational movie import job added to queue',
+                jobId: job.id,
+                count,
+            };
+        } catch (error) {
+            const errorMessage = error instanceof Error ? error.message : String(error);
+            return {
+                success: false,
+                error: errorMessage,
+            };
+        }
+    }
+
+    /**
+     * POST /api/queues/rotational-tv-import
+     * Запустить ротационный импорт сериалов (автоматически выбирает следующую категорию)
+     */
+    @Post('rotational-tv-import')
+    async rotationalTvImport(@Body() body: { count?: number }) {
+        try {
+            const count = body.count || 50;
+            const job = await this.queuesService.addRotationalTvImportJob(count);
+
+            return {
+                success: true,
+                message: 'Rotational TV import job added to queue',
+                jobId: job.id,
+                count,
+            };
+        } catch (error) {
+            const errorMessage = error instanceof Error ? error.message : String(error);
+            return {
+                success: false,
+                error: errorMessage,
+            };
+        }
+    }
+
+    /**
+     * POST /api/queues/schedule-rotational-movie-import
+     * Запланировать автоматический ротационный импорт фильмов
+     */
+    @Post('schedule-rotational-movie-import')
+    async scheduleRotationalMovieImport(
+        @Body() body: { cronExpression: string; count: number }
+    ) {
+        try {
+            await this.queuesService.scheduleRotationalMovieImport(
+                body.cronExpression,
+                body.count
+            );
+
+            return {
+                success: true,
+                message: `Scheduled rotational movie import: ${body.cronExpression} (${body.count} per run)`,
+            };
+        } catch (error) {
+            const errorMessage = error instanceof Error ? error.message : String(error);
+            return {
+                success: false,
+                error: errorMessage,
+            };
+        }
+    }
+
+    /**
+     * POST /api/queues/schedule-rotational-tv-import
+     * Запланировать автоматический ротационный импорт TV shows
+     */
+    @Post('schedule-rotational-tv-import')
+    async scheduleRotationalTvImport(
+        @Body() body: { cronExpression: string; count: number }
+    ) {
+        try {
+            await this.queuesService.scheduleRotationalTvImport(
+                body.cronExpression,
+                body.count
+            );
+
+            return {
+                success: true,
+                message: `Scheduled rotational TV import: ${body.cronExpression} (${body.count} per run)`,
+            };
+        } catch (error) {
+            const errorMessage = error instanceof Error ? error.message : String(error);
+            return {
+                success: false,
+                error: errorMessage,
+            };
+        }
+    }
+
+    /**
+     * GET /api/queues/rotation-status
+     * Получить статус ротации категорий
+     */
+    @Get('rotation-status')
+    async getRotationStatus() {
+        try {
+            const status = await this.queuesService.getRotationStatus();
+
+            return {
+                success: true,
+                rotation: status,
+            };
+        } catch (error) {
+            const errorMessage = error instanceof Error ? error.message : String(error);
+            return {
+                success: false,
+                error: errorMessage,
+            };
+        }
+    }
+
+    /**
      * POST /api/queues/clean
      * Очистить завершённые задачи
      */

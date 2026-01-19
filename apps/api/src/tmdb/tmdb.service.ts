@@ -1034,4 +1034,106 @@ export class TmdbService {
             throw error;
         }
     }
+
+    /**
+     * Import TV shows by category with progress tracking
+     */
+    async importTvShows(
+        category: string,
+        count: number,
+        startPage?: number
+    ): Promise<{ imported: number; skipped: number; lastPage: number }> {
+        try {
+            // Get next page from progress tracker if startPage not provided
+            const nextPage = startPage || (this.importProgressService
+                ? await this.importProgressService.getNextPage('tv_shows', category)
+                : 1);
+
+            this.logger.log(`Importing ${count} ${category} TV shows from TMDB (starting page: ${nextPage})`);
+
+            let imported = 0;
+            let skipped = 0;
+            const tvShowsPerPage = 20;
+            const totalPages = Math.ceil(count / tvShowsPerPage);
+            let lastProcessedPage = nextPage - 1;
+
+            for (let page = nextPage; page < nextPage + totalPages; page++) {
+                this.logger.debug(`Processing page ${page}...`);
+
+                const response = await this.getTVByCategory(category, page);
+
+                if (!response.results || response.results.length === 0) {
+                    this.logger.warn(`No more results for ${category} TV shows at page ${page}`);
+                    break;
+                }
+
+                const tvShows = response.results.slice(0, count - (imported + skipped));
+                let pageImported = 0;
+                let pageSkipped = 0;
+
+                for (const tvShow of tvShows) {
+                    try {
+                        // Check if TV show already exists before importing
+                        const { data: existing } = await supabase
+                            .from('tv_shows')
+                            .select('id')
+                            .eq('id', tvShow.id)
+                            .maybeSingle();
+
+                        if (existing) {
+                            pageSkipped++;
+                            skipped++;
+                            this.logger.debug(`Skipped: ${tvShow.name} (already exists)`);
+                        } else {
+                            await this.importTvShowToDb(tvShow.id);
+                            pageImported++;
+                            imported++;
+                            this.logger.log(`Imported: ${tvShow.name} (${imported}/${count})`);
+                        }
+                    } catch (error) {
+                        pageSkipped++;
+                        skipped++;
+                        this.logger.warn(`Failed: ${tvShow.name}`);
+                    }
+
+                    // Rate limiting: delay between requests
+                    await new Promise(resolve => setTimeout(resolve, 250));
+                }
+
+                lastProcessedPage = page;
+
+                // Update progress after each page
+                if (this.importProgressService) {
+                    await this.importProgressService.updateProgress(
+                        'tv_shows',
+                        category,
+                        page,
+                        pageImported,
+                        pageSkipped
+                    );
+                }
+
+                // If all TV shows on this page were skipped (duplicates),
+                // consider moving to next category
+                if (pageImported === 0 && pageSkipped > 0) {
+                    this.logger.warn(`Page ${page}: All ${pageSkipped} TV shows skipped (duplicates). Consider switching category.`);
+                }
+
+                if (imported + skipped >= count) break;
+            }
+
+            this.logger.log(`TV import complete: ${imported} imported, ${skipped} skipped, last page: ${lastProcessedPage}`);
+
+            // Generate embeddings for newly imported TV shows
+            if (imported > 0) {
+                await this.embeddingsService.generateAllMissingTvEmbeddings();
+            }
+
+            return { imported, skipped, lastPage: lastProcessedPage };
+        } catch (error) {
+            const errorMessage = error instanceof Error ? error.message : String(error);
+            this.logger.error(`Import ${category} TV shows error: ${errorMessage}`);
+            throw error;
+        }
+    }
 }

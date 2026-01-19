@@ -13,16 +13,32 @@ export class TvImportProcessor extends WorkerHost {
     }
 
     async process(job: Job<TvImportJob>): Promise<any> {
-        const { year, count, page } = job.data;
+        const { year, count, page, category } = job.data;
 
-        this.logger.log(`📺 Starting TV show import: ${count} shows for year ${year} (page: ${page || 1})`);
+        if (category) {
+            this.logger.log(`📺 Starting TV show import: ${count} shows from category '${category}' (page: ${page || 'auto'})`);
+        } else if (year) {
+            this.logger.log(`📺 Starting TV show import: ${count} shows for year ${year} (page: ${page || 1})`);
+        } else {
+            this.logger.log(`📺 Starting TV show import: ${count} shows (page: ${page || 1})`);
+        }
 
         try {
             // Update progress
             await job.updateProgress(0);
 
             // Import TV shows
-            const result = await this.tmdbService.importTvShowsByYear(year, count, page);
+            let result;
+            if (category) {
+                // Import by category with rotation
+                result = await this.tmdbService.importTvShows(category, count, page);
+            } else if (year) {
+                // Import by year
+                result = await this.tmdbService.importTvShowsByYear(year, count, page);
+            } else {
+                // If no category and no year, throw error
+                throw new Error('Either category or year must be specified for TV show import');
+            }
 
             await job.updateProgress(100);
 
@@ -33,6 +49,7 @@ export class TvImportProcessor extends WorkerHost {
                 imported: result.imported,
                 skipped: result.skipped,
                 lastPage: result.lastPage,
+                category: category || undefined,
             };
         } catch (error) {
             const errorMessage = error instanceof Error ? error.message : String(error);

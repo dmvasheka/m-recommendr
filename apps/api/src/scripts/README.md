@@ -1,11 +1,12 @@
-# Translation Update Scripts
+# API Scripts
 
-Scripts for updating translations in the database for existing movies and TV shows.
+Collection of scripts for managing imports, translations, and other tasks.
 
 ## Prerequisites
 
 - TMDB API key configured in `.env` file
 - Supabase connection configured
+- Redis running (for BullMQ queues)
 - Node.js 18+ with tsx/ts-node
 
 ## update-translations.ts
@@ -149,6 +150,180 @@ Translations are stored in JSONB format:
     "tagline": "Страх триматиме вас у полоні. Надія може вас звільнити."
   }
 }
+```
+
+## setup-cron.ts
+
+Script for setting up automatic rotational import schedules using cron expressions.
+
+### What is Rotational Import?
+
+Rotational import automatically cycles through different TMDB categories to ensure diverse content:
+- **Movies**: popular → top_rated → now_playing → upcoming → (repeat)
+- **TV Shows**: popular → top_rated → (repeat)
+
+Each category tracks its progress separately, preventing duplicate imports.
+
+### Usage
+
+**View schedule information:**
+```bash
+npx tsx src/scripts/setup-cron.ts
+```
+
+**Setup cron schedules:**
+```bash
+npx tsx src/scripts/setup-cron.ts --setup
+```
+
+### Recommended Schedules
+
+**Movies (Rotational):**
+- Frequency: Every 8 hours
+- Count: 100 movies per run
+- Rotation: Automatically cycles through all 4 categories
+- Example: `0 */8 * * *`
+
+**TV Shows (Rotational):**
+- Frequency: Daily at 2 AM
+- Count: 80 TV shows per run
+- Rotation: Automatically cycles through 2 categories
+- Example: `0 2 * * *`
+
+### Alternative Schedules
+
+```bash
+# More frequent movie imports (every 6 hours)
+curl -X POST http://localhost:3001/api/queues/schedule-rotational-movie-import \
+  -H "Content-Type: application/json" \
+  -d '{"cronExpression": "0 */6 * * *", "count": 80}'
+
+# Less frequent movie imports (every 12 hours)
+curl -X POST http://localhost:3001/api/queues/schedule-rotational-movie-import \
+  -H "Content-Type: application/json" \
+  -d '{"cronExpression": "0 */12 * * *", "count": 150}'
+
+# TV shows twice daily
+curl -X POST http://localhost:3001/api/queues/schedule-rotational-tv-import \
+  -H "Content-Type: application/json" \
+  -d '{"cronExpression": "0 2,14 * * *", "count": 50}'
+```
+
+### Manual Import Triggers
+
+**Start a rotational import now:**
+```bash
+# Movies (will import from next category in rotation)
+curl -X POST http://localhost:3001/api/queues/rotational-movie-import \
+  -H "Content-Type: application/json" \
+  -d '{"count": 50}'
+
+# TV Shows
+curl -X POST http://localhost:3001/api/queues/rotational-tv-import \
+  -H "Content-Type: application/json" \
+  -d '{"count": 50}'
+```
+
+### Monitoring
+
+**Check rotation status:**
+```bash
+curl http://localhost:3001/api/queues/rotation-status
+
+# Example response:
+{
+  "success": true,
+  "rotation": {
+    "movies": {
+      "lastCategory": "popular",
+      "nextCategory": "top_rated",
+      "lastRun": "2026-01-20T00:00:00.000Z"
+    },
+    "tv_shows": {
+      "lastCategory": "popular",
+      "nextCategory": "top_rated",
+      "lastRun": "2026-01-20T02:00:00.000Z"
+    }
+  }
+}
+```
+
+**Check queue statistics:**
+```bash
+curl http://localhost:3001/api/queues/stats
+
+# Example response:
+{
+  "success": true,
+  "stats": {
+    "movieImport": { "waiting": 0, "active": 1, "completed": 45, "failed": 0 },
+    "tvImport": { "waiting": 2, "active": 1, "completed": 28, "failed": 0 },
+    "embeddings": { "waiting": 0, "active": 0, "completed": 1675, "failed": 0 }
+  }
+}
+```
+
+### How It Works
+
+1. **Category Selection**: System automatically selects next category in rotation
+2. **Progress Tracking**: Each category has its own `import_progress` record tracking last imported page
+3. **Duplicate Prevention**: Checks database before importing to skip existing content
+4. **Smart Skip Detection**: Warns when >80% of items are skipped (all content already imported)
+5. **Auto Rotation**: Next scheduled run will use the next category in rotation
+
+### Cron Expression Reference
+
+```
+ * * * * *
+ │ │ │ │ │
+ │ │ │ │ └─── day of week (0-7, Sunday=0 or 7)
+ │ │ │ └───── month (1-12)
+ │ │ └─────── day of month (1-31)
+ │ └───────── hour (0-23)
+ └─────────── minute (0-59)
+```
+
+**Common Patterns:**
+- `0 */6 * * *` - Every 6 hours
+- `0 */8 * * *` - Every 8 hours
+- `0 */12 * * *` - Every 12 hours
+- `0 2 * * *` - Daily at 2 AM
+- `0 2,14 * * *` - At 2 AM and 2 PM
+- `0 0 * * 0` - Weekly on Sundays at midnight
+
+### Troubleshooting
+
+**Cron not triggering:**
+1. Check Redis is running: `redis-cli ping`
+2. Check server logs for BullMQ errors
+3. Verify schedules: `curl http://localhost:3001/api/queues/stats`
+
+**Too many duplicates:**
+- This is normal behavior - rotational import will automatically move to next category
+- Check logs for: `⚠️ Page X: All Y items skipped (duplicates)`
+- Next category will have fresh content
+
+**High API usage:**
+- Reduce frequency: change from every 6h to every 12h
+- Reduce count: change from 100 to 50 items per run
+- Built-in rate limiting: 250ms delay between requests
+
+### Rate Limiting
+
+Built-in rate limiting to respect TMDB API limits:
+- **250ms** delay between movie/TV show imports
+- Automatic retry on API errors (3 attempts with exponential backoff)
+- Progress saved after each page to prevent data loss
+
+### Database Tables
+
+**import_progress**:
+```sql
+content_type | category   | year | last_page | total_imported | total_skipped | last_run
+-------------|------------|------|-----------|----------------|---------------|---------------------
+movies       | popular    | NULL | 25        | 450            | 50             | 2026-01-20 08:00:00
+movies       | top_rated  | NULL | 18        | 340            | 20             | 2026-01-20 00:00:00
+tv_shows     | popular    | NULL | 12        | 230            | 10             | 2026-01-20 02:00:00
 ```
 
 ## Next Steps
