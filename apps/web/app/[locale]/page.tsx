@@ -1,6 +1,6 @@
 'use client'
 
-import { Search } from "lucide-react"
+import { Search, Sparkles } from "lucide-react"
 import { Button } from "@/components/ui/button"
 import { NewMovieCard } from "@/components/NewMovieCard"
 import { Navigation } from "@/components/Navigation"
