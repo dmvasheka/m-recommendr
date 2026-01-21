@@ -8,6 +8,7 @@ import { RedisModule } from './redis/redis.module';
 import { QueuesModule } from './queues/queues.module';
 import { ChatModule } from './chat/chat.module';
 import { TvShowsModule } from './tv-shows/tv-shows.module';
+import { UsersModule } from './users/users.module';
 
 @Module({
     imports: [
@@ -20,6 +21,7 @@ import { TvShowsModule } from './tv-shows/tv-shows.module';
         QueuesModule,
         ChatModule,
         TvShowsModule,
+        UsersModule,
     ],
     controllers: [],
     providers: [],
