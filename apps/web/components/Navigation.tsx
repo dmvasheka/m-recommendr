@@ -3,20 +3,13 @@
 import { Sparkles, Bookmark } from "lucide-react"
 import { Button } from "@/components/ui/button"
 import { useAuth } from "@/lib/auth/AuthProvider"
-import { useTranslations, useLocale } from 'next-intl'
-import { Link, useRouter, usePathname } from '@/navigation'
+import { useTranslations } from 'next-intl'
+import { Link } from '@/navigation'
+import { LanguageSwitcher } from './LanguageSwitcher'
 
 export function Navigation() {
   const { user } = useAuth()
-  const locale = useLocale()
   const t = useTranslations('Navigation')
-  const router = useRouter()
-  const pathname = usePathname()
-
-  const toggleLocale = () => {
-    const nextLocale = locale === 'en' ? 'ru' : 'en'
-    router.replace(pathname, { locale: nextLocale })
-  }
 
   return (
     <nav className="fixed top-0 left-0 right-0 z-50 border-b border-white/5 bg-[#0a0a0f]/80 backdrop-blur-xl">
@@ -43,12 +36,7 @@ export function Navigation() {
           )}
         </div>
         <div className="flex items-center gap-3">
-          <button
-              onClick={toggleLocale}
-              className="px-2 py-1 text-xs font-bold border border-white/20 rounded text-white hover:bg-white/10 uppercase mr-2"
-          >
-              {locale === 'en' ? 'ru' : 'en'}
-          </button>
+          <LanguageSwitcher />
 
           {user ? (
             <>
@@ -62,7 +50,7 @@ export function Navigation() {
                 href="/chat"
                 className="hidden sm:block text-sm text-[#9ca3af] hover:text-white transition-colors"
               >
-                AI Chat
+                {t('chat')}
               </Link>
             </>
           ) : (
