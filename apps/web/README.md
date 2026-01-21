@@ -31,6 +31,30 @@ You can check out [the Next.js GitHub repository](https://github.com/vercel/next
 
 ## Deploy on Vercel
 
-The easiest way to deploy your Next.js app is to use the [Vercel Platform](https://vercel.com/new?utm_medium=default-template&filter=next.js&utm_source=create-next-app&utm_campaign=create-next-app-readme) from the creators of Next.js.
+This project is part of a Turbo monorepo. Follow these steps to deploy:
 
-Check out our [Next.js deployment documentation](https://nextjs.org/docs/app/building-your-application/deploying) for more details.
+### 1. Import Project
+Import your repository to Vercel: https://vercel.com/new
+
+### 2. Configure Project Settings
+In the Vercel project configuration:
+
+- **Framework Preset**: Next.js
+- **Root Directory**: `apps/web` (important for monorepo)
+- **Build Command**: Leave empty (Vercel will auto-detect via turbo.json)
+- **Install Command**: Leave empty (will use `pnpm install` automatically)
+- **Output Directory**: Leave as default (`.next`)
+
+### 3. Environment Variables
+Add the following environment variables in Vercel dashboard:
+- `NEXT_PUBLIC_SUPABASE_URL` - Your Supabase project URL
+- `NEXT_PUBLIC_SUPABASE_ANON_KEY` - Your Supabase anon key
+- `NEXT_PUBLIC_API_URL` - Your API URL (optional, if using separate backend)
+
+### 4. Deploy
+Click "Deploy" and Vercel will automatically build using Turbo!
+
+### Troubleshooting
+- Make sure `pnpm-workspace.yaml` exists in the root
+- Verify `turbo.json` is configured correctly
+- Check that all workspace dependencies (`@repo/*`) are properly linked

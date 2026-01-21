@@ -3,10 +3,10 @@ import {routing} from './routing';
  
 export default getRequestConfig(async ({locale}) => {
   // Validate that the incoming `locale` parameter is valid
-  let validLocale: string = locale ?? routing.defaultLocale;
-  if (!routing.locales.includes(validLocale as any)) {
-    validLocale = routing.defaultLocale;
-  }
+  // Ensure we always have a valid string locale
+  const validLocale = (locale && routing.locales.includes(locale as any)
+    ? locale
+    : routing.defaultLocale) as string;
 
   // Мы используем динамический импорт.
   // Важно: в режиме dev Next.js может кэшировать пустые модули.

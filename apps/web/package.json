@@ -8,7 +8,8 @@
     "build": "next build",
     "start": "next start",
     "lint": "eslint --max-warnings 0",
-    "check-types": "next typegen && tsc --noEmit"
+    "check-types": "next typegen && tsc --noEmit",
+    "test:security": "node test-security-headers.js"
   },
   "dependencies": {
     "@radix-ui/react-slot": "^1.2.4",

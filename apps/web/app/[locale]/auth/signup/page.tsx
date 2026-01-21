@@ -6,6 +6,7 @@ import { useAuth } from '@/lib/auth/AuthProvider'
 import { Button } from '@/components/ui/button'
 import { useTranslations } from 'next-intl'
 import { Link, useRouter } from '@/navigation'
+import { PasswordStrengthIndicator, usePasswordValidation } from '@/components/PasswordStrengthIndicator'
 
 export default function SignupPage() {
     const [email, setEmail] = useState('')
@@ -18,17 +19,22 @@ export default function SignupPage() {
     const t = useTranslations('Auth')
     const tNav = useTranslations('Navigation')
 
+    // Password validation
+    const passwordValidation = usePasswordValidation(password)
+
     const handleSignup = async (e: React.FormEvent) => {
         e.preventDefault()
         setError('')
 
+        // Validate password match
         if (password !== confirmPassword) {
             setError(t('errors.passwordsMatch'))
             return
         }
 
-        if (password.length < 6) {
-            setError(t('errors.passwordLength'))
+        // Validate password strength
+        if (!passwordValidation.isValid) {
+            setError(passwordValidation.errors[0] || t('errors.passwordWeak'))
             return
         }
 
@@ -92,7 +98,11 @@ export default function SignupPage() {
                                 value={password}
                                 onChange={(e) => setPassword(e.target.value)}
                                 className="w-full px-4 py-3 bg-[#1a1a2e]/60 border border-white/10 text-white placeholder:text-[#9ca3af] rounded-lg focus:outline-none focus:ring-2 focus:ring-[#e50914] focus:border-transparent"
-                                placeholder="••••••••"
+                                placeholder="••••••••••••"
+                            />
+                            <PasswordStrengthIndicator
+                                password={password}
+                                locale={t('locale')}
                             />
                         </div>
 

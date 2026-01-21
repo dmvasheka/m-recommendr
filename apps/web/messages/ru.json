@@ -124,9 +124,11 @@
     "creatingAccount": "Создание аккаунта...",
     "noAccount": "Нет аккаунта?",
     "haveAccount": "Уже есть аккаунт?",
+    "locale": "ru",
     "errors": {
       "passwordsMatch": "Пароли не совпадают",
       "passwordLength": "Пароль должен быть не менее 6 символов",
+      "passwordWeak": "Пароль не соответствует требованиям безопасности",
       "loginFailed": "Ошибка входа",
       "signupFailed": "Ошибка регистрации"
     }
