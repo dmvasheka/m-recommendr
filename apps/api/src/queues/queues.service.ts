@@ -206,26 +206,32 @@ export class QueuesService {
 
     // Schedule rotational movie import
     async scheduleRotationalMovieImport(cronExpression: string, count: number) {
+        // Get next category from rotation
+        const category = await this.categoryRotationService.getNextCategory('movies');
+
         await this.movieImportQueue.add(
             'import-movies-rotational',
-            { count },
+            { count, category },
             {
                 repeat: { pattern: cronExpression },
             }
         );
-        this.logger.log(`⏰ Scheduled rotational movie import: ${cronExpression} (${count} per run)`);
+        this.logger.log(`⏰ Scheduled rotational movie import: ${cronExpression} (${count} per run, category=${category})`);
     }
 
     // Schedule rotational TV import
     async scheduleRotationalTvImport(cronExpression: string, count: number) {
+        // Get next category from rotation
+        const category = await this.categoryRotationService.getNextCategory('tv_shows');
+
         await this.tvImportQueue.add(
             'import-tv-rotational',
-            { count },
+            { count, category },
             {
                 repeat: { pattern: cronExpression },
             }
         );
-        this.logger.log(`⏰ Scheduled rotational TV import: ${cronExpression} (${count} per run)`);
+        this.logger.log(`⏰ Scheduled rotational TV import: ${cronExpression} (${count} per run, category=${category})`);
     }
 
     // Get rotation status
