@@ -4,7 +4,7 @@ import { ReactNode } from 'react';
 // чтобы предотвратить ошибку "missing required error components".
 export default function RootLayout({ children }: { children: ReactNode }) {
   return (
-    <html suppressHydrationWarning>
+    <html lang="en">
       <body>{children}</body>
     </html>
   );

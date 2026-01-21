@@ -8,7 +8,7 @@ import { usePopularMovies } from "@/lib/api/hooks"
 import { useAuth } from "@/lib/auth/AuthProvider"
 import { useState } from "react"
 import { useTranslations } from 'next-intl'
-import { useRouter } from '@/navigation'
+import { useRouter, Link } from '@/navigation'
 
 export default function Page() {
   const router = useRouter()
@@ -17,6 +17,7 @@ export default function Page() {
   const { data: popularMovies, isLoading } = usePopularMovies(20)
 
   const tHome = useTranslations('Home')
+  const tNav = useTranslations('Navigation')
 
   const handleSearch = (e: React.FormEvent) => {
     e.preventDefault()
@@ -120,7 +121,7 @@ export default function Page() {
                 {tNav('recommendations')}
               </Link>
               <Link href="/chat" className="transition-colors hover:text-white">
-                AI Chat
+                {tNav('chat')}
               </Link>
               <Link href="/watchlist" className="transition-colors hover:text-white">
                 {tNav('watchlist')}
