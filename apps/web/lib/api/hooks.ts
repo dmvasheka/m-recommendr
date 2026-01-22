@@ -152,3 +152,26 @@ export function useClearChatHistory() {
         },
     })
 }
+
+// User Preferences - Language
+export function useLanguagePreference(userId: string) {
+    return useQuery({
+        queryKey: ['user', 'language', userId],
+        queryFn: () => api.getLanguagePreference(userId),
+        enabled: !!userId,
+        staleTime: Infinity, // Don't refetch unless explicitly invalidated
+    })
+}
+
+export function useUpdateLanguagePreference() {
+    const queryClient = useQueryClient()
+
+    return useMutation({
+        mutationFn: ({ userId, language }: { userId: string; language: string }) =>
+            api.updateLanguagePreference(userId, language),
+        onSuccess: (_, variables) => {
+            // Invalidate language preference to refetch
+            queryClient.invalidateQueries({ queryKey: ['user', 'language', variables.userId] })
+        },
+    })
+}

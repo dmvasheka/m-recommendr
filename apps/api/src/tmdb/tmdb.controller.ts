@@ -1,11 +1,15 @@
 import { Controller, Get, Post, Param, Query, Logger } from '@nestjs/common';
 import { TmdbService, TmdbSearchResponse, TmdbMovieDetails } from './tmdb.service';
+import { ImportProgressService } from './import-progress.service';
 
 @Controller('tmdb')
 export class TmdbController {
     private readonly logger = new Logger(TmdbController.name);
 
-    constructor(private readonly tmdbService: TmdbService) {}
+    constructor(
+        private readonly tmdbService: TmdbService,
+        private readonly importProgressService: ImportProgressService,
+    ) {}
 
     /**
      * GET /tmdb/search?q=inception&page=1
@@ -179,6 +183,90 @@ export class TmdbController {
             return {
                 status: 'error',
                 message: 'Failed to connect to TMDB API',
+                error: errorMessage,
+            };
+        }
+    }
+
+    /**
+     * GET /tmdb/import-progress
+     * Get all import progress records
+     */
+    @Get('import-progress')
+    async getImportProgress() {
+        try {
+            const progress = await this.importProgressService.getAllProgress();
+            return {
+                success: true,
+                progress,
+            };
+        } catch (error) {
+            const errorMessage = error instanceof Error ? error.message : String(error);
+            return {
+                success: false,
+                error: errorMessage,
+            };
+        }
+    }
+
+    /**
+     * GET /tmdb/import-progress/:contentType/:category
+     * Get progress for specific import configuration
+     * Example: /tmdb/import-progress/movies/popular
+     */
+    @Get('import-progress/:contentType/:category')
+    async getSpecificProgress(
+        @Param('contentType') contentType: 'movies' | 'tv_shows',
+        @Param('category') category: string,
+        @Query('year') year?: string,
+    ) {
+        try {
+            const yearNum = year ? parseInt(year, 10) : undefined;
+            const progress = await this.importProgressService.getProgress(
+                contentType,
+                category,
+                yearNum
+            );
+
+            return {
+                success: true,
+                progress,
+            };
+        } catch (error) {
+            const errorMessage = error instanceof Error ? error.message : String(error);
+            return {
+                success: false,
+                error: errorMessage,
+            };
+        }
+    }
+
+    /**
+     * POST /tmdb/import-progress/reset
+     * Reset progress for a specific import configuration
+     */
+    @Post('import-progress/reset')
+    async resetProgress(
+        @Query('contentType') contentType: 'movies' | 'tv_shows',
+        @Query('category') category: string,
+        @Query('year') year?: string,
+    ) {
+        try {
+            const yearNum = year ? parseInt(year, 10) : undefined;
+            await this.importProgressService.resetProgress(
+                contentType,
+                category,
+                yearNum
+            );
+
+            return {
+                success: true,
+                message: `Reset progress for ${contentType}/${category}${year ? `/${year}` : ''}`,
+            };
+        } catch (error) {
+            const errorMessage = error instanceof Error ? error.message : String(error);
+            return {
+                success: false,
                 error: errorMessage,
             };
         }

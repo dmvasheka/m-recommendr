@@ -164,6 +164,21 @@ class ApiClient {
             method: 'DELETE',
         })
     }
+
+    // User preferences - Language
+    async updateLanguagePreference(userId: string, language: string): Promise<void> {
+        return this.fetch(`/api/users/${userId}/language`, {
+            method: 'PATCH',
+            body: JSON.stringify({ language }),
+        })
+    }
+
+    async getLanguagePreference(userId: string): Promise<string> {
+        const response = await this.fetch<{ success: boolean; language: string }>(
+            `/api/users/${userId}/language`
+        )
+        return response.language || 'en'
+    }
 }
 
 export const api = new ApiClient()

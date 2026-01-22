@@ -13,16 +13,32 @@ export class MovieImportProcessor extends WorkerHost {
     }
 
     async process(job: Job<MovieImportJob>): Promise<any> {
-        const { count, page } = job.data;
+        const { count, page, year, category } = job.data;
 
-        this.logger.log(`🎬 Starting movie import: ${count} movies (page: ${page || 1})`);
+        if (category) {
+            this.logger.log(`🎬 Starting movie import: ${count} movies from category '${category}' (page: ${page || 'auto'})`);
+        } else if (year) {
+            this.logger.log(`🎬 Starting movie import: ${count} movies for year ${year} (page: ${page || 1})`);
+        } else {
+            this.logger.log(`🎬 Starting movie import: ${count} movies (page: ${page || 1})`);
+        }
 
         try {
             // Обновляем прогресс
             await job.updateProgress(0);
 
             // Импортируем фильмы
-            const result = await this.tmdbService.importPopularMovies(count, page);
+            let result;
+            if (category) {
+                // Import by category with rotation
+                result = await this.tmdbService.importMovies(category, count, page);
+            } else if (year) {
+                // Import by year
+                result = await this.tmdbService.importMoviesByYear(year, count);
+            } else {
+                // Legacy: import popular movies
+                result = await this.tmdbService.importPopularMovies(count, page);
+            }
 
             await job.updateProgress(100);
 
@@ -32,6 +48,8 @@ export class MovieImportProcessor extends WorkerHost {
                 success: true,
                 imported: result.imported,
                 skipped: result.skipped,
+                lastPage: 'lastPage' in result ? result.lastPage : undefined,
+                category: category || undefined,
             };
         } catch (error) {
             const errorMessage = error instanceof Error ? error.message : String(error);

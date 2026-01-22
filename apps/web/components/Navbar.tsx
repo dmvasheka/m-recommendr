@@ -17,7 +17,10 @@ export function Navbar() {
     }
 
     const toggleLocale = () => {
-        const nextLocale = locale === 'en' ? 'ru' : 'en'
+        const locales = ['en', 'ru', 'uk'] as const
+        const currentIndex = locales.indexOf(locale as any)
+        const nextIndex = (currentIndex + 1) % locales.length
+        const nextLocale = locales[nextIndex]
         router.replace(pathname, { locale: nextLocale })
     }
 
@@ -60,7 +63,7 @@ export function Navbar() {
                             onClick={toggleLocale}
                             className="px-2 py-1 text-xs font-bold border border-gray-300 rounded hover:bg-gray-100 uppercase"
                         >
-                            {locale === 'en' ? 'ru' : 'en'}
+                            {locale}
                         </button>
 
                         {user ? (

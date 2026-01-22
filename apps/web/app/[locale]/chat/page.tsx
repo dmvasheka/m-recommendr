@@ -116,10 +116,16 @@ export default function ChatPage() {
                         </p>
                     </div>
                     <button
-                        onClick={() => router.replace('/chat', { locale: locale === 'en' ? 'ru' : 'en' })}
+                        onClick={() => {
+                            const locales = ['en', 'ru', 'uk'] as const
+                            const currentIndex = locales.indexOf(locale as any)
+                            const nextIndex = (currentIndex + 1) % locales.length
+                            const nextLocale = locales[nextIndex]
+                            router.replace('/chat', { locale: nextLocale })
+                        }}
                         className="px-2 py-1 text-xs font-bold border border-white/20 rounded text-white hover:bg-white/10 uppercase"
                     >
-                        {locale === 'en' ? 'ru' : 'en'}
+                        {locale}
                     </button>
                 </div>
             </div>

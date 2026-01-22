@@ -1,23 +1,23 @@
 'use client'
 
-import { Search, Sparkles, Bookmark } from "lucide-react"
+import { Search, Sparkles } from "lucide-react"
 import { Button } from "@/components/ui/button"
 import { NewMovieCard } from "@/components/NewMovieCard"
+import { Navigation } from "@/components/Navigation"
 import { usePopularMovies } from "@/lib/api/hooks"
 import { useAuth } from "@/lib/auth/AuthProvider"
 import { useState } from "react"
-import { useTranslations, useLocale } from 'next-intl'
-import { Link, useRouter } from '@/navigation'
+import { useTranslations } from 'next-intl'
+import { useRouter, Link } from '@/navigation'
 
 export default function Page() {
   const router = useRouter()
-  const locale = useLocale()
   const { user } = useAuth()
   const [searchQuery, setSearchQuery] = useState('')
   const { data: popularMovies, isLoading } = usePopularMovies(20)
-  
-  const tNav = useTranslations('Navigation')
+
   const tHome = useTranslations('Home')
+  const tNav = useTranslations('Navigation')
 
   const handleSearch = (e: React.FormEvent) => {
     e.preventDefault()
@@ -26,73 +26,9 @@ export default function Page() {
     }
   }
 
-  const toggleLocale = () => {
-    const nextLocale = locale === 'en' ? 'ru' : 'en'
-    router.replace('/', { locale: nextLocale })
-  }
-
   return (
     <div className="min-h-screen bg-gradient-to-b from-[#0a0a0f] via-[#1a1a2e] to-[#0a0a0f]">
-      {/* Navigation */}
-      <nav className="fixed top-0 left-0 right-0 z-50 border-b border-white/5 bg-[#0a0a0f]/80 backdrop-blur-xl">
-        <div className="mx-auto flex max-w-7xl items-center justify-between px-4 py-3 sm:px-6 sm:py-4">
-          <div className="flex items-center gap-4 sm:gap-6">
-            <Link href="/" className="flex items-center gap-2">
-              <Sparkles className="h-5 w-5 sm:h-6 sm:w-6 text-[#e50914]" />
-              <span className="text-lg sm:text-xl font-semibold text-white">Movie Recommendr</span>
-            </Link>
-            <Link
-              href="/discover"
-              className="text-sm sm:text-base text-[#9ca3af] hover:text-white transition-colors"
-            >
-              {tNav('discover')}
-            </Link>
-            {user && (
-              <Link
-                href="/watchlist"
-                className="flex items-center gap-2 text-sm sm:text-base text-[#9ca3af] hover:text-white transition-colors"
-              >
-                <Bookmark className="h-4 w-4" />
-                <span className="hidden sm:inline">{tNav('watchlist')}</span>
-              </Link>
-            )}
-          </div>
-          <div className="flex items-center gap-3">
-            <button
-                onClick={toggleLocale}
-                className="px-2 py-1 text-xs font-bold border border-white/20 rounded text-white hover:bg-white/10 uppercase mr-2"
-            >
-                {locale === 'en' ? 'ru' : 'en'}
-            </button>
-
-            {user ? (
-              <>
-                <Link
-                  href="/recommendations"
-                  className="hidden sm:block text-sm text-[#9ca3af] hover:text-white transition-colors"
-                >
-                  {tNav('recommendations')}
-                </Link>
-                <Link
-                  href="/chat"
-                  className="hidden sm:block text-sm text-[#9ca3af] hover:text-white transition-colors"
-                >
-                  AI Chat
-                </Link>
-              </>
-            ) : (
-              <Link href="/auth/login">
-                <Button
-                  variant="outline"
-                  className="border-white/10 bg-transparent text-sm sm:text-base text-white hover:bg-white/5"
-                >
-                  {tNav('signIn')}
-                </Button>
-              </Link>
-            )}
-          </div>
-        </div>
-      </nav>
+      <Navigation />
 
       {/* Hero Section */}
       <section className="relative px-4 pt-20 pb-8 sm:px-6 sm:pt-28 sm:pb-12">
@@ -185,7 +121,7 @@ export default function Page() {
                 {tNav('recommendations')}
               </Link>
               <Link href="/chat" className="transition-colors hover:text-white">
-                AI Chat
+                {tNav('chat')}
               </Link>
               <Link href="/watchlist" className="transition-colors hover:text-white">
                 {tNav('watchlist')}
