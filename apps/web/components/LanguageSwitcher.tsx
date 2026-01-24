@@ -72,7 +72,7 @@ export function LanguageSwitcher() {
       }
 
       // Build new path with target locale
-      const newPath = `/${languageCode}${pathSegments.length > 0 ? '/' + pathSegments.join('/') : ''}`
+      const newPath = `/${languageCode}${pathSegments.length > 0 ? '/' + pathSegments.join('/') : ''}${window.location.search}${window.location.hash}`
 
       // Full page reload to ensure translations update
       window.location.assign(newPath)
