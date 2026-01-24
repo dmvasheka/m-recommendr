@@ -59,11 +59,13 @@ export interface Recommendation {
 export interface SearchMoviesParams {
     query: string
     limit?: number
+    language?: string
 }
 
 export interface SimilarMoviesParams {
     movieId: number
     limit?: number
+    language?: string
 }
 
 // Chat types
@@ -78,6 +80,7 @@ export interface SendChatMessageParams {
     userId: string
     message: string
     includeHistory?: boolean
+    language?: string
 }
 
 export interface ChatHistoryMessage {

@@ -1,7 +1,10 @@
 // Export Supabase clients
 export { supabase, supabaseAnon, testConnection } from './supabase.client';
 
-// Export all types
+// Export generated types from Supabase schema
+export type { Database as GeneratedDatabase, Json } from './generated-types';
+
+// Export all types (manual types for backwards compatibility and convenience)
 export type {
     Database,
     User,

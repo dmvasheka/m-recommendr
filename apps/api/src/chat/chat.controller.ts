@@ -33,6 +33,7 @@ export class ChatController {
             userId: string;
             message: string;
             includeHistory?: boolean;
+            language?: string;
         }
     ) {
         try {
@@ -45,6 +46,7 @@ export class ChatController {
                 userId: body.userId,
                 message: body.message,
                 conversationHistory,
+                language: body.language || 'en',
             });
 
             return {

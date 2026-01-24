@@ -33,6 +33,9 @@ export interface UserPreferences {
  * @param userMessage - User's question/request
  * @param context - Relevant movies from vector search
  * @param conversationHistory - Previous messages in conversation
+ * @param userPreferences - User's preferences
+ * @param detectedMood - Detected mood from user message
+ * @param language - Language code for response (en, ru, uk)
  * @returns AI-generated response
  */
 export async function generateChatResponse(
@@ -40,7 +43,8 @@ export async function generateChatResponse(
     context: MovieContext[],
     conversationHistory: ChatMessage[] = [],
     userPreferences?: UserPreferences,
-    detectedMood?: MoodKeywords
+    detectedMood?: MoodKeywords,
+    language: string = 'en'
 ): Promise<string> {
     // Format context from movies into readable text
     const formattedContext = context.map((movie, index) => {
@@ -75,8 +79,19 @@ export async function generateChatResponse(
         ).join('\n')}`;
     }
 
+    // Language-specific instructions
+    const languageInstructions: Record<string, string> = {
+        'ru': '**ВАЖНО: Отвечай ТОЛЬКО на русском языке.** Все твои ответы, объяснения и рекомендации должны быть на русском.',
+        'uk': '**ВАЖЛИВО: Відповідай ТІЛЬКИ українською мовою.** Усі твої відповіді, пояснення та рекомендації мають бути українською.',
+        'en': 'Respond in English.'
+    };
+
+    const languageInstruction = languageInstructions[language] || languageInstructions['en'];
+
     // System prompt for movie recommendation assistant
     const systemPrompt = `You are an expert movie recommendation assistant with deep knowledge of cinema. Your role is to help users discover movies they'll love based on their preferences, mood, or specific requests.
+
+      ${languageInstruction}
 
       Guidelines:
       1. Use the provided movie context to give personalized recommendations

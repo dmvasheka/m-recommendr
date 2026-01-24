@@ -144,6 +144,21 @@
 
 **Подзадачи:**
 - [ ] Разработать новый дизайн интерфейса (рассмотреть: v0.dev, Figma с AI, MidJourney для концептов)
+- [ ] **Добавить страницу для сериалов** 📺
+  - [ ] Создать страницу `/[locale]/tv-shows` с списком сериалов
+  - [ ] Реализовать карточки сериалов (poster, название, рейтинг, первая дата выхода)
+  - [ ] Детальная страница `/[locale]/tv-shows/[id]` с информацией о сезонах/эпизодах
+  - [ ] Добавление сериалов в watchlist (аналогично фильмам)
+  - [ ] Интеграция с TV Shows API + language support (уже готово на backend)
+  - [ ] Поиск и фильтрация сериалов
+- [ ] **Сделать главную страницу mix фильмов и сериалов** 🎬📺
+  - [ ] Объединить популярные фильмы и TV shows на главной
+  - [ ] Варианты реализации:
+    - Вариант A: Две отдельные секции "Популярные фильмы" + "Популярные сериалы"
+    - Вариант B: Единая лента с миксом, отсортированная по popularity
+  - [ ] Добавить визуальный индикатор типа контента (🎬 фильм / 📺 сериал)
+  - [ ] Сортировка по popularity, рейтингу или дате выхода
+  - [ ] Поддержка всех языков (ru/uk/en)
 - [ ] Улучшить главную страницу или перенести функционал `/discover` на главную
 - [ ] Улучшить карточки фильмов (hover эффекты, анимации, больше информации)
 - [ ] Добавить темную тему (dark mode)
@@ -1490,3 +1505,193 @@ create index idx_notifications_unread on admin_notifications(created_at desc) wh
 - Regular security audits
 
 ---
+
+## 11. 🌐 Дополнения к локализации (обновлено 2026-01-24)
+
+**Статус:** Критические баги исправлены, требуется расширение функционала
+
+### 11.1 Завершить обновление переводов в БД
+- [x] **Добавить poster_url и backdrop_url в translations** ✅ (2026-01-24)
+  - [x] Обновлены методы `getMovieTranslations()` и `getTvTranslations()`
+  - [x] Скрипт `update-translations.ts` обновлен
+  - [x] Обновлены первые 20 фильмов с новыми полями
+- [ ] **Обновить ВСЕ оставшиеся фильмы и сериалы**
+  ```bash
+  # Фильмы (осталось ~1655 из 1675)
+  npx tsx apps/api/src/scripts/update-translations.ts --movies --all
+  
+  # Сериалы
+  npx tsx apps/api/src/scripts/update-translations.ts --tv --all
+  ```
+- [ ] **Автоматизировать обновление переводов для новых импортов**
+  - Добавить в BullMQ processor после импорта
+
+### 11.2 Расширить поддержку языков в API ✅ **ЗАВЕРШЕНО (2026-01-24)**
+**Текущее состояние:** ✅ Все основные endpoints поддерживают `language` параметр (100% покрытие)
+
+**Endpoints с language поддержкой:**
+- [x] `/api/movies/:id?language=ru` - детальная информация о фильме ✅
+- [x] `/api/movies/search?q=...&language=en` ✅
+- [x] `/api/movies/autocomplete?q=...&language=ru` ✅
+- [x] `/api/movies/:id/similar?language=uk` ✅
+- [x] `/api/recommendations?user_id=...&language=ru` ✅
+- [x] `/api/recommendations/hybrid?user_id=...&language=en` ✅
+- [x] `/api/recommendations/popular?limit=10&language=uk` ✅ (уже было)
+- [x] `/api/tv-shows/:id?language=ru` ✅ **NEW (2026-01-24)**
+- [x] `/api/tv-shows/search?q=...&language=en` ✅ **NEW (2026-01-24)**
+- [x] `/api/tv-shows/autocomplete?q=...&language=uk` ✅ **NEW (2026-01-24)**
+- [x] `/api/chat` - AI отвечает на языке пользователя ✅ **NEW (2026-01-24)**
+  - [x] Поддержка русского, украинского, английского
+  - [x] Локализованные названия фильмов в контексте
+  - [x] Language-specific system prompts
+
+**Технические задачи:**
+1. [x] Обновлены все `MoviesService`, `TvShowsService`, `RecommendationsService` методы ✅
+2. [x] Добавлен параметр `language` во все контроллеры ✅
+3. [x] Обновлено кэширование с учетом языка (ключи вида `search:query:limit:language`) ✅
+4. [x] Обновлен фронтенд для передачи `locale` во все API запросы ✅
+   - [x] API client (`lib/api/client.ts`) - все методы принимают `language?` ✅
+   - [x] TypeScript types (`lib/api/types.ts`) - обновлены интерфейсы ✅
+   - [x] React hooks (`lib/api/hooks.ts`) - все hooks поддерживают language ✅
+
+**Итого:** 11 из 11 endpoints (100%) с полной поддержкой multilanguage
+
+### 11.3 Синхронизация языковых предпочтений
+- [ ] **При входе пользователя:** загрузить `preferred_language` из БД и применить
+- [ ] **При регистрации:** сохранить текущий язык интерфейса
+- [ ] **Middleware для автоопределения языка:** из `accept-language` заголовка
+- [ ] **Fallback цепочка:** user preference → browser language → default (en)
+
+### 11.4 Индексы для translations (производительность)
+```sql
+-- GIN индексы для быстрого доступа к переводам
+CREATE INDEX idx_movies_translations_gin ON movies USING gin(translations);
+CREATE INDEX idx_tv_shows_translations_gin ON tv_shows USING gin(translations);
+
+-- Индекс для поиска по конкретному языку
+CREATE INDEX idx_movies_translations_title_ru 
+  ON movies ((translations->'ru'->>'title'));
+```
+
+---
+
+## 12. 🔧 Улучшение TypeScript типизации ✅ **ЗАВЕРШЕНО (2026-01-24)**
+
+### 12.1 Проблема с type assertions в category-rotation.service.ts ✅
+**Было:**
+```typescript
+const response = await supabase
+  .from('import_progress')
+  .select('category, last_run')
+  // ...
+const lastImport = response.data as { category: string; last_run: string } | null;
+```
+
+**Стало:**
+```typescript
+import { GeneratedDatabase } from '@repo/db';
+type ImportProgressRow = GeneratedDatabase['public']['Tables']['import_progress']['Row'];
+
+const { data: lastImport, error } = await supabase
+  .from('import_progress')
+  .select('category, last_run')
+  .maybeSingle<Pick<ImportProgressRow, 'category' | 'last_run'>>();
+```
+
+**Решение:**
+- [x] Регенерировать типы из Supabase ✅
+  ```bash
+  supabase gen types typescript --linked > packages/db/src/generated-types.ts
+  ```
+- [x] Экспортировать `GeneratedDatabase` и `Json` из `@repo/db` ✅
+- [x] Использовать generated types вместо manual assertions ✅
+- [x] Добавить строгую типизацию для select запросов с конкретными полями ✅
+- [x] Исправлены TypeScript ошибки в `category-rotation.service.ts` ✅
+- [x] Исправлены TypeScript ошибки в `update-translations.ts` ✅
+
+**Результат:** 0 TypeScript ошибок компиляции, улучшена type safety
+
+### 12.2 Автоматическая регенерация типов
+- [ ] Добавить pre-commit hook для проверки актуальности типов
+- [ ] Создать npm script `pnpm types:generate` в package.json
+- [ ] Документировать процесс в README
+
+---
+
+## 13. 🚀 Критические обновления инфраструктуры
+
+### 13.1 Node.js upgrade (CRITICAL)
+- [ ] **Обновить Node.js 18 → 20+**
+  - Текущая версия deprecated для Supabase
+  - Обновить `.nvmrc`, `package.json` engines
+  - Обновить CI/CD конфигурацию
+  - Тестировать после обновления
+
+### 13.2 Redis upgrade (HIGH PRIORITY)
+- [ ] **Обновить Redis 5.0.14 → 6.2.0+**
+  - Рекомендация от BullMQ
+  - Проверить совместимость команд
+  - Обновить docker-compose или production Redis
+
+### 13.3 Зависимости
+- [ ] **Исправить peer dependencies:**
+  ```bash
+  pnpm update @swc/helpers@latest
+  ```
+- [ ] **Обновить pnpm lockfile:**
+  ```bash
+  pnpm install --no-frozen-lockfile
+  ```
+- [ ] **Regular dependency audits:**
+  ```bash
+  pnpm audit
+  pnpm outdated
+  ```
+
+---
+
+## 14. 📝 Приоритетный список (обновлено 2026-01-24)
+
+### 🔥 Неделя 1-2: Критическое
+1. ✅ Исправить TypeScript ошибки в backend (DONE 2026-01-24)
+2. ✅ Добавить поддержку language в `/api/recommendations/popular` (DONE 2026-01-24)
+3. ✅ **Добавить language поддержку во ВСЕ основные endpoints** (DONE 2026-01-24) 🎉
+   - ✅ Movies API: 4/4 endpoints ✅
+   - ✅ Recommendations API: 3/3 endpoints ✅
+   - ✅ TV Shows API: 3/3 endpoints ✅
+   - ✅ Chat API: 1/1 endpoint ✅
+   - ✅ Frontend: API client + hooks обновлены ✅
+4. ✅ **Улучшить TypeScript типизацию** (DONE 2026-01-24)
+   - ✅ Generated types из Supabase
+   - ✅ Удалены type assertions
+   - ✅ 0 ошибок компиляции
+5. [ ] Node.js 18 → 20+ upgrade
+6. [ ] Redis 5.0.14 → 6.2.0+ upgrade
+7. [ ] Обновить переводы для всех фильмов (~1655 оставшихся)
+
+### 📋 Неделя 3-4: Важное
+8. [ ] Синхронизация языковых предпочтений (auto-load on login)
+9. [ ] Добавить индексы для translations JSONB полей
+10. [ ] Movie Explanations UI (backend готов)
+11. [ ] Тесты для локализации
+12. [ ] **Добавить страницу для сериалов** `/[locale]/tv-shows` 📺
+13. [ ] **Сделать главную страницу mix фильмов и сериалов** 🎬📺
+
+### 🟢 Неделя 5-6: Улучшения
+14. [ ] Performance оптимизация (кэширование с языком)
+15. [ ] UI/UX полировка
+16. [ ] Документация для разработчиков
+
+---
+
+**Last Updated:** 2026-01-24 (вечер)
+**Сегодняшний прогресс:**
+- ✅ TV Shows API - добавлена multilingual поддержка (3 endpoints)
+- ✅ Chat API - добавлена multilingual поддержка (AI отвечает на ru/uk/en)
+- ✅ Frontend - обновлены все API calls для передачи locale
+- ✅ TypeScript типизация улучшена (generated types из Supabase)
+- ✅ 11 из 11 API endpoints (100%) теперь поддерживают language параметр
+- ✅ Добавлены новые задачи: страница для сериалов + mix на главной
+
+**New items added:** 15 (локализация, типизация, инфраструктура, новые фичи)
+

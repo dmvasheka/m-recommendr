@@ -12,6 +12,12 @@ export interface RecommendationResult {
     vote_average: number | null;
     popularity: number | null;
     similarity: number;
+    translations?: Record<string, {
+        title?: string;
+        description?: string;
+        poster_url?: string;
+        backdrop_url?: string;
+    }>;
 }
 
 @Injectable()
@@ -26,11 +32,12 @@ export class RecommendationsService {
     async getPersonalizedRecommendations(
         userId: string,
         limit = 10,
+        language = 'en',
     ): Promise<RecommendationResult[]> {
         try {
-            this.logger.log(`Getting personalized recommendations for user ${userId}`);
+            this.logger.log(`Getting personalized recommendations for user ${userId} (language: ${language})`);
 
-            const cacheKey = `recommendations:${userId}:${limit}`;
+            const cacheKey = `recommendations:${userId}:${limit}:${language}`;
             const cached = await this.redisService.get<RecommendationResult[]>(cacheKey);
 
             if (cached) {
@@ -65,7 +72,24 @@ export class RecommendationsService {
                 throw error;
             }
 
-            const results = data as RecommendationResult[] | null;
+            let results = data as RecommendationResult[] | null;
+
+            // Apply translations if available
+            if (results && language !== 'en') {
+                results = results.map(movie => {
+                    const translation = movie.translations?.[language];
+                    if (translation) {
+                        return {
+                            ...movie,
+                            title: translation.title || movie.title,
+                            description: translation.description || movie.description,
+                            poster_url: translation.poster_url || movie.poster_url,
+                            backdrop_url: translation.backdrop_url || movie.backdrop_url,
+                        };
+                    }
+                    return movie;
+                });
+            }
 
             if (results && results.length > 0) {
                 await this.redisService.set(cacheKey, results, 600);
@@ -130,17 +154,18 @@ export class RecommendationsService {
     async getHybridRecommendations(
         userId: string,
         limit = 10,
+        language = 'en',
     ): Promise<RecommendationResult[]> {
         try {
-            this.logger.log(`Getting hybrid recommendations for user ${userId}`);
+            this.logger.log(`Getting hybrid recommendations for user ${userId} (language: ${language})`);
 
             // Get personalized recommendations (profile-based)
             const profileRecs = await
-                this.getPersonalizedRecommendations(userId, limit * 2);
+                this.getPersonalizedRecommendations(userId, limit * 2, language);
 
             if (profileRecs.length === 0) {
                 // Fallback to popular movies if no profile yet
-                return this.getPopularRecommendations(limit, 'en');
+                return this.getPopularRecommendations(limit, language);
             }
 
             // Rerank by combining similarity and popularity

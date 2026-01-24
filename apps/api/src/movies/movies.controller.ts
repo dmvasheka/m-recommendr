@@ -24,14 +24,15 @@ export class MoviesController {
     }
 
     /**
-     * GET /api/movies/autocomplete?q=query&limit=10
-     * Fast search for UI autocomplete
+     * GET /api/movies/autocomplete?q=query&limit=10&language=en
+     * Fast search for UI autocomplete with optional language parameter
      * MUST be before 'search' and ':id' to avoid conflicts
      */
     @Get('autocomplete')
     async autocomplete(
         @Query('q') query: string,
         @Query('limit') limit?: string,
+        @Query('language') language?: string,
     ) {
         if (!query || query.length < 2) {
             return { success: true, results: [] };
@@ -39,7 +40,7 @@ export class MoviesController {
 
         try {
             const maxResults = this.parseLimit(limit);
-            const results = await this.moviesService.autocomplete(query, maxResults);
+            const results = await this.moviesService.autocomplete(query, maxResults, language);
 
             return {
                 success: true,
@@ -56,13 +57,14 @@ export class MoviesController {
     }
 
     /**
-     * GET /api/movies/search?q=query&limit=10
-     * Semantic search for movies
+     * GET /api/movies/search?q=query&limit=10&language=en
+     * Semantic search for movies with optional language parameter
      */
     @Get('search')
     async searchMovies(
         @Query('q') query: string,
         @Query('limit') limit?: string,
+        @Query('language') language?: string,
     ) {
         if (!query) {
             return { error: 'Query parameter "q" is required' };
@@ -70,7 +72,7 @@ export class MoviesController {
 
         try {
             const maxResults = this.parseLimit(limit);
-            const results = await this.moviesService.searchMovies(query, maxResults);
+            const results = await this.moviesService.searchMovies(query, maxResults, language);
 
             return {
                 success: true,
@@ -90,13 +92,14 @@ export class MoviesController {
     }
 
     /**
-     * GET /api/movies/:id/similar?limit=10
-     * Get similar movies
+     * GET /api/movies/:id/similar?limit=10&language=en
+     * Get similar movies with optional language parameter
      */
     @Get(':id/similar')
     async getSimilarMovies(
         @Param('id') id: string,
         @Query('limit') limit?: string,
+        @Query('language') language?: string,
     ) {
         const movieId = parseInt(id, 10);
         if (isNaN(movieId)) {
@@ -105,7 +108,7 @@ export class MoviesController {
 
         try {
             const maxResults = this.parseLimit(limit);
-            const results = await this.moviesService.getSimilarMovies(movieId, maxResults);
+            const results = await this.moviesService.getSimilarMovies(movieId, maxResults, language);
 
             return {
                 success: true,
@@ -125,18 +128,21 @@ export class MoviesController {
     }
 
     /**
-     * GET /api/movies/:id
-     * Get movie by ID
+     * GET /api/movies/:id?language=en
+     * Get movie by ID with optional language parameter
      */
     @Get(':id')
-    async getMovieById(@Param('id') id: string) {
+    async getMovieById(
+        @Param('id') id: string,
+        @Query('language') language?: string,
+    ) {
         const movieId = parseInt(id, 10);
         if (isNaN(movieId)) {
             return { error: 'Invalid movie ID' };
         }
 
         try {
-            const movie = await this.moviesService.getMovieById(movieId);
+            const movie = await this.moviesService.getMovieById(movieId, language);
 
             if (!movie) {
                 return {
