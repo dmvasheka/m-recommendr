@@ -155,10 +155,11 @@ export class QueuesController {
     @Get('stats')
     async getStats() {
         try {
-            const [movieImportStats, tvImportStats, embeddingStats] = await Promise.all([
+            const [movieImportStats, tvImportStats, embeddingStats, translationStats] = await Promise.all([
                 this.queuesService.getMovieImportStats(),
                 this.queuesService.getTvImportStats(),
                 this.queuesService.getEmbeddingStats(),
+                this.queuesService.getTranslationUpdateStats(),
             ]);
 
             return {
@@ -167,6 +168,7 @@ export class QueuesController {
                     movieImport: movieImportStats,
                     tvImport: tvImportStats,
                     embeddings: embeddingStats,
+                    translations: translationStats,
                 },
             };
         } catch (error) {
@@ -356,6 +358,107 @@ export class QueuesController {
             return {
                 success: true,
                 rotation: status,
+            };
+        } catch (error) {
+            const errorMessage = error instanceof Error ? error.message : String(error);
+            return {
+                success: false,
+                error: errorMessage,
+            };
+        }
+    }
+
+    /**
+     * POST /api/queues/update-translations
+     * Обновить переводы и локализованные постеры
+     */
+    @Post('update-translations')
+    async updateTranslations(
+        @Body() body: {
+            type: 'movies' | 'tv';
+            limit?: number;
+            offset?: number;
+            force?: boolean;
+            ids?: number[];
+        }
+    ) {
+        try {
+            const job = await this.queuesService.addTranslationUpdateJob({
+                type: body.type,
+                limit: body.limit || 100,
+                offset: body.offset || 0,
+                force: body.force || false,
+                ids: body.ids,
+            });
+
+            return {
+                success: true,
+                message: `Translation update job added to queue`,
+                jobId: job.id,
+                type: body.type,
+                limit: body.limit || 100,
+                force: body.force || false,
+            };
+        } catch (error) {
+            const errorMessage = error instanceof Error ? error.message : String(error);
+            return {
+                success: false,
+                error: errorMessage,
+            };
+        }
+    }
+
+    /**
+     * POST /api/queues/batch-update-translations
+     * Массовое обновление переводов (разбивает на batch jobs)
+     */
+    @Post('batch-update-translations')
+    async batchUpdateTranslations(
+        @Body() body: {
+            type: 'movies' | 'tv';
+            totalCount: number;
+            batchSize?: number;
+            force?: boolean;
+        }
+    ) {
+        try {
+            const batchSize = body.batchSize || 100;
+            const jobs = await this.queuesService.addBatchTranslationUpdateJobs(
+                body.type,
+                body.totalCount,
+                batchSize,
+                body.force || false
+            );
+
+            return {
+                success: true,
+                message: `Added ${jobs.length} translation update jobs`,
+                totalJobs: jobs.length,
+                totalItems: body.totalCount,
+                batchSize,
+                force: body.force || false,
+            };
+        } catch (error) {
+            const errorMessage = error instanceof Error ? error.message : String(error);
+            return {
+                success: false,
+                error: errorMessage,
+            };
+        }
+    }
+
+    /**
+     * GET /api/queues/translation-stats
+     * Получить статистику очереди обновления переводов
+     */
+    @Get('translation-stats')
+    async getTranslationStats() {
+        try {
+            const stats = await this.queuesService.getTranslationUpdateStats();
+
+            return {
+                success: true,
+                stats,
             };
         } catch (error) {
             const errorMessage = error instanceof Error ? error.message : String(error);

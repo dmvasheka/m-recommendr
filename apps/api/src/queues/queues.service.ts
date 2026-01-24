@@ -23,6 +23,14 @@ export interface EmbeddingJob {
     batchSize?: number;
 }
 
+export interface TranslationUpdateJob {
+    type: 'movies' | 'tv';
+    limit?: number;
+    offset?: number;
+    force?: boolean;
+    ids?: number[];
+}
+
 @Injectable()
 export class QueuesService {
     private readonly logger = new Logger(QueuesService.name);
@@ -31,6 +39,7 @@ export class QueuesService {
         @InjectQueue('movie-import') private movieImportQueue: Queue,
         @InjectQueue('tv-import') private tvImportQueue: Queue,
         @InjectQueue('embedding-generation') private embeddingQueue: Queue,
+        @InjectQueue('translation-update') private translationQueue: Queue,
         private readonly categoryRotationService: CategoryRotationService,
         private readonly tmdbService: TmdbService,
     ) {}
@@ -239,11 +248,50 @@ export class QueuesService {
         return await this.categoryRotationService.getRotationStatus();
     }
 
+    // Translation Update Queue
+    async addTranslationUpdateJob(data: TranslationUpdateJob) {
+        const job = await this.translationQueue.add('update-translations', data, {
+            attempts: 3,
+            backoff: {
+                type: 'exponential',
+                delay: 5000,
+            },
+        });
+        this.logger.log(`🌐 Translation update job added: ${job.id} (type=${data.type}, limit=${data.limit}, force=${data.force})`);
+        return job;
+    }
+
+    // Batch Translation Update - split into multiple jobs
+    async addBatchTranslationUpdateJobs(type: 'movies' | 'tv', totalCount: number, batchSize = 100, force = false) {
+        const jobs = [];
+        for (let offset = 0; offset < totalCount; offset += batchSize) {
+            const job = await this.addTranslationUpdateJob({
+                type,
+                limit: Math.min(batchSize, totalCount - offset),
+                offset,
+                force,
+            });
+            jobs.push(job);
+        }
+        this.logger.log(`📦 Added ${jobs.length} translation update jobs for ${type} (total: ${totalCount}, batch: ${batchSize})`);
+        return jobs;
+    }
+
+    async getTranslationUpdateStats() {
+        return {
+            waiting: await this.translationQueue.getWaitingCount(),
+            active: await this.translationQueue.getActiveCount(),
+            completed: await this.translationQueue.getCompletedCount(),
+            failed: await this.translationQueue.getFailedCount(),
+        };
+    }
+
     // Clean old jobs
     async cleanQueues() {
         await this.movieImportQueue.clean(24 * 3600 * 1000, 100, 'completed');
         await this.tvImportQueue.clean(24 * 3600 * 1000, 100, 'completed');
         await this.embeddingQueue.clean(24 * 3600 * 1000, 100, 'completed');
+        await this.translationQueue.clean(24 * 3600 * 1000, 100, 'completed');
         this.logger.log('🧹 Old jobs cleaned');
     }
 }

@@ -5,6 +5,7 @@ import { QueuesService } from './queues.service';
 import { MovieImportProcessor } from './processors/movie-import.processor';
 import { TvImportProcessor } from './processors/tv-import.processor';
 import { EmbeddingProcessor } from './processors/embedding.processor';
+import { TranslationUpdateProcessor } from './processors/translation-update.processor';
 import { TmdbModule } from '../tmdb/tmdb.module';
 import { EmbeddingsModule } from '../embeddings/embeddings.module';
 import { QueuesController } from './queues.controller';
@@ -23,10 +24,11 @@ import { QueuesController } from './queues.controller';
             { name: 'movie-import' },
             { name: 'tv-import' },
             { name: 'embedding-generation' },
+            { name: 'translation-update' },
         ),
     ],
     controllers: [QueuesController],
-    providers: [QueuesService, MovieImportProcessor, TvImportProcessor, EmbeddingProcessor],
+    providers: [QueuesService, MovieImportProcessor, TvImportProcessor, EmbeddingProcessor, TranslationUpdateProcessor],
     exports: [QueuesService],
 })
 export class QueuesModule {}

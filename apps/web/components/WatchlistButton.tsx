@@ -3,7 +3,7 @@
 import { useState } from 'react'
 import { useAuth } from '@/lib/auth/AuthProvider'
 import { useAddToWatchlist, useRemoveFromWatchlist, useWatchlist } from '@/lib/api/hooks'
-import { useTranslations } from 'next-intl'
+import { useTranslations, useLocale } from 'next-intl'
 import { useRouter } from '@/navigation'
 
 interface WatchlistButtonProps {
@@ -15,10 +15,11 @@ export function WatchlistButton({ movieId, variant = 'button' }: WatchlistButton
     const { user } = useAuth()
     const [isAdding, setIsAdding] = useState(false)
     const router = useRouter()
+    const locale = useLocale()
     const t = useTranslations('Common.watchlist')
     const tCommon = useTranslations('Common')
 
-    const { data: watchlist } = useWatchlist(user?.id || '')
+    const { data: watchlist } = useWatchlist(user?.id || '', undefined, locale)
     const addMutation = useAddToWatchlist()
     const removeMutation = useRemoveFromWatchlist()
 

@@ -3,12 +3,21 @@
  * Script to update translations for existing movies in the database
  *
  * Usage:
- *   tsx src/scripts/update-translations.ts [--movies | --tv | --all] [--limit=N] [--offset=N]
+ *   tsx src/scripts/update-translations.ts [--movies | --tv | --all] [--limit=N] [--offset=N] [--force]
+ *
+ * Options:
+ *   --movies    Update only movies
+ *   --tv        Update only TV shows
+ *   --all       Update both (default)
+ *   --limit=N   Process only N items
+ *   --offset=N  Start from offset N
+ *   --force     Update ALL items, even those with existing translations (for re-fetching localized posters)
  *
  * Examples:
  *   tsx src/scripts/update-translations.ts --movies --limit=10
  *   tsx src/scripts/update-translations.ts --tv
  *   tsx src/scripts/update-translations.ts --all
+ *   tsx src/scripts/update-translations.ts --all --force --limit=100  # Re-fetch localized posters for 100 items
  */
 
 import axios from 'axios';
@@ -47,6 +56,7 @@ const flags = {
     movies: args.includes('--movies'),
     tv: args.includes('--tv'),
     all: args.includes('--all'),
+    force: args.includes('--force'), // Update even existing translations
     limit: parseInt(args.find(arg => arg.startsWith('--limit='))?.split('=')[1] || '0'),
     offset: parseInt(args.find(arg => arg.startsWith('--offset='))?.split('=')[1] || '0'),
 };
@@ -57,12 +67,73 @@ if (!flags.movies && !flags.tv && !flags.all) {
 }
 
 /**
+ * Fetch localized posters for a movie using /images endpoint
+ */
+async function fetchMovieLocalizedPosters(movieId: number): Promise<Record<string, { poster_url: string | null; backdrop_url: string | null }>> {
+    const result: Record<string, { poster_url: string | null; backdrop_url: string | null }> = {};
+
+    try {
+        const response = await axios.get(`${TMDB_BASE_URL}/movie/${movieId}/images`, {
+            params: {
+                api_key: TMDB_API_KEY,
+                include_image_language: 'en,ru,uk,null',
+            },
+            timeout: 10000,
+        });
+
+        const posters = response.data.posters || [];
+        const backdrops = response.data.backdrops || [];
+
+        // Group posters by language, picking the highest voted one
+        const postersByLang: Record<string, any> = {};
+        for (const poster of posters) {
+            const lang = poster.iso_639_1 || 'en';
+            if (!postersByLang[lang] || poster.vote_average > postersByLang[lang].vote_average) {
+                postersByLang[lang] = poster;
+            }
+        }
+
+        // Group backdrops by language
+        const backdropsByLang: Record<string, any> = {};
+        for (const backdrop of backdrops) {
+            const lang = backdrop.iso_639_1 || 'en';
+            if (!backdropsByLang[lang] || backdrop.vote_average > backdropsByLang[lang].vote_average) {
+                backdropsByLang[lang] = backdrop;
+            }
+        }
+
+        // Build result for each supported language
+        for (const langCode of ['en', 'ru', 'uk']) {
+            const poster = postersByLang[langCode] || postersByLang['en'] || posters[0];
+            const backdrop = backdropsByLang[langCode] || backdropsByLang['en'] || backdrops[0];
+
+            result[langCode] = {
+                poster_url: poster?.file_path ? `${TMDB_IMAGE_BASE_URL}/w500${poster.file_path}` : null,
+                backdrop_url: backdrop?.file_path ? `${TMDB_IMAGE_BASE_URL}/original${backdrop.file_path}` : null,
+            };
+        }
+
+        const foundLangs = Object.keys(postersByLang).filter(l => ['en', 'ru', 'uk'].includes(l));
+        if (foundLangs.length > 1) {
+            console.log(`    🖼️  Found localized posters: ${foundLangs.join(', ')}`);
+        }
+    } catch (error) {
+        // Silent fail - we'll use default posters
+    }
+
+    return result;
+}
+
+/**
  * Fetch translations for a movie from TMDB
  */
 async function fetchMovieTranslations(movieId: number): Promise<Record<string, any> | null> {
     const translations: Record<string, any> = {};
 
     try {
+        // First, fetch localized posters
+        const localizedPosters = await fetchMovieLocalizedPosters(movieId);
+
         for (const lang of TRANSLATION_LANGUAGES) {
             const response = await axios.get(`${TMDB_BASE_URL}/movie/${movieId}`, {
                 params: {
@@ -75,12 +146,15 @@ async function fetchMovieTranslations(movieId: number): Promise<Record<string, a
             const data = response.data;
             const langCode = lang.split('-')[0]; // 'en-US' -> 'en'
 
+            // Use localized poster if available
+            const localizedImages = localizedPosters[langCode] || { poster_url: null, backdrop_url: null };
+
             translations[langCode] = {
                 title: data.title,
                 description: data.overview || null,
                 tagline: data.tagline || null,
-                poster_url: data.poster_path ? `${TMDB_IMAGE_BASE_URL}/w500${data.poster_path}` : null,
-                backdrop_url: data.backdrop_path ? `${TMDB_IMAGE_BASE_URL}/original${data.backdrop_path}` : null,
+                poster_url: localizedImages.poster_url || (data.poster_path ? `${TMDB_IMAGE_BASE_URL}/w500${data.poster_path}` : null),
+                backdrop_url: localizedImages.backdrop_url || (data.backdrop_path ? `${TMDB_IMAGE_BASE_URL}/original${data.backdrop_path}` : null),
             };
 
             // Delay between language requests
@@ -109,12 +183,73 @@ async function fetchMovieTranslations(movieId: number): Promise<Record<string, a
 }
 
 /**
+ * Fetch localized posters for a TV show using /images endpoint
+ */
+async function fetchTvLocalizedPosters(tvId: number): Promise<Record<string, { poster_url: string | null; backdrop_url: string | null }>> {
+    const result: Record<string, { poster_url: string | null; backdrop_url: string | null }> = {};
+
+    try {
+        const response = await axios.get(`${TMDB_BASE_URL}/tv/${tvId}/images`, {
+            params: {
+                api_key: TMDB_API_KEY,
+                include_image_language: 'en,ru,uk,null',
+            },
+            timeout: 10000,
+        });
+
+        const posters = response.data.posters || [];
+        const backdrops = response.data.backdrops || [];
+
+        // Group posters by language
+        const postersByLang: Record<string, any> = {};
+        for (const poster of posters) {
+            const lang = poster.iso_639_1 || 'en';
+            if (!postersByLang[lang] || poster.vote_average > postersByLang[lang].vote_average) {
+                postersByLang[lang] = poster;
+            }
+        }
+
+        // Group backdrops by language
+        const backdropsByLang: Record<string, any> = {};
+        for (const backdrop of backdrops) {
+            const lang = backdrop.iso_639_1 || 'en';
+            if (!backdropsByLang[lang] || backdrop.vote_average > backdropsByLang[lang].vote_average) {
+                backdropsByLang[lang] = backdrop;
+            }
+        }
+
+        // Build result for each supported language
+        for (const langCode of ['en', 'ru', 'uk']) {
+            const poster = postersByLang[langCode] || postersByLang['en'] || posters[0];
+            const backdrop = backdropsByLang[langCode] || backdropsByLang['en'] || backdrops[0];
+
+            result[langCode] = {
+                poster_url: poster?.file_path ? `${TMDB_IMAGE_BASE_URL}/w500${poster.file_path}` : null,
+                backdrop_url: backdrop?.file_path ? `${TMDB_IMAGE_BASE_URL}/original${backdrop.file_path}` : null,
+            };
+        }
+
+        const foundLangs = Object.keys(postersByLang).filter(l => ['en', 'ru', 'uk'].includes(l));
+        if (foundLangs.length > 1) {
+            console.log(`    🖼️  Found localized posters: ${foundLangs.join(', ')}`);
+        }
+    } catch (error) {
+        // Silent fail - we'll use default posters
+    }
+
+    return result;
+}
+
+/**
  * Fetch translations for a TV show from TMDB
  */
 async function fetchTvTranslations(tvId: number): Promise<Record<string, any> | null> {
     const translations: Record<string, any> = {};
 
     try {
+        // First, fetch localized posters
+        const localizedPosters = await fetchTvLocalizedPosters(tvId);
+
         for (const lang of TRANSLATION_LANGUAGES) {
             const response = await axios.get(`${TMDB_BASE_URL}/tv/${tvId}`, {
                 params: {
@@ -127,12 +262,15 @@ async function fetchTvTranslations(tvId: number): Promise<Record<string, any> | 
             const data = response.data;
             const langCode = lang.split('-')[0];
 
+            // Use localized poster if available
+            const localizedImages = localizedPosters[langCode] || { poster_url: null, backdrop_url: null };
+
             translations[langCode] = {
                 name: data.name,
                 overview: data.overview || null,
                 tagline: data.tagline || null,
-                poster_url: data.poster_path ? `${TMDB_IMAGE_BASE_URL}/w500${data.poster_path}` : null,
-                backdrop_url: data.backdrop_path ? `${TMDB_IMAGE_BASE_URL}/original${data.backdrop_path}` : null,
+                poster_url: localizedImages.poster_url || (data.poster_path ? `${TMDB_IMAGE_BASE_URL}/w500${data.poster_path}` : null),
+                backdrop_url: localizedImages.backdrop_url || (data.backdrop_path ? `${TMDB_IMAGE_BASE_URL}/original${data.backdrop_path}` : null),
             };
 
             if (TRANSLATION_LANGUAGES.indexOf(lang) < TRANSLATION_LANGUAGES.length - 1) {
@@ -165,11 +303,15 @@ async function fetchTvTranslations(tvId: number): Promise<Record<string, any> | 
 async function updateMovieTranslations() {
     console.log('\n🎬 Starting movie translations update...\n');
 
-    // Get movies without translations
+    // Get movies - either all (force) or only those without translations
     let query = supabase
         .from('movies')
-        .select('id, title')
-        .or('translations.is.null,translations.eq.{}');
+        .select('id, title');
+
+    // Only filter by missing translations if --force is not set
+    if (!flags.force) {
+        query = query.or('translations.is.null,translations.eq.{}');
+    }
 
     if (flags.limit > 0) {
         query = query.limit(flags.limit);
@@ -248,8 +390,12 @@ async function updateTvTranslations() {
 
     let query = supabase
         .from('tv_shows')
-        .select('id, name')
-        .or('translations.is.null,translations.eq.{}');
+        .select('id, name');
+
+    // Only filter by missing translations if --force is not set
+    if (!flags.force) {
+        query = query.or('translations.is.null,translations.eq.{}');
+    }
 
     if (flags.limit > 0) {
         query = query.limit(flags.limit);
@@ -344,6 +490,7 @@ async function main() {
     console.log('🚀 Translation Update Script');
     console.log('============================');
     console.log(`Mode: ${flags.all ? 'ALL' : flags.movies ? 'MOVIES' : 'TV SHOWS'}`);
+    console.log(`Force update: ${flags.force ? 'YES (re-fetching all)' : 'NO (only missing)'}`);
     console.log(`Limit: ${flags.limit || 'No limit'}`);
     console.log(`Offset: ${flags.offset || 0}`);
     console.log(`Languages: ${TRANSLATION_LANGUAGES.join(', ')}`);
