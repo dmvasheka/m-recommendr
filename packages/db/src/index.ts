@@ -18,4 +18,7 @@ export type {
     TvEpisode,
     TvEpisodeInsert,
     UserTvWatchlist,
+    ImportProgress,
+    ImportProgressInsert,
+    ImportProgressUpdate,
 } from './types';

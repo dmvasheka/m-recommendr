@@ -22,7 +22,7 @@ export class CategoryRotationService {
     async getNextCategory(contentType: ContentType): Promise<Category> {
         try {
             // Get the last imported category
-            const { data: lastImport, error } = await supabase
+            const response = await supabase
                 .from('import_progress')
                 .select('category, last_run')
                 .eq('content_type', contentType)
@@ -30,6 +30,9 @@ export class CategoryRotationService {
                 .order('last_run', { ascending: false })
                 .limit(1)
                 .maybeSingle();
+
+            const lastImport = response.data as { category: string; last_run: string } | null;
+            const error = response.error;
 
             if (error) {
                 this.logger.error(`Error getting last category: ${error.message}`);
@@ -106,7 +109,7 @@ export class CategoryRotationService {
      * Get last import record for a content type
      */
     private async getLastImport(contentType: ContentType): Promise<{ category: string; last_run: string } | null> {
-        const { data } = await supabase
+        const response = await supabase
             .from('import_progress')
             .select('category, last_run')
             .eq('content_type', contentType)
@@ -115,7 +118,7 @@ export class CategoryRotationService {
             .limit(1)
             .maybeSingle();
 
-        return data;
+        return response.data as { category: string; last_run: string } | null;
     }
 
     /**

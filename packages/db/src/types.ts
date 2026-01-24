@@ -375,6 +375,47 @@ export interface Database {
                     created_at?: string
                 }
             }
+            import_progress: {
+                Row: {
+                    id: string
+                    content_type: 'movies' | 'tv_shows'
+                    category: string
+                    year: number | null
+                    last_page: number
+                    last_run: string | null
+                    total_imported: number | null
+                    total_skipped: number | null
+                    notes: string | null
+                    created_at: string
+                    updated_at: string
+                }
+                Insert: {
+                    id?: string
+                    content_type: 'movies' | 'tv_shows'
+                    category: string
+                    year?: number | null
+                    last_page?: number
+                    last_run?: string | null
+                    total_imported?: number | null
+                    total_skipped?: number | null
+                    notes?: string | null
+                    created_at?: string
+                    updated_at?: string
+                }
+                Update: {
+                    id?: string
+                    content_type?: 'movies' | 'tv_shows'
+                    category?: string
+                    year?: number | null
+                    last_page?: number
+                    last_run?: string | null
+                    total_imported?: number | null
+                    total_skipped?: number | null
+                    notes?: string | null
+                    created_at?: string
+                    updated_at?: string
+                }
+            }
         }
         Views: {
             [_ in never]: never
@@ -472,6 +513,7 @@ export type TvEpisode = Database['public']['Tables']['tv_episodes']['Row']
 export type UserWatchlist = Database['public']['Tables']['user_watchlist']['Row']
 export type UserTvWatchlist = Database['public']['Tables']['user_tv_watchlist']['Row']
 export type UserProfile = Database['public']['Tables']['user_profiles']['Row']
+export type ImportProgress = Database['public']['Tables']['import_progress']['Row']
 
 export type MovieInsert = Database['public']['Tables']['movies']['Insert']
 export type MovieUpdate = Database['public']['Tables']['movies']['Update']
@@ -479,3 +521,5 @@ export type TvShowInsert = Database['public']['Tables']['tv_shows']['Insert']
 export type TvShowUpdate = Database['public']['Tables']['tv_shows']['Update']
 export type TvSeasonInsert = Database['public']['Tables']['tv_seasons']['Insert']
 export type TvEpisodeInsert = Database['public']['Tables']['tv_episodes']['Insert']
+export type ImportProgressInsert = Database['public']['Tables']['import_progress']['Insert']
+export type ImportProgressUpdate = Database['public']['Tables']['import_progress']['Update']
