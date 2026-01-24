@@ -19,13 +19,13 @@ export class MoviesService {
     constructor(private readonly redisService: RedisService) {}
 
     /**
-     * Semantic search - find movies by query text
+     * Semantic search - find movies by query text with optional language parameter
      */
-    async searchMovies(query: string, limit = 10): Promise<SearchResult[]> {
+    async searchMovies(query: string, limit = 10, language = 'en'): Promise<SearchResult[]> {
         try {
-            this.logger.log(`Searching for: "${query}"`);
+            this.logger.log(`Searching for: "${query}" (language: ${language})`);
 
-            const cacheKey = `search:${query.toLowerCase()}:${limit}`;
+            const cacheKey = `search:${query.toLowerCase()}:${limit}:${language}`;
             const cached = await this.redisService.get<SearchResult[]>(cacheKey);
 
             if (cached) {
@@ -48,7 +48,25 @@ export class MoviesService {
                 throw error;
             }
 
-            const results = data as SearchResult[] | null;
+            let results = data as SearchResult[] | null;
+
+            // Apply translations if available
+            if (results && language !== 'en') {
+                results = results.map(movie => {
+                    const translation = (movie as any).translations?.[language];
+                    if (translation) {
+                        return {
+                            ...movie,
+                            title: translation.title || movie.title,
+                            description: translation.description || movie.description,
+                            poster_url: translation.poster_url || movie.poster_url,
+                            backdrop_url: translation.backdrop_url || movie.backdrop_url,
+                        };
+                    }
+                    return movie;
+                });
+            }
+
             this.logger.log(`Found ${results?.length || 0} results`);
             if (results && results.length > 0) {
                 await this.redisService.set(cacheKey, results, 3600);
@@ -65,11 +83,11 @@ export class MoviesService {
     }
 
     /**
-     * Find similar movies by movie ID
+     * Find similar movies by movie ID with optional language parameter
      */
-    async getSimilarMovies(movieId: number, limit = 10): Promise<SearchResult[]> {
+    async getSimilarMovies(movieId: number, limit = 10, language = 'en'): Promise<SearchResult[]> {
         try {
-            this.logger.log(`Finding similar movies to ${movieId}`);
+            this.logger.log(`Finding similar movies to ${movieId} (language: ${language})`);
 
             // Use Supabase RPC to call get_similar_movies function
             const { data, error } = await (supabase.rpc as
@@ -82,7 +100,25 @@ export class MoviesService {
                 throw error;
             }
 
-            const results = data as SearchResult[] | null;
+            let results = data as SearchResult[] | null;
+
+            // Apply translations if available
+            if (results && language !== 'en') {
+                results = results.map(movie => {
+                    const translation = (movie as any).translations?.[language];
+                    if (translation) {
+                        return {
+                            ...movie,
+                            title: translation.title || movie.title,
+                            description: translation.description || movie.description,
+                            poster_url: translation.poster_url || movie.poster_url,
+                            backdrop_url: translation.backdrop_url || movie.backdrop_url,
+                        };
+                    }
+                    return movie;
+                });
+            }
+
             this.logger.log(`Found ${results?.length || 0} similar movies`);
             return results || [];
         } catch (error) {
@@ -94,9 +130,9 @@ export class MoviesService {
     }
 
     /**
-     * Get movie by ID
+     * Get movie by ID with optional language parameter
      */
-    async getMovieById(movieId: number): Promise<Movie | null> {
+    async getMovieById(movieId: number, language = 'en'): Promise<Movie | null> {
         try {
             const { data, error } = await supabase
                 .from('movies')
@@ -108,7 +144,22 @@ export class MoviesService {
                 throw error;
             }
 
-            return data as Movie;
+            const movie = data as any;
+
+            // Apply translations if available
+            if (movie && movie.translations && movie.translations[language]) {
+                const translation = movie.translations[language];
+                return {
+                    ...movie,
+                    title: translation.title || movie.title,
+                    description: translation.description || movie.description,
+                    poster_url: translation.poster_url || movie.poster_url,
+                    backdrop_url: translation.backdrop_url || movie.backdrop_url,
+                    tagline: translation.tagline || movie.tagline,
+                };
+            }
+
+            return movie;
         } catch (error) {
             const errorMessage = error instanceof Error ? error.message :
                 String(error);
@@ -299,9 +350,9 @@ export class MoviesService {
     }
 
     /**
-     * Fast prefix/substring search for autocomplete
+     * Fast prefix/substring search for autocomplete with optional language parameter
      */
-    async autocomplete(query: string, limit = 10): Promise<Movie[]> {
+    async autocomplete(query: string, limit = 10, language = 'en'): Promise<Movie[]> {
         try {
             // Sanitize query: escape special LIKE characters and trim
             const sanitizedQuery = query
@@ -312,13 +363,13 @@ export class MoviesService {
                 return [];
             }
 
-            this.logger.log(`Autocomplete for: "${sanitizedQuery}"`);
+            this.logger.log(`Autocomplete for: "${sanitizedQuery}" (language: ${language})`);
 
             // Search by title using ilike (case-insensitive substring)
             // We order by popularity to show most relevant movies first
             const { data, error } = await supabase
                 .from('movies')
-                .select('id, title, poster_url, release_date, vote_average')
+                .select('id, title, poster_url, release_date, vote_average, translations')
                 .ilike('title', `%${sanitizedQuery}%`)
                 .order('popularity', { ascending: false })
                 .limit(limit);
@@ -327,7 +378,23 @@ export class MoviesService {
                 throw error;
             }
 
-            return (data as Movie[]) || [];
+            // Apply translations if available
+            let results = data as any[] || [];
+            if (language !== 'en') {
+                results = results.map(movie => {
+                    const translation = movie.translations?.[language];
+                    if (translation) {
+                        return {
+                            ...movie,
+                            title: translation.title || movie.title,
+                            poster_url: translation.poster_url || movie.poster_url,
+                        };
+                    }
+                    return movie;
+                });
+            }
+
+            return results as Movie[];
         } catch (error) {
             const errorMessage = error instanceof Error ? error.message : String(error);
             this.logger.error(`Autocomplete error: ${errorMessage}`);

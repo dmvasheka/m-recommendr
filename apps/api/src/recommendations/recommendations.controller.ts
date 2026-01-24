@@ -25,13 +25,14 @@ export class RecommendationsController {
     }
 
     /**
-     * GET /api/recommendations?user_id=xxx&limit=10
+     * GET /api/recommendations?user_id=xxx&limit=10&language=en
      * Get personalized recommendations for a user
      */
     @Get()
     async getRecommendations(
         @Query('user_id') userId: string,
         @Query('limit') limit?: string,
+        @Query('language') language?: string,
     ) {
         if (!userId) {
             return { error: 'Query parameter "user_id" is required' };
@@ -42,6 +43,7 @@ export class RecommendationsController {
             const results = await this.recommendationsService.getPersonalizedRecommendations(
                 userId,
                 maxResults,
+                language,
             );
 
                 return {
@@ -64,13 +66,14 @@ export class RecommendationsController {
 
         /**
          * GET
-         /api/recommendations/hybrid?user_id=xxx&limit=10
+         /api/recommendations/hybrid?user_id=xxx&limit=10&language=en
          * Get hybrid recommendations (profile + popularity)
          */
     @Get('hybrid')
     async getHybridRecommendations(
             @Query('user_id') userId: string,
         @Query('limit') limit?: string,
+        @Query('language') language?: string,
     ) {
         if (!userId) {
             return { error: 'Query parameter "user_id" is required' };
@@ -81,6 +84,7 @@ export class RecommendationsController {
             const results = await this.recommendationsService.getHybridRecommendations(
                 userId,
                 maxResults,
+                language,
             );
 
                     return {

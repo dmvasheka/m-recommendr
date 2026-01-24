@@ -1,5 +1,8 @@
 import { Injectable, Logger } from '@nestjs/common';
-import { supabase } from '@repo/db';
+import { supabase, GeneratedDatabase } from '@repo/db';
+
+// Type for import_progress row with selected fields
+type ImportProgressRow = GeneratedDatabase['public']['Tables']['import_progress']['Row'];
 
 export type ContentType = 'movies' | 'tv_shows';
 export type Category = 'popular' | 'top_rated' | 'now_playing' | 'upcoming';
@@ -22,17 +25,14 @@ export class CategoryRotationService {
     async getNextCategory(contentType: ContentType): Promise<Category> {
         try {
             // Get the last imported category
-            const response = await supabase
+            const { data: lastImport, error } = await supabase
                 .from('import_progress')
                 .select('category, last_run')
                 .eq('content_type', contentType)
                 .is('year', null) // Only category-based imports, not year-based
                 .order('last_run', { ascending: false })
                 .limit(1)
-                .maybeSingle();
-
-            const lastImport = response.data as { category: string; last_run: string } | null;
-            const error = response.error;
+                .maybeSingle<Pick<ImportProgressRow, 'category' | 'last_run'>>();
 
             if (error) {
                 this.logger.error(`Error getting last category: ${error.message}`);
@@ -108,17 +108,21 @@ export class CategoryRotationService {
     /**
      * Get last import record for a content type
      */
-    private async getLastImport(contentType: ContentType): Promise<{ category: string; last_run: string } | null> {
-        const response = await supabase
+    private async getLastImport(contentType: ContentType): Promise<Pick<ImportProgressRow, 'category' | 'last_run'> | null> {
+        const { data, error } = await supabase
             .from('import_progress')
             .select('category, last_run')
             .eq('content_type', contentType)
             .is('year', null)
             .order('last_run', { ascending: false })
             .limit(1)
-            .maybeSingle();
+            .maybeSingle<Pick<ImportProgressRow, 'category' | 'last_run'>>();
 
-        return response.data as { category: string; last_run: string } | null;
+        if (error) {
+            this.logger.error(`Error getting last import: ${error.message}`);
+        }
+
+        return data;
     }
 
     /**

@@ -13,6 +13,9 @@
 
 import axios from 'axios';
 import { supabase } from '@repo/db';
+
+type MovieRow = { id: number; title: string };
+type TvRow = { id: number; name: string };
 import dotenv from 'dotenv';
 import path from 'path';
 
@@ -176,22 +179,30 @@ async function updateMovieTranslations() {
         query = query.range(flags.offset, flags.offset + (flags.limit || 1000) - 1);
     }
 
-    const { data: movies, error } = await query;
+    const { data, error } = await query;
 
     if (error) {
         console.error('❌ Error fetching movies:', error.message);
         return;
     }
 
-    if (!movies || movies.length === 0) {
+    if (!data || data.length === 0) {
         console.log('✅ No movies need translation updates');
         return;
     }
+
+    const movies = data as MovieRow[];
 
     console.log(`📊 Found ${movies.length} movies to update\n`);
 
     for (let i = 0; i < movies.length; i++) {
         const movie = movies[i];
+
+        if (!movie) {
+            console.log(`[${i + 1}/${movies.length}] ⚠️ Skipping: movie is undefined`);
+            continue;
+        }
+
         stats.moviesProcessed++;
 
         console.log(`[${i + 1}/${movies.length}] Processing movie ID ${movie.id}: ${movie.title}`);
@@ -202,6 +213,7 @@ async function updateMovieTranslations() {
             // Update database
             const { error: updateError } = await supabase
                 .from('movies')
+                // @ts-ignore - Supabase type inference issue with partial selects
                 .update({ translations })
                 .eq('id', movie.id);
 
@@ -247,22 +259,30 @@ async function updateTvTranslations() {
         query = query.range(flags.offset, flags.offset + (flags.limit || 1000) - 1);
     }
 
-    const { data: tvShows, error } = await query;
+    const { data, error } = await query;
 
     if (error) {
         console.error('❌ Error fetching TV shows:', error.message);
         return;
     }
 
-    if (!tvShows || tvShows.length === 0) {
+    if (!data || data.length === 0) {
         console.log('✅ No TV shows need translation updates');
         return;
     }
+
+    const tvShows = data as TvRow[];
 
     console.log(`📊 Found ${tvShows.length} TV shows to update\n`);
 
     for (let i = 0; i < tvShows.length; i++) {
         const tv = tvShows[i];
+
+        if (!tv) {
+            console.log(`[${i + 1}/${tvShows.length}] ⚠️ Skipping: tv is undefined`);
+            continue;
+        }
+
         stats.tvProcessed++;
 
         console.log(`[${i + 1}/${tvShows.length}] Processing TV ID ${tv.id}: ${tv.name}`);
@@ -272,6 +292,7 @@ async function updateTvTranslations() {
         if (translations && Object.keys(translations).length > 0) {
             const { error: updateError } = await supabase
                 .from('tv_shows')
+                // @ts-ignore - Supabase type inference issue with partial selects
                 .update({ translations })
                 .eq('id', tv.id);
 

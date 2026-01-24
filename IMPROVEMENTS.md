@@ -1490,3 +1490,153 @@ create index idx_notifications_unread on admin_notifications(created_at desc) wh
 - Regular security audits
 
 ---
+
+## 11. 🌐 Дополнения к локализации (обновлено 2026-01-24)
+
+**Статус:** Критические баги исправлены, требуется расширение функционала
+
+### 11.1 Завершить обновление переводов в БД
+- [x] **Добавить poster_url и backdrop_url в translations** ✅ (2026-01-24)
+  - [x] Обновлены методы `getMovieTranslations()` и `getTvTranslations()`
+  - [x] Скрипт `update-translations.ts` обновлен
+  - [x] Обновлены первые 20 фильмов с новыми полями
+- [ ] **Обновить ВСЕ оставшиеся фильмы и сериалы**
+  ```bash
+  # Фильмы (осталось ~1655 из 1675)
+  npx tsx apps/api/src/scripts/update-translations.ts --movies --all
+  
+  # Сериалы
+  npx tsx apps/api/src/scripts/update-translations.ts --tv --all
+  ```
+- [ ] **Автоматизировать обновление переводов для новых импортов**
+  - Добавить в BullMQ processor после импорта
+
+### 11.2 Расширить поддержку языков в API
+**Текущее состояние:** Только `/api/recommendations/popular` поддерживает `language` параметр
+
+**Endpoints требующие добавления language поддержки:**
+- [ ] `/api/movies/:id` - детальная информация о фильме
+  ```typescript
+  // Добавить параметр language, возвращать данные из translations[language]
+  GET /api/movies/123?language=ru
+  ```
+- [ ] `/api/movies/search?q=...&language=en`
+- [ ] `/api/movies/autocomplete?q=...&language=ru`
+- [ ] `/api/movies/:id/similar?language=uk`
+- [ ] `/api/recommendations?user_id=...&language=ru`
+- [ ] `/api/recommendations/hybrid?user_id=...&language=en`
+- [ ] `/api/tv-shows/*` - все TV show endpoints
+- [ ] `/api/chat` - AI должен отвечать на языке пользователя
+
+**Технические задачи:**
+1. Обновить все `MoviesService`, `TvShowsService`, `RecommendationsService` методы
+2. Добавить параметр `language` в контроллеры
+3. Обновить кэширование с учетом языка (ключи вида `movies:123:ru`)
+4. Обновить фронтенд для передачи `locale` во все API запросы
+
+### 11.3 Синхронизация языковых предпочтений
+- [ ] **При входе пользователя:** загрузить `preferred_language` из БД и применить
+- [ ] **При регистрации:** сохранить текущий язык интерфейса
+- [ ] **Middleware для автоопределения языка:** из `accept-language` заголовка
+- [ ] **Fallback цепочка:** user preference → browser language → default (en)
+
+### 11.4 Индексы для translations (производительность)
+```sql
+-- GIN индексы для быстрого доступа к переводам
+CREATE INDEX idx_movies_translations_gin ON movies USING gin(translations);
+CREATE INDEX idx_tv_shows_translations_gin ON tv_shows USING gin(translations);
+
+-- Индекс для поиска по конкретному языку
+CREATE INDEX idx_movies_translations_title_ru 
+  ON movies ((translations->'ru'->>'title'));
+```
+
+---
+
+## 12. 🔧 Улучшение TypeScript типизации
+
+### 12.1 Проблема с type assertions в category-rotation.service.ts
+**Текущий код:**
+```typescript
+const response = await supabase
+  .from('import_progress')
+  .select('category, last_run')
+  // ...
+const lastImport = response.data as { category: string; last_run: string } | null;
+```
+
+**Решение:**
+- [ ] Регенерировать типы из Supabase:
+  ```bash
+  npx supabase gen types typescript --local > packages/db/src/generated-types.ts
+  ```
+- [ ] Использовать generated types вместо manual assertions
+- [ ] Добавить строгую типизацию для select запросов с конкретными полями
+
+### 12.2 Автоматическая регенерация типов
+- [ ] Добавить pre-commit hook для проверки актуальности типов
+- [ ] Создать npm script `pnpm types:generate` в package.json
+- [ ] Документировать процесс в README
+
+---
+
+## 13. 🚀 Критические обновления инфраструктуры
+
+### 13.1 Node.js upgrade (CRITICAL)
+- [ ] **Обновить Node.js 18 → 20+**
+  - Текущая версия deprecated для Supabase
+  - Обновить `.nvmrc`, `package.json` engines
+  - Обновить CI/CD конфигурацию
+  - Тестировать после обновления
+
+### 13.2 Redis upgrade (HIGH PRIORITY)
+- [ ] **Обновить Redis 5.0.14 → 6.2.0+**
+  - Рекомендация от BullMQ
+  - Проверить совместимость команд
+  - Обновить docker-compose или production Redis
+
+### 13.3 Зависимости
+- [ ] **Исправить peer dependencies:**
+  ```bash
+  pnpm update @swc/helpers@latest
+  ```
+- [ ] **Обновить pnpm lockfile:**
+  ```bash
+  pnpm install --no-frozen-lockfile
+  ```
+- [ ] **Regular dependency audits:**
+  ```bash
+  pnpm audit
+  pnpm outdated
+  ```
+
+---
+
+## 14. 📝 Приоритетный список (обновлено 2026-01-24)
+
+### 🔥 Неделя 1-2: Критическое
+1. ✅ Исправить TypeScript ошибки в backend (DONE 2026-01-24)
+2. ✅ Добавить поддержку language в `/api/recommendations/popular` (DONE 2026-01-24)
+3. [ ] Node.js 18 → 20+ upgrade
+4. [ ] Redis 5.0.14 → 6.2.0+ upgrade
+5. [ ] Обновить переводы для всех фильмов (~1655 оставшихся)
+6. [ ] Добавить language поддержку в основные endpoints (movies, tv-shows)
+
+### 📋 Неделя 3-4: Важное
+7. [ ] Синхронизация языковых предпочтений (auto-load on login)
+8. [ ] Улучшить TypeScript типизацию (generated types из Supabase)
+9. [ ] Добавить индексы для translations JSONB полей
+10. [ ] Movie Explanations UI (backend готов)
+11. [ ] Тесты для локализации
+
+### 🟢 Неделя 5-6: Улучшения
+12. [ ] Performance оптимизация (кэширование с языком)
+13. [ ] AI Chat локализация (ответы на языке пользователя)
+14. [ ] UI/UX полировка
+15. [ ] Документация для разработчиков
+
+---
+
+**Last Updated:** 2026-01-24
+**New items added:** 13 (локализация, типизация, инфраструктура)
+
