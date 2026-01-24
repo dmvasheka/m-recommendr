@@ -7,7 +7,7 @@ import { SearchBar } from '@/components/SearchBar'
 import { NewMovieCard } from '@/components/NewMovieCard'
 import { useSearchMovies, usePopularMovies, useSendChatMessage } from '@/lib/api/hooks'
 import { useAuth } from '@/lib/auth/AuthProvider'
-import { useTranslations } from 'next-intl'
+import { useTranslations, useLocale } from 'next-intl'
 
 function DiscoverPageContent() {
     const searchParams = useSearchParams()
@@ -17,6 +17,7 @@ function DiscoverPageContent() {
     const [aiExplanation, setAiExplanation] = useState('')
     const sendChatMessage = useSendChatMessage()
     const t = useTranslations('Discover')
+    const locale = useLocale()
 
 
     // Update search query when URL changes
@@ -53,10 +54,11 @@ function DiscoverPageContent() {
     const { data: searchResults, isLoading: isSearchLoading } = useSearchMovies({
         query: searchQuery,
         limit: 20,
+        language: locale,
     })
 
     // Fetch popular movies as fallback
-    const { data: popularMovies, isLoading: isPopularLoading } = usePopularMovies(20)
+    const { data: popularMovies, isLoading: isPopularLoading } = usePopularMovies(20, locale)
 
     // Decide what to display
     const showSearchResults = searchQuery.length > 0

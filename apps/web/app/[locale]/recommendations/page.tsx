@@ -10,7 +10,7 @@ import {
     usePopularMovies,
     useWatchlist,
 } from '@/lib/api/hooks'
-import { useTranslations } from 'next-intl'
+import { useTranslations, useLocale } from 'next-intl'
 import { Link } from '@/navigation'
 
 type RecommendationType = 'personalized' | 'hybrid' | 'popular'
@@ -20,20 +20,23 @@ export default function RecommendationsPage() {
     const [recType, setRecType] = useState<RecommendationType>('hybrid')
     const t = useTranslations('Recommendations')
     const tNav = useTranslations('Navigation')
+    const locale = useLocale()
 
     // Fetch different recommendation types
     const { data: personalizedRecs, isLoading: isPersonalizedLoading } = useRecommendations(
         user?.id || '',
-        20
+        20,
+        locale
     )
     const { data: hybridRecs, isLoading: isHybridLoading } = useHybridRecommendations(
         user?.id || '',
-        20
+        20,
+        locale
     )
-    const { data: popularMovies, isLoading: isPopularLoading } = usePopularMovies(20)
+    const { data: popularMovies, isLoading: isPopularLoading } = usePopularMovies(20, locale)
 
     // Get watchlist to show stats
-    const { data: watchlist } = useWatchlist(user?.id || '')
+    const { data: watchlist } = useWatchlist(user?.id || '', undefined, locale)
 
     const watchedCount = watchlist?.filter((item) => item.status === 'watched').length || 0
     const ratedCount = watchlist?.filter((item) => item.rating && item.rating >= 7).length || 0

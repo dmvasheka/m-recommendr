@@ -71,10 +71,11 @@ class ApiClient {
 
 
     // Watchlist
-    async getWatchlist(userId: string, status?: 'planned' | 'watched'): Promise<WatchlistItem[]> {
+    async getWatchlist(userId: string, status?: 'planned' | 'watched', language?: string): Promise<WatchlistItem[]> {
         const statusParam = status ? `&status=${status}` : ''
+        const langParam = language ? `&language=${language}` : ''
         const response = await this.fetch<{ success: boolean; items: WatchlistItem[] }>(
-            `/api/watchlist?user_id=${userId}${statusParam}`
+            `/api/watchlist?user_id=${userId}${statusParam}${langParam}`
         )
         return response.items || []
     }

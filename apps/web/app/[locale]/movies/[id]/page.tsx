@@ -5,7 +5,7 @@ import { Navbar } from '@/components/Navbar'
 import { MovieCard } from '@/components/MovieCard'
 import { WatchlistButton } from '@/components/WatchlistButton'
 import { useMovie, useSimilarMovies } from '@/lib/api/hooks'
-import { useTranslations } from 'next-intl'
+import { useTranslations, useLocale } from 'next-intl'
 import { Link } from '@/navigation'
 
 interface PageProps {
@@ -15,11 +15,13 @@ interface PageProps {
 export default function MovieDetailsPage({ params }: PageProps) {
     const movieId = parseInt(params.id)
     const t = useTranslations('MovieDetails')
+    const locale = useLocale()
 
-    const { data: movie, isLoading, error } = useMovie(movieId)
+    const { data: movie, isLoading, error } = useMovie(movieId, locale)
     const { data: similarMovies } = useSimilarMovies({
         movieId,
         limit: 8,
+        language: locale,
     })
 
     if (isLoading) {

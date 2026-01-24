@@ -6,7 +6,7 @@ import { Navigation } from '@/components/Navigation'
 import { RatingStars } from '@/components/RatingStars'
 import { useAuth } from '@/lib/auth/AuthProvider'
 import { useWatchlist, useMarkAsWatched, useRemoveFromWatchlist } from '@/lib/api/hooks'
-import { useTranslations } from 'next-intl'
+import { useTranslations, useLocale } from 'next-intl'
 import { Link } from '@/navigation'
 
 type FilterTab = 'all' | 'planned' | 'watched'
@@ -17,8 +17,9 @@ export default function WatchlistPage() {
     const t = useTranslations('Watchlist')
     const tCommon = useTranslations('Common')
     const tNav = useTranslations('Navigation')
+    const locale = useLocale()
 
-    const { data: allMovies, isLoading } = useWatchlist(user?.id || '')
+    const { data: allMovies, isLoading } = useWatchlist(user?.id || '', undefined, locale)
     const markAsWatchedMutation = useMarkAsWatched()
     const removeMutation = useRemoveFromWatchlist()
 

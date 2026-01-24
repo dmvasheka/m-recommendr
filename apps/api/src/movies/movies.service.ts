@@ -9,7 +9,7 @@ import {
 import type { Movie } from '@repo/db';
 import { RedisService } from '../redis/redis.service';
 
-export interface SearchResult extends Omit<Movie, 'embedding'> {
+export interface SearchResult extends Omit<Movie, 'embedding' | 'translations'> {
     similarity: number;
     translations?: Record<string, {
         title?: string;

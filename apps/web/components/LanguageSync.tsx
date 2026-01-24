@@ -27,16 +27,65 @@ export function LanguageSync() {
       return
     }
 
+    // Check if there was a recent manual language change
+    if (typeof window !== 'undefined') {
+      const manualChange = localStorage.getItem('manualLanguageChange')
+      if (manualChange) {
+        let isValid = false
+        let changeTimestamp = 0
+        let changeLanguage = ''
+
+        try {
+          const parsed = JSON.parse(manualChange)
+          // Normalize timestamp: accept number or parseable string
+          changeTimestamp = typeof parsed.timestamp === 'number' 
+            ? parsed.timestamp 
+            : Date.parse(parsed.timestamp)
+            
+          // Normalize language: must be non-empty string
+          changeLanguage = typeof parsed.language === 'string' ? parsed.language : ''
+
+          if (!isNaN(changeTimestamp) && changeLanguage) {
+            isValid = true
+          }
+        } catch {
+          // JSON parse error, treat as invalid
+        }
+
+        if (!isValid) {
+          localStorage.removeItem('manualLanguageChange')
+        } else {
+          const elapsed = Date.now() - changeTimestamp
+
+          // If manual change was within last 10 seconds, respect it
+          if (elapsed < 10000) {
+            console.log(`⏱️  LanguageSync: Skipping auto-sync due to recent manual change (${Math.round(elapsed/1000)}s ago)`)
+            hasChecked.current = true
+
+            // Clean up if we're on the correct language
+            if (changeLanguage === currentLocale) {
+              localStorage.removeItem('manualLanguageChange')
+            }
+            return
+          } else {
+            // Clean up expired entry
+            localStorage.removeItem('manualLanguageChange')
+          }
+        }
+      }
+    }
+
     // If user has a preferred language and it's different from current locale
     if (preferredLanguage && preferredLanguage !== currentLocale) {
       hasChecked.current = true
 
       // Redirect to user's preferred language
-      console.log(`Syncing language: ${currentLocale} -> ${preferredLanguage}`)
+      console.log(`🔄 LanguageSync: Syncing language ${currentLocale} -> ${preferredLanguage}`)
       router.replace(pathname, { locale: preferredLanguage })
     } else if (preferredLanguage) {
       // Language matches, mark as checked
       hasChecked.current = true
+      console.log(`✅ LanguageSync: Language already matches (${currentLocale})`)
     }
   }, [user, preferredLanguage, currentLocale, isLoading, router, pathname])
 
