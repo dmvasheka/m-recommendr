@@ -2,10 +2,10 @@
 
 import { useState, useRef, useEffect } from 'react'
 import { useLocale } from 'next-intl'
-import { useRouter, usePathname } from '@/navigation'
 import { Globe } from 'lucide-react'
 import { useAuth } from '@/lib/auth/AuthProvider'
 import { useUpdateLanguagePreference } from '@/lib/api/hooks'
+import { useQueryClient } from '@tanstack/react-query'
 
 const languages = [
   { code: 'en', name: 'English', flag: '🇺🇸' },
@@ -15,12 +15,11 @@ const languages = [
 
 export function LanguageSwitcher() {
   const locale = useLocale()
-  const router = useRouter()
-  const pathname = usePathname()
   const { user } = useAuth()
   const [isOpen, setIsOpen] = useState(false)
   const dropdownRef = useRef<HTMLDivElement>(null)
   const updateLanguageMutation = useUpdateLanguagePreference()
+  const queryClient = useQueryClient()
 
   const currentLanguage = languages.find(lang => lang.code === locale) || languages[0]
 
@@ -37,6 +36,12 @@ export function LanguageSwitcher() {
   }, [])
 
   const handleLanguageChange = async (languageCode: string) => {
+    // Don't do anything if already on this language
+    if (languageCode === locale) {
+      setIsOpen(false)
+      return
+    }
+
     setIsOpen(false)
 
     // Save to database if user is logged in
@@ -46,14 +51,32 @@ export function LanguageSwitcher() {
           userId: user.id,
           language: languageCode
         })
+
+        // Optimistically update the cache
+        queryClient.setQueryData(['user', 'language', user.id], languageCode)
       } catch (error) {
         console.error('Failed to save language preference:', error)
-        // Continue anyway - router will update the UI
+        // Continue anyway - navigation will still work
       }
     }
 
-    // Update the route (this also sets the cookie)
-    router.replace(pathname, { locale: languageCode })
+    // Navigate to new locale with full page reload
+    // This is necessary because NextIntlClientProvider doesn't update
+    // on client-side navigation in App Router
+    if (typeof window !== 'undefined') {
+      const pathSegments = window.location.pathname.split('/').filter(Boolean)
+
+      // Remove current locale if it's the first segment
+      if (pathSegments[0] === locale) {
+        pathSegments.shift()
+      }
+
+      // Build new path with target locale
+      const newPath = `/${languageCode}${pathSegments.length > 0 ? '/' + pathSegments.join('/') : ''}`
+
+      // Full page reload to ensure translations update
+      window.location.assign(newPath)
+    }
   }
 
   return (

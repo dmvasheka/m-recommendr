@@ -8,7 +8,7 @@ export function Providers({ children }: { children: React.ReactNode }) {
     return (
         <ReactQueryProvider>
             <AuthProvider>
-                <LanguageSync />
+                {/* <LanguageSync /> */}
                 {children}
             </AuthProvider>
         </ReactQueryProvider>
