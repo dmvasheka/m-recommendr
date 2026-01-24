@@ -11,6 +11,13 @@ import { RedisService } from '../redis/redis.service';
 
 export interface SearchResult extends Omit<Movie, 'embedding'> {
     similarity: number;
+    translations?: Record<string, {
+        title?: string;
+        description?: string;
+        poster_url?: string;
+        backdrop_url?: string;
+        tagline?: string;
+    }> | null;
 }
 
 @Injectable()
@@ -53,7 +60,7 @@ export class MoviesService {
             // Apply translations if available
             if (results && language !== 'en') {
                 results = results.map(movie => {
-                    const translation = (movie as any).translations?.[language];
+                    const translation = movie.translations?.[language];
                     if (translation) {
                         return {
                             ...movie,
@@ -105,7 +112,7 @@ export class MoviesService {
             // Apply translations if available
             if (results && language !== 'en') {
                 results = results.map(movie => {
-                    const translation = (movie as any).translations?.[language];
+                    const translation = movie.translations?.[language];
                     if (translation) {
                         return {
                             ...movie,

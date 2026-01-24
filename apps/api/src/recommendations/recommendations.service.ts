@@ -12,6 +12,12 @@ export interface RecommendationResult {
     vote_average: number | null;
     popularity: number | null;
     similarity: number;
+    translations?: Record<string, {
+        title?: string;
+        description?: string;
+        poster_url?: string;
+        backdrop_url?: string;
+    }>;
 }
 
 @Injectable()
@@ -71,7 +77,7 @@ export class RecommendationsService {
             // Apply translations if available
             if (results && language !== 'en') {
                 results = results.map(movie => {
-                    const translation = (movie as any).translations?.[language];
+                    const translation = movie.translations?.[language];
                     if (translation) {
                         return {
                             ...movie,
