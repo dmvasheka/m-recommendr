@@ -15,6 +15,7 @@ export interface SendMessageDto {
     userId: string;
     message: string;
     conversationHistory?: ChatMessage[];
+    language?: string;
 }
 
 export interface ChatResponse {
@@ -108,11 +109,11 @@ export class ChatService {
             }
 
 
-            // 3. Fetch full enriched metadata for context
+            // 3. Fetch full enriched metadata for context (with translations)
             const movieIds = (relevantMovies || []).map((m: any) => m.id);
             const { data: enrichedMovies, error: enrichError } = await supabase
                 .from('movies')
-                .select('id, title, description, genres, keywords, tagline, movie_cast, crew, vote_average, release_date')
+                .select('id, title, description, genres, keywords, tagline, movie_cast, crew, vote_average, release_date, translations')
                 .in('id', movieIds);
 
             if (enrichError) {
@@ -120,6 +121,23 @@ export class ChatService {
             }
 
             let context: MovieContext[] = (enrichedMovies || []) as any[];
+
+            // Apply translations if language is not English
+            const language = dto.language || 'en';
+            if (language !== 'en' && context.length > 0) {
+                context = context.map((movie: any) => {
+                    const translation = movie.translations?.[language];
+                    if (translation) {
+                        return {
+                            ...movie,
+                            title: translation.title || movie.title,
+                            description: translation.description || movie.description,
+                        };
+                    }
+                    return movie;
+                });
+                this.logger.log(`Applied ${language} translations to ${context.length} movies`);
+            }
 
             // NEW: Fetch conversation history if not provided
             let conversationHistory = dto.conversationHistory || [];
@@ -147,13 +165,14 @@ export class ChatService {
                 this.logger.log(`Re-ranked ${context.length} movies by mood: ${detectedMood.mood}`);
             }
 
-            // 4. Generate AI response using RAG with personalization + history
+            // 4. Generate AI response using RAG with personalization + history + language
             const aiResponse = await generateChatResponse(
                 dto.message,
                 context,
                 conversationHistory, // NOW includes previous messages
                 userPreferences || undefined,
-                detectedMood || undefined
+                detectedMood || undefined,
+                language
             );
 
             // 5. Save conversation to database

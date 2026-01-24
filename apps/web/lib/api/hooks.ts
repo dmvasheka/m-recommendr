@@ -16,18 +16,18 @@ export function useMovies(page = 1, pageSize = 20) {
     })
 }
 
-export function useMovie(id: number) {
+export function useMovie(id: number, language?: string) {
     return useQuery({
-        queryKey: ['movie', id],
-        queryFn: () => api.getMovie(id),
+        queryKey: ['movie', id, language],
+        queryFn: () => api.getMovie(id, language),
         enabled: !!id,
     })
 }
 
-export function useAutocomplete(query: string, limit = 5) {
+export function useAutocomplete(query: string, limit = 5, language?: string) {
     return useQuery({
-        queryKey: ['autocomplete', query, limit],
-        queryFn: () => api.autocompleteMovies(query, limit),
+        queryKey: ['autocomplete', query, limit, language],
+        queryFn: () => api.autocompleteMovies(query, limit, language),
         enabled: query.length >= 2,
         staleTime: 60 * 1000, // Cache for 1 minute
     })
@@ -35,7 +35,7 @@ export function useAutocomplete(query: string, limit = 5) {
 
 export function useSearchMovies(params: SearchMoviesParams) {
     return useQuery({
-        queryKey: ['movies', 'search', params.query, params.limit],
+        queryKey: ['movies', 'search', params.query, params.limit, params.language],
         queryFn: () => api.searchMovies(params),
         enabled: params.query.length > 0,
     })
@@ -43,7 +43,7 @@ export function useSearchMovies(params: SearchMoviesParams) {
 
 export function useSimilarMovies(params: SimilarMoviesParams) {
     return useQuery({
-        queryKey: ['movies', 'similar', params.movieId, params.limit],
+        queryKey: ['movies', 'similar', params.movieId, params.limit, params.language],
         queryFn: () => api.getSimilarMovies(params),
         enabled: !!params.movieId,
     })
@@ -98,18 +98,18 @@ export function useRemoveFromWatchlist() {
 }
 
 // Recommendations
-export function useRecommendations(userId: string, limit = 10) {
+export function useRecommendations(userId: string, limit = 10, language?: string) {
     return useQuery({
-        queryKey: ['recommendations', userId, limit],
-        queryFn: () => api.getRecommendations(userId, limit),
+        queryKey: ['recommendations', userId, limit, language],
+        queryFn: () => api.getRecommendations(userId, limit, language),
         enabled: !!userId,
     })
 }
 
-export function useHybridRecommendations(userId: string, limit = 10) {
+export function useHybridRecommendations(userId: string, limit = 10, language?: string) {
     return useQuery({
-        queryKey: ['recommendations', 'hybrid', userId, limit],
-        queryFn: () => api.getHybridRecommendations(userId, limit),
+        queryKey: ['recommendations', 'hybrid', userId, limit, language],
+        queryFn: () => api.getHybridRecommendations(userId, limit, language),
         enabled: !!userId,
     })
 }

@@ -8,13 +8,14 @@ export class TvShowsController {
     constructor(private readonly tvShowsService: TvShowsService) {}
 
     /**
-     * GET /api/tv-shows/autocomplete?q=query&limit=10
+     * GET /api/tv-shows/autocomplete?q=query&limit=10&language=en
      * Fast search for UI autocomplete
      */
     @Get('autocomplete')
     async autocomplete(
         @Query('q') query: string,
         @Query('limit') limit?: string,
+        @Query('language') language?: string,
     ) {
         if (!query || query.length < 2) {
             return { success: true, results: [] };
@@ -22,7 +23,7 @@ export class TvShowsController {
 
         try {
             const maxResults = limit ? parseInt(limit, 10) : 10;
-            const results = await this.tvShowsService.autocomplete(query, maxResults);
+            const results = await this.tvShowsService.autocomplete(query, maxResults, language);
 
             return {
                 success: true,
@@ -39,13 +40,14 @@ export class TvShowsController {
     }
 
     /**
-     * GET /api/tv-shows/search?q=query&limit=10
+     * GET /api/tv-shows/search?q=query&limit=10&language=en
      * Semantic search for TV shows
      */
     @Get('search')
     async searchTvShows(
         @Query('q') query: string,
         @Query('limit') limit?: string,
+        @Query('language') language?: string,
     ) {
         if (!query) {
             return { error: 'Query parameter "q" is required' };
@@ -53,7 +55,7 @@ export class TvShowsController {
 
         try {
             const maxResults = limit ? parseInt(limit, 10) : 10;
-            const results = await this.tvShowsService.searchTvShows(query, maxResults);
+            const results = await this.tvShowsService.searchTvShows(query, maxResults, language);
 
             return {
                 success: true,
@@ -72,18 +74,21 @@ export class TvShowsController {
     }
 
     /**
-     * GET /api/tv-shows/:id
+     * GET /api/tv-shows/:id?language=en
      * Get TV show by ID
      */
     @Get(':id')
-    async getTvShowById(@Param('id') id: string) {
+    async getTvShowById(
+        @Param('id') id: string,
+        @Query('language') language?: string,
+    ) {
         const tvShowId = parseInt(id, 10);
         if (isNaN(tvShowId)) {
             return { error: 'Invalid TV show ID' };
         }
 
         try {
-            const tvShow = await this.tvShowsService.getTvShowById(tvShowId);
+            const tvShow = await this.tvShowsService.getTvShowById(tvShowId, language);
 
             if (!tvShow) {
                 return {

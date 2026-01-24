@@ -39,28 +39,32 @@ class ApiClient {
         return response.movies || []
     }
 
-    async getMovie(id: number): Promise<Movie> {
-        const data = await this.fetch<{ success: boolean; movie: Movie }>(`/api/movies/${id}`)
+    async getMovie(id: number, language?: string): Promise<Movie> {
+        const langParam = language ? `?language=${language}` : ''
+        const data = await this.fetch<{ success: boolean; movie: Movie }>(`/api/movies/${id}${langParam}`)
         return data.movie
     }
 
-    async autocompleteMovies(query: string, limit = 5): Promise<Movie[]> {
+    async autocompleteMovies(query: string, limit = 5, language?: string): Promise<Movie[]> {
+        const langParam = language ? `&language=${language}` : ''
         const data = await this.fetch<{ success: boolean; results: Movie[] }>(
-            `/api/movies/autocomplete?q=${encodeURIComponent(query)}&limit=${limit}`
+            `/api/movies/autocomplete?q=${encodeURIComponent(query)}&limit=${limit}${langParam}`
         )
         return data.results
     }
 
-    async searchMovies({ query, limit = 10 }: SearchMoviesParams): Promise<Movie[]> {
+    async searchMovies({ query, limit = 10, language }: SearchMoviesParams): Promise<Movie[]> {
+        const langParam = language ? `&language=${language}` : ''
         const response = await this.fetch<{ success: boolean; results: Movie[] }>(
-            `/api/movies/search?q=${encodeURIComponent(query)}&limit=${limit}`
+            `/api/movies/search?q=${encodeURIComponent(query)}&limit=${limit}${langParam}`
         )
         return response.results || []
     }
 
-    async getSimilarMovies({ movieId, limit = 10 }: SimilarMoviesParams): Promise<Movie[]> {
+    async getSimilarMovies({ movieId, limit = 10, language }: SimilarMoviesParams): Promise<Movie[]> {
+        const langParam = language ? `&language=${language}` : ''
         const response = await this.fetch<{ success: boolean; results: Movie[] }>(
-            `/api/movies/${movieId}/similar?limit=${limit}`
+            `/api/movies/${movieId}/similar?limit=${limit}${langParam}`
         )
         return response.results || []
     }
@@ -98,16 +102,18 @@ class ApiClient {
     }
 
     // Recommendations
-    async getRecommendations(userId: string, limit = 10): Promise<Recommendation[]> {
+    async getRecommendations(userId: string, limit = 10, language?: string): Promise<Recommendation[]> {
+        const langParam = language ? `&language=${language}` : ''
         const response = await this.fetch<{ success: boolean; recommendations: Recommendation[] }>(
-            `/api/recommendations?user_id=${userId}&limit=${limit}`
+            `/api/recommendations?user_id=${userId}&limit=${limit}${langParam}`
         )
         return response.recommendations || []
     }
 
-    async getHybridRecommendations(userId: string, limit = 10): Promise<Recommendation[]> {
+    async getHybridRecommendations(userId: string, limit = 10, language?: string): Promise<Recommendation[]> {
+        const langParam = language ? `&language=${language}` : ''
         const response = await this.fetch<{ success: boolean; recommendations: Recommendation[] }>(
-            `/api/recommendations/hybrid?user_id=${userId}&limit=${limit}`
+            `/api/recommendations/hybrid?user_id=${userId}&limit=${limit}${langParam}`
         )
         return response.recommendations || []
     }
