@@ -1,7 +1,7 @@
 'use client'
 
 import Image from 'next/image'
-import { Navbar } from '@/components/Navbar'
+import { Navigation } from '@/components/Navigation'
 import { MovieCard } from '@/components/MovieCard'
 import { WatchlistButton } from '@/components/WatchlistButton'
 import { useMovie, useSimilarMovies } from '@/lib/api/hooks'
@@ -27,7 +27,7 @@ export default function MovieDetailsPage({ params }: PageProps) {
     if (isLoading) {
         return (
             <div className="min-h-screen bg-[#0a0a0f]">
-                <Navbar />
+                <Navigation />
                 <div className="flex justify-center items-center py-20">
                     <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-[#e50914]"></div>
                 </div>
@@ -38,7 +38,7 @@ export default function MovieDetailsPage({ params }: PageProps) {
     if (error || !movie) {
         return (
             <div className="min-h-screen bg-[#0a0a0f]">
-                <Navbar />
+                <Navigation />
                 <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-20 text-center">
                     <div className="text-6xl mb-4">😢</div>
                     <h1 className="text-3xl font-bold text-white mb-2">{t('notFound')}</h1>
@@ -69,7 +69,7 @@ export default function MovieDetailsPage({ params }: PageProps) {
 
     return (
         <div className="min-h-screen bg-[#0a0a0f]">
-            <Navbar />
+            <Navigation />
 
             <div className="relative h-[500px] w-full">
                 {backdropUrl ? (

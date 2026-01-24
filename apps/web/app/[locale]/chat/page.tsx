@@ -5,6 +5,7 @@ import { useAuth } from '@/lib/auth/AuthProvider'
 import { useSendChatMessage } from '@/lib/api/hooks'
 import { useRouter } from '@/navigation'
 import { useTranslations, useLocale } from 'next-intl'
+import { Navigation } from '@/components/Navigation'
 
 interface Message {
     role: 'user' | 'assistant'
@@ -106,32 +107,20 @@ export default function ChatPage() {
 
     return (
         <div className="min-h-screen bg-gradient-to-b from-[#0a0a0f] via-[#1a1a2e] to-[#0a0a0f] flex flex-col">
-            {/* Header */}
-            <div className="bg-[#0a0a0f]/80 border-b border-white/10 backdrop-blur-xl px-4 py-4 fixed top-0 left-0 right-0 z-10">
-                <div className="max-w-4xl mx-auto flex justify-between items-center">
-                    <div>
-                        <h1 className="text-2xl font-bold text-white">{t('title')}</h1>
-                        <p className="text-sm text-[#9ca3af] mt-1">
-                            {t('subtitle')}
-                        </p>
-                    </div>
-                    <button
-                        onClick={() => {
-                            const locales = ['en', 'ru', 'uk'] as const
-                            const currentIndex = locales.indexOf(locale as any)
-                            const nextIndex = (currentIndex + 1) % locales.length
-                            const nextLocale = locales[nextIndex]
-                            router.replace('/chat', { locale: nextLocale })
-                        }}
-                        className="px-2 py-1 text-xs font-bold border border-white/20 rounded text-white hover:bg-white/10 uppercase"
-                    >
-                        {locale}
-                    </button>
+            <Navigation />
+
+            {/* Chat Header */}
+            <div className="pt-20 px-4 pb-4">
+                <div className="max-w-4xl mx-auto">
+                    <h1 className="text-2xl font-bold text-white">{t('title')}</h1>
+                    <p className="text-sm text-[#9ca3af] mt-1">
+                        {t('subtitle')}
+                    </p>
                 </div>
             </div>
 
             {/* Messages Container */}
-            <div className="flex-1 overflow-y-auto px-4 py-6 mt-24">
+            <div className="flex-1 overflow-y-auto px-4 py-6">
                 <div className="max-w-4xl mx-auto space-y-6">
                     {messages.length === 0 && (
                         <div className="text-center py-12">
