@@ -114,10 +114,10 @@ export function useHybridRecommendations(userId: string, limit = 10) {
     })
 }
 
-export function usePopularMovies(limit = 10) {
+export function usePopularMovies(limit = 10, language?: string) {
     return useQuery({
-        queryKey: ['movies', 'popular', limit],
-        queryFn: () => api.getPopularMovies(limit),
+        queryKey: ['movies', 'popular', limit, language],
+        queryFn: () => api.getPopularMovies(limit, language),
     })
 }
 

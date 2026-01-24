@@ -140,7 +140,7 @@ export class RecommendationsService {
 
             if (profileRecs.length === 0) {
                 // Fallback to popular movies if no profile yet
-                return this.getPopularRecommendations(limit);
+                return this.getPopularRecommendations(limit, 'en');
             }
 
             // Rerank by combining similarity and popularity
@@ -176,11 +176,11 @@ export class RecommendationsService {
      * Fallback: Get popular movies for users without
      profile
      */
-    async getPopularRecommendations(limit = 10):
+    async getPopularRecommendations(limit = 10, language = 'en'):
         Promise<RecommendationResult[]> {
         try {
-            this.logger.log(`Getting popular movies as fallback recommendations`);
-            const cacheKey = `popular:${limit}`;
+            this.logger.log(`Getting popular movies as fallback recommendations (language: ${language})`);
+            const cacheKey = `popular:${limit}:${language}`;
             const cached = await this.redisService.get<RecommendationResult[]>(cacheKey);
 
             if (cached) {
@@ -192,7 +192,7 @@ export class RecommendationsService {
 
             const { data, error } = await (supabase as any)
                 .from('movies')
-                .select('id, title, description, poster_url, backdrop_url, genres, vote_average, popularity, release_date')
+                .select('id, title, description, poster_url, backdrop_url, genres, vote_average, popularity, release_date, translations')
                 .not('embedding', 'is', null) // Only movies with embeddings
                 .order('popularity', { ascending: false })
                 .limit(limit);
@@ -201,10 +201,21 @@ export class RecommendationsService {
                 throw error;
             }
 
-            const results = ((data || []) as any[]).map(movie => ({
-                ...movie,
-                similarity: 0, // No similarity for popular movies
-            }));
+            const results = ((data || []) as any[]).map(movie => {
+                // Use translations if available, fallback to original fields
+                const translatedData = movie.translations?.[language];
+                return {
+                    id: movie.id,
+                    title: translatedData?.title || movie.title,
+                    description: translatedData?.description || movie.description,
+                    poster_url: translatedData?.poster_url || movie.poster_url,
+                    backdrop_url: translatedData?.backdrop_url || movie.backdrop_url,
+                    genres: movie.genres,
+                    vote_average: movie.vote_average,
+                    popularity: movie.popularity,
+                    similarity: 0, // No similarity for popular movies
+                };
+            });
             this.logger.log(`Found ${results.length} popular movies`);
 
             if (results.length > 0) {

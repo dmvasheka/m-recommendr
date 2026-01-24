@@ -7,14 +7,15 @@ import { Navigation } from "@/components/Navigation"
 import { usePopularMovies } from "@/lib/api/hooks"
 import { useAuth } from "@/lib/auth/AuthProvider"
 import { useState } from "react"
-import { useTranslations } from 'next-intl'
+import { useTranslations, useLocale } from 'next-intl'
 import { useRouter, Link } from '@/navigation'
 
 export default function Page() {
   const router = useRouter()
   const { user } = useAuth()
   const [searchQuery, setSearchQuery] = useState('')
-  const { data: popularMovies, isLoading } = usePopularMovies(20)
+  const locale = useLocale()
+  const { data: popularMovies, isLoading } = usePopularMovies(20, locale)
 
   const tHome = useTranslations('Home')
   const tNav = useTranslations('Navigation')

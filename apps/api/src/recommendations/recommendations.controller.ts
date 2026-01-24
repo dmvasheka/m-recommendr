@@ -101,16 +101,20 @@ export class RecommendationsController {
             }
 
             /**
-             * GET /api/recommendations/popular?limit=10
+             * GET /api/recommendations/popular?limit=10&language=en
              * Get popular movies (fallback for users without
              profile)
              */
     @Get('popular')
-    async getPopularRecommendations(@Query('limit') limit?: string) {
+    async getPopularRecommendations(
+        @Query('limit') limit?: string,
+        @Query('language') language?: string,
+    ) {
         try {
             const maxResults = this.parseLimit(limit);
             const results = await this.recommendationsService.getPopularRecommendations(
                 maxResults,
+                language,
             );
 
                     return {

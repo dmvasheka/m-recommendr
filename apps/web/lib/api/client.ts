@@ -112,9 +112,10 @@ class ApiClient {
         return response.recommendations || []
     }
 
-    async getPopularMovies(limit = 10): Promise<Movie[]> {
+    async getPopularMovies(limit = 10, language?: string): Promise<Movie[]> {
+        const langParam = language ? `&language=${language}` : ''
         const response = await this.fetch<{ success: boolean; recommendations: Movie[] }>(
-            `/api/recommendations/popular?limit=${limit}`
+            `/api/recommendations/popular?limit=${limit}${langParam}`
         )
         return response.recommendations || []
     }

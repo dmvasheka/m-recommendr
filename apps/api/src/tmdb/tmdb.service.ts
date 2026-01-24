@@ -340,6 +340,8 @@ export class TmdbService {
                     title: data.title,
                     description: data.overview || null,
                     tagline: data.tagline || null,
+                    poster_url: data.poster_path ? `${this.imageBaseUrl}/w500${data.poster_path}` : null,
+                    backdrop_url: data.backdrop_path ? `${this.imageBaseUrl}/original${data.backdrop_path}` : null,
                 };
 
                 this.logger.log(`✅ Fetched ${langCode} translation for movie ${movieId}: "${data.title}"`);
@@ -384,6 +386,8 @@ export class TmdbService {
                     name: data.name,
                     overview: data.overview || null,
                     tagline: data.tagline || null,
+                    poster_url: data.poster_path ? `${this.imageBaseUrl}/w500${data.poster_path}` : null,
+                    backdrop_url: data.backdrop_path ? `${this.imageBaseUrl}/original${data.backdrop_path}` : null,
                 };
 
                 this.logger.log(`✅ Fetched ${langCode} translation for TV ${tvId}: "${data.name}"`);

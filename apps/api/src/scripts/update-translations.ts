@@ -22,6 +22,7 @@ dotenv.config({ path: path.resolve(__dirname, '../../../../.env') });
 // Configuration
 const TMDB_API_KEY = process.env.TMDB_API_KEY;
 const TMDB_BASE_URL = 'https://api.themoviedb.org/3';
+const TMDB_IMAGE_BASE_URL = 'https://image.tmdb.org/t/p';
 const TRANSLATION_LANGUAGES = ['en-US', 'ru-RU', 'uk-UA'];
 const DELAY_BETWEEN_MOVIES = 350; // ms between movies (to stay under rate limits)
 const DELAY_BETWEEN_LANGUAGES = 100; // ms between language requests
@@ -75,6 +76,8 @@ async function fetchMovieTranslations(movieId: number): Promise<Record<string, a
                 title: data.title,
                 description: data.overview || null,
                 tagline: data.tagline || null,
+                poster_url: data.poster_path ? `${TMDB_IMAGE_BASE_URL}/w500${data.poster_path}` : null,
+                backdrop_url: data.backdrop_path ? `${TMDB_IMAGE_BASE_URL}/original${data.backdrop_path}` : null,
             };
 
             // Delay between language requests
@@ -125,6 +128,8 @@ async function fetchTvTranslations(tvId: number): Promise<Record<string, any> | 
                 name: data.name,
                 overview: data.overview || null,
                 tagline: data.tagline || null,
+                poster_url: data.poster_path ? `${TMDB_IMAGE_BASE_URL}/w500${data.poster_path}` : null,
+                backdrop_url: data.backdrop_path ? `${TMDB_IMAGE_BASE_URL}/original${data.backdrop_path}` : null,
             };
 
             if (TRANSLATION_LANGUAGES.indexOf(lang) < TRANSLATION_LANGUAGES.length - 1) {
