@@ -31,9 +31,31 @@ export function LanguageSync() {
     if (typeof window !== 'undefined') {
       const manualChange = localStorage.getItem('manualLanguageChange')
       if (manualChange) {
+        let isValid = false
+        let changeTimestamp = 0
+        let changeLanguage = ''
+
         try {
-          const { timestamp, language } = JSON.parse(manualChange)
-          const elapsed = Date.now() - timestamp
+          const parsed = JSON.parse(manualChange)
+          // Normalize timestamp: accept number or parseable string
+          changeTimestamp = typeof parsed.timestamp === 'number' 
+            ? parsed.timestamp 
+            : Date.parse(parsed.timestamp)
+            
+          // Normalize language: must be non-empty string
+          changeLanguage = typeof parsed.language === 'string' ? parsed.language : ''
+
+          if (!isNaN(changeTimestamp) && changeLanguage) {
+            isValid = true
+          }
+        } catch {
+          // JSON parse error, treat as invalid
+        }
+
+        if (!isValid) {
+          localStorage.removeItem('manualLanguageChange')
+        } else {
+          const elapsed = Date.now() - changeTimestamp
 
           // If manual change was within last 10 seconds, respect it
           if (elapsed < 10000) {
@@ -41,7 +63,7 @@ export function LanguageSync() {
             hasChecked.current = true
 
             // Clean up if we're on the correct language
-            if (language === currentLocale) {
+            if (changeLanguage === currentLocale) {
               localStorage.removeItem('manualLanguageChange')
             }
             return
@@ -49,9 +71,6 @@ export function LanguageSync() {
             // Clean up expired entry
             localStorage.removeItem('manualLanguageChange')
           }
-        } catch (e) {
-          // Invalid data, clean up
-          localStorage.removeItem('manualLanguageChange')
         }
       }
     }
