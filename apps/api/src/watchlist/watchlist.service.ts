@@ -7,7 +7,9 @@ export interface WatchlistItem extends Omit<UserWatchlist,
     movie?: {
         id: number;
         title: string;
+        description: string | null;
         poster_url: string | null;
+        backdrop_url: string | null;
         vote_average: number | null;
         release_date: string | null;
     };
@@ -135,15 +137,15 @@ export class WatchlistService {
     }
 
     /**
-     * Get user's watchlist with optional filters
+     * Get user's watchlist with optional filters and language
      */
     async getUserWatchlist(
         userId: string,
         status?: 'planned' | 'watched',
+        language = 'en',
     ): Promise<WatchlistItem[]> {
         try {
-            this.logger.log(`Getting watchlist for user ${userId}, 
-  status: ${status || 'all'}`);
+            this.logger.log(`Getting watchlist for user ${userId}, status: ${status || 'all'}, language: ${language}`);
 
             let query = supabase
                 .from('user_watchlist')
@@ -157,9 +159,12 @@ export class WatchlistService {
                       movies:movie_id (
                           id,
                           title,
+                          description,
                           poster_url,
+                          backdrop_url,
                           vote_average,
-                          release_date
+                          release_date,
+                          translations
                       )
                   `)
                 .eq('user_id', userId)
@@ -173,25 +178,50 @@ export class WatchlistService {
 
             if (error) throw error;
 
-            // Transform the data to match WatchlistItem interface
-            const items = (data || []).map((item: any) => ({
-                movie_id: item.movie_id,
-                status: item.status,
-                rating: item.rating,
-                watched_at: item.watched_at,
-                created_at: item.created_at,
-                updated_at: item.updated_at,
-                movie: item.movies,
-            }));
+            // Transform the data and apply translations
+            const items = (data || []).map((item: any) => {
+                const movie = item.movies;
+                if (!movie) {
+                    return {
+                        movie_id: item.movie_id,
+                        status: item.status,
+                        rating: item.rating,
+                        watched_at: item.watched_at,
+                        created_at: item.created_at,
+                        updated_at: item.updated_at,
+                        movie: null,
+                    };
+                }
 
-            this.logger.log(`Found ${items.length} items in 
-  watchlist`);
+                // Apply translations if available
+                const translation = movie.translations?.[language];
+                const localizedMovie = {
+                    id: movie.id,
+                    title: translation?.title || movie.title,
+                    description: translation?.description || movie.description,
+                    poster_url: translation?.poster_url || movie.poster_url,
+                    backdrop_url: translation?.backdrop_url || movie.backdrop_url,
+                    vote_average: movie.vote_average,
+                    release_date: movie.release_date,
+                };
+
+                return {
+                    movie_id: item.movie_id,
+                    status: item.status,
+                    rating: item.rating,
+                    watched_at: item.watched_at,
+                    created_at: item.created_at,
+                    updated_at: item.updated_at,
+                    movie: localizedMovie,
+                };
+            });
+
+            this.logger.log(`Found ${items.length} items in watchlist`);
             return items as WatchlistItem[];
         } catch (error) {
             const errorMessage = error instanceof Error ?
                 error.message : String(error);
-            this.logger.error(`Get watchlist error: 
-  ${errorMessage}`);
+            this.logger.error(`Get watchlist error: ${errorMessage}`);
             throw error;
         }
     }

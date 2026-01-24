@@ -72,13 +72,14 @@ export class WatchlistController {
     }
 
     /**
-     * GET /api/watchlist?user_id=xxx&status=planned|watched
-     * Get user's watchlist with optional filter
+     * GET /api/watchlist?user_id=xxx&status=planned|watched&language=en
+     * Get user's watchlist with optional filter and language
      */
     @Get()
     async getWatchlist(
         @Query('user_id') userId: string,
         @Query('status') status?: 'planned' | 'watched',
+        @Query('language') language?: string,
     ) {
         if (!userId) {
             return { error: 'Query parameter "user_id" is required'
@@ -87,7 +88,7 @@ export class WatchlistController {
 
         try {
             const items = await
-                this.watchlistService.getUserWatchlist(userId, status);
+                this.watchlistService.getUserWatchlist(userId, status, language || 'en');
             return {
                 success: true,
                 userId,
@@ -98,7 +99,7 @@ export class WatchlistController {
         } catch (error) {
             const errorMessage = error instanceof Error ?
                 error.message : String(error);
-            this.logger.error(`Get watchlist failed: 
+            this.logger.error(`Get watchlist failed:
   ${errorMessage}`);
             return {
                 success: false,

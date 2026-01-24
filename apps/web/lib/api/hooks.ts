@@ -51,10 +51,10 @@ export function useSimilarMovies(params: SimilarMoviesParams) {
 
 
 // Watchlist
-export function useWatchlist(userId: string, status?: 'planned' | 'watched') {
+export function useWatchlist(userId: string, status?: 'planned' | 'watched', language?: string) {
     return useQuery({
-        queryKey: ['watchlist', userId, status],
-        queryFn: () => api.getWatchlist(userId, status),
+        queryKey: ['watchlist', userId, status, language],
+        queryFn: () => api.getWatchlist(userId, status, language),
         enabled: !!userId,
     })
 }
