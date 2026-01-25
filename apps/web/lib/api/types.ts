@@ -54,6 +54,12 @@ export interface MarkAsWatchedParams {
     rating: number // 1-10
 }
 
+export interface RemoveFromWatchlistParams {
+    itemId: number
+    userId: string
+    content_type?: 'movie' | 'tv_show'
+}
+
 // Recommendations types
 export interface Recommendation {
     movie: Movie

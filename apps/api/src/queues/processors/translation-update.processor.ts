@@ -17,6 +17,8 @@ const TMDB_IMAGE_BASE_URL = 'https://image.tmdb.org/t/p';
 const TRANSLATION_LANGUAGES = ['en-US', 'ru-RU', 'uk-UA'];
 const DELAY_BETWEEN_ITEMS = 350;
 const DELAY_BETWEEN_LANGUAGES = 100;
+const MAX_RETRIES = 3;
+const RATE_LIMIT_BACKOFF_BASE_MS = 10000;
 
 @Processor('translation-update')
 export class TranslationUpdateProcessor extends WorkerHost {
@@ -91,7 +93,8 @@ export class TranslationUpdateProcessor extends WorkerHost {
      */
     private async fetchTranslations(
         id: number,
-        type: 'movies' | 'tv'
+        type: 'movies' | 'tv',
+        retryCount = 0
     ): Promise<Record<string, any> | null> {
         const translations: Record<string, any> = {};
         const endpoint = type === 'movies' ? 'movie' : 'tv';
@@ -137,9 +140,14 @@ export class TranslationUpdateProcessor extends WorkerHost {
             return translations;
         } catch (error) {
             if (axios.isAxiosError(error) && error.response?.status === 429) {
-                this.logger.warn(`Rate limit for ${type} ${id}, waiting...`);
-                await new Promise(resolve => setTimeout(resolve, 10000));
-                return this.fetchTranslations(id, type);
+                if (retryCount >= MAX_RETRIES) {
+                    this.logger.warn(`Rate limit for ${type} ${id}, retries exhausted (${retryCount})`);
+                    return null;
+                }
+                const backoffMs = RATE_LIMIT_BACKOFF_BASE_MS * Math.pow(2, retryCount);
+                this.logger.warn(`Rate limit for ${type} ${id}, retry ${retryCount + 1} in ${backoffMs}ms`);
+                await new Promise(resolve => setTimeout(resolve, backoffMs));
+                return this.fetchTranslations(id, type, retryCount + 1);
             }
             return null;
         }

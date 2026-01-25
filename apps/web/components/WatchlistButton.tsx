@@ -109,8 +109,9 @@ export function WatchlistButton({
 
         try {
             await removeFromWatchlist.mutateAsync({
-                movieId: itemId,
+                itemId,
                 userId: user.id,
+                content_type: contentType,
             })
             showToast.success(t('removed'))
             setShowActions(false)
