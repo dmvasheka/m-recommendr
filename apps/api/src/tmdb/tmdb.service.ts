@@ -313,12 +313,76 @@ export class TmdbService {
     }
 
     /**
+     * Fetch localized posters for a movie using /images endpoint
+     * Returns a map of language code -> poster_url
+     */
+    async getMovieLocalizedPosters(movieId: number): Promise<Record<string, { poster_url: string | null; backdrop_url: string | null }>> {
+        const result: Record<string, { poster_url: string | null; backdrop_url: string | null }> = {};
+
+        try {
+            // Fetch images with all relevant languages
+            const response = await axios.get(
+                `${this.baseUrl}/movie/${movieId}/images`,
+                {
+                    params: {
+                        api_key: this.apiKey,
+                        include_image_language: 'en,ru,uk,null', // Include images for these languages + no language
+                    },
+                    timeout: 10000,
+                }
+            );
+
+            const posters = response.data.posters || [];
+            const backdrops = response.data.backdrops || [];
+
+            // Group posters by language, picking the highest voted one for each language
+            const postersByLang: Record<string, any> = {};
+            for (const poster of posters) {
+                const lang = poster.iso_639_1 || 'en'; // null language defaults to 'en'
+                if (!postersByLang[lang] || poster.vote_average > postersByLang[lang].vote_average) {
+                    postersByLang[lang] = poster;
+                }
+            }
+
+            // Group backdrops by language
+            const backdropsByLang: Record<string, any> = {};
+            for (const backdrop of backdrops) {
+                const lang = backdrop.iso_639_1 || 'en';
+                if (!backdropsByLang[lang] || backdrop.vote_average > backdropsByLang[lang].vote_average) {
+                    backdropsByLang[lang] = backdrop;
+                }
+            }
+
+            // Build result for each supported language
+            for (const langCode of ['en', 'ru', 'uk']) {
+                const poster = postersByLang[langCode] || postersByLang['en'] || posters[0];
+                const backdrop = backdropsByLang[langCode] || backdropsByLang['en'] || backdrops[0];
+
+                result[langCode] = {
+                    poster_url: poster?.file_path ? `${this.imageBaseUrl}/w500${poster.file_path}` : null,
+                    backdrop_url: backdrop?.file_path ? `${this.imageBaseUrl}/original${backdrop.file_path}` : null,
+                };
+            }
+
+            this.logger.log(`🖼️ Fetched localized posters for movie ${movieId}: ${Object.keys(postersByLang).join(', ')}`);
+        } catch (error) {
+            const errorMessage = error instanceof Error ? error.message : String(error);
+            this.logger.warn(`Could not fetch localized posters for movie ${movieId}: ${errorMessage}`);
+        }
+
+        return result;
+    }
+
+    /**
      * Fetch movie translations in multiple languages
      */
     async getMovieTranslations(movieId: number): Promise<Record<string, any>> {
         const translations: Record<string, any> = {};
 
         this.logger.log(`🌐 Fetching translations for movie ${movieId} in languages: ${this.translationLanguages.join(', ')}`);
+
+        // First, fetch localized posters
+        const localizedPosters = await this.getMovieLocalizedPosters(movieId);
 
         for (const lang of this.translationLanguages) {
             try {
@@ -336,15 +400,18 @@ export class TmdbService {
                 const data = response.data;
                 const langCode = lang.split('-')[0]; // 'en-US' -> 'en', 'ru-RU' -> 'ru'
 
+                // Use localized poster if available, otherwise fallback to API response
+                const localizedImages = localizedPosters[langCode] || { poster_url: null, backdrop_url: null };
+
                 translations[langCode] = {
                     title: data.title,
                     description: data.overview || null,
                     tagline: data.tagline || null,
-                    poster_url: data.poster_path ? `${this.imageBaseUrl}/w500${data.poster_path}` : null,
-                    backdrop_url: data.backdrop_path ? `${this.imageBaseUrl}/original${data.backdrop_path}` : null,
+                    poster_url: localizedImages.poster_url || (data.poster_path ? `${this.imageBaseUrl}/w500${data.poster_path}` : null),
+                    backdrop_url: localizedImages.backdrop_url || (data.backdrop_path ? `${this.imageBaseUrl}/original${data.backdrop_path}` : null),
                 };
 
-                this.logger.log(`✅ Fetched ${langCode} translation for movie ${movieId}: "${data.title}"`);
+                this.logger.log(`✅ Fetched ${langCode} translation for movie ${movieId}: "${data.title}" (poster: ${localizedImages.poster_url ? 'localized' : 'default'})`);
 
                 // Small delay between requests
                 await new Promise(resolve => setTimeout(resolve, 100));
@@ -359,12 +426,76 @@ export class TmdbService {
     }
 
     /**
+     * Fetch localized posters for a TV show using /images endpoint
+     * Returns a map of language code -> poster_url
+     */
+    async getTvLocalizedPosters(tvId: number): Promise<Record<string, { poster_url: string | null; backdrop_url: string | null }>> {
+        const result: Record<string, { poster_url: string | null; backdrop_url: string | null }> = {};
+
+        try {
+            // Fetch images with all relevant languages
+            const response = await axios.get(
+                `${this.baseUrl}/tv/${tvId}/images`,
+                {
+                    params: {
+                        api_key: this.apiKey,
+                        include_image_language: 'en,ru,uk,null', // Include images for these languages + no language
+                    },
+                    timeout: 10000,
+                }
+            );
+
+            const posters = response.data.posters || [];
+            const backdrops = response.data.backdrops || [];
+
+            // Group posters by language, picking the highest voted one for each language
+            const postersByLang: Record<string, any> = {};
+            for (const poster of posters) {
+                const lang = poster.iso_639_1 || 'en'; // null language defaults to 'en'
+                if (!postersByLang[lang] || poster.vote_average > postersByLang[lang].vote_average) {
+                    postersByLang[lang] = poster;
+                }
+            }
+
+            // Group backdrops by language
+            const backdropsByLang: Record<string, any> = {};
+            for (const backdrop of backdrops) {
+                const lang = backdrop.iso_639_1 || 'en';
+                if (!backdropsByLang[lang] || backdrop.vote_average > backdropsByLang[lang].vote_average) {
+                    backdropsByLang[lang] = backdrop;
+                }
+            }
+
+            // Build result for each supported language
+            for (const langCode of ['en', 'ru', 'uk']) {
+                const poster = postersByLang[langCode] || postersByLang['en'] || posters[0];
+                const backdrop = backdropsByLang[langCode] || backdropsByLang['en'] || backdrops[0];
+
+                result[langCode] = {
+                    poster_url: poster?.file_path ? `${this.imageBaseUrl}/w500${poster.file_path}` : null,
+                    backdrop_url: backdrop?.file_path ? `${this.imageBaseUrl}/original${backdrop.file_path}` : null,
+                };
+            }
+
+            this.logger.log(`🖼️ Fetched localized posters for TV ${tvId}: ${Object.keys(postersByLang).join(', ')}`);
+        } catch (error) {
+            const errorMessage = error instanceof Error ? error.message : String(error);
+            this.logger.warn(`Could not fetch localized posters for TV ${tvId}: ${errorMessage}`);
+        }
+
+        return result;
+    }
+
+    /**
      * Fetch TV show translations in multiple languages
      */
     async getTvTranslations(tvId: number): Promise<Record<string, any>> {
         const translations: Record<string, any> = {};
 
         this.logger.log(`🌐 Fetching translations for TV ${tvId} in languages: ${this.translationLanguages.join(', ')}`);
+
+        // First, fetch localized posters
+        const localizedPosters = await this.getTvLocalizedPosters(tvId);
 
         for (const lang of this.translationLanguages) {
             try {
@@ -382,15 +513,18 @@ export class TmdbService {
                 const data = response.data;
                 const langCode = lang.split('-')[0]; // 'en-US' -> 'en'
 
+                // Use localized poster if available, otherwise fallback to API response
+                const localizedImages = localizedPosters[langCode] || { poster_url: null, backdrop_url: null };
+
                 translations[langCode] = {
                     name: data.name,
                     overview: data.overview || null,
                     tagline: data.tagline || null,
-                    poster_url: data.poster_path ? `${this.imageBaseUrl}/w500${data.poster_path}` : null,
-                    backdrop_url: data.backdrop_path ? `${this.imageBaseUrl}/original${data.backdrop_path}` : null,
+                    poster_url: localizedImages.poster_url || (data.poster_path ? `${this.imageBaseUrl}/w500${data.poster_path}` : null),
+                    backdrop_url: localizedImages.backdrop_url || (data.backdrop_path ? `${this.imageBaseUrl}/original${data.backdrop_path}` : null),
                 };
 
-                this.logger.log(`✅ Fetched ${langCode} translation for TV ${tvId}: "${data.name}"`);
+                this.logger.log(`✅ Fetched ${langCode} translation for TV ${tvId}: "${data.name}" (poster: ${localizedImages.poster_url ? 'localized' : 'default'})`);
 
                 await new Promise(resolve => setTimeout(resolve, 100));
             } catch (error) {

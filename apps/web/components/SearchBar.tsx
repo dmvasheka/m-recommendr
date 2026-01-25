@@ -3,6 +3,7 @@
 import { useState, useEffect, useRef } from 'react'
 import { useRouter } from '@/navigation'
 import { useAutocomplete } from '@/lib/api/hooks'
+import { useLocale } from 'next-intl'
 import Image from 'next/image'
 import { Search, X, Star } from 'lucide-react'
 
@@ -21,6 +22,7 @@ export function SearchBar({
     const [debouncedQuery, setDebouncedQuery] = useState(defaultValue)
     const [showSuggestions, setShowSuggestions] = useState(false)
     const router = useRouter()
+    const locale = useLocale()
     const containerRef = useRef<HTMLDivElement>(null)
 
     // Debounce query for better performance
@@ -32,8 +34,8 @@ export function SearchBar({
         return () => clearTimeout(timer)
     }, [query])
 
-    // Use our new autocomplete hook with debounced query
-    const { data: suggestions, isLoading } = useAutocomplete(debouncedQuery, 6)
+    // Use our new autocomplete hook with debounced query and locale
+    const { data: suggestions, isLoading } = useAutocomplete(debouncedQuery, 6, locale)
 
     // Handle clicks outside to close suggestions
     useEffect(() => {
