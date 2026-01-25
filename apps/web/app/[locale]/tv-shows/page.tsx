@@ -21,10 +21,12 @@ export default function TvShowsPage() {
 
     useEffect(() => {
         const timeoutId = setTimeout(() => {
-            setDebouncedQuery(searchQuery)
+            setDebouncedQuery(searchQuery.trim())
         }, 300)
         return () => clearTimeout(timeoutId)
     }, [searchQuery])
+
+    const trimmedQuery = debouncedQuery.trim()
 
     const {
         data: tvShowsPages,
@@ -46,13 +48,13 @@ export default function TvShowsPage() {
         hasNextPage: hasNextSearch,
         isFetchingNextPage: isFetchingNextSearch,
     } = useInfiniteSearchTvShows({
-        query: debouncedQuery,
+        query: trimmedQuery,
         limit: 40,
         language: locale,
         pageSize: 40,
     })
 
-    const showSearchResults = debouncedQuery.length >= 2
+    const showSearchResults = trimmedQuery.length >= 2
     const displayShows = showSearchResults
         ? (searchPages?.pages.flatMap((page) => page.items) ?? [])
         : (tvShowsPages?.pages.flatMap((page) => page.items) ?? [])
