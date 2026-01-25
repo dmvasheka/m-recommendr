@@ -23,11 +23,11 @@ export class TvShowsService {
     /**
      * Semantic search - find TV shows by query text
      */
-    async searchTvShows(query: string, limit = 10, language = 'en'): Promise<TvShowSearchResult[]> {
+    async searchTvShows(query: string, limit = 10, language = 'en', offset = 0): Promise<TvShowSearchResult[]> {
         try {
             this.logger.log(`Searching TV shows for: "${query}" (language: ${language})`);
 
-            const cacheKey = `tv_search:${query.toLowerCase()}:${limit}:${language}`;
+            const cacheKey = `tv_search:${query.toLowerCase()}:${limit}:${offset}:${language}`;
             const cached = await this.redisService.get<TvShowSearchResult[]>(cacheKey);
 
             if (cached) {
@@ -43,7 +43,7 @@ export class TvShowsService {
             // 2. Use Supabase RPC to call match_tv_shows function
             const { data, error } = await (supabase.rpc as any)('match_tv_shows', {
                 query_embedding: JSON.stringify(queryEmbedding),
-                match_count: limit,
+                match_count: limit + offset,
             });
 
             if (error) {
@@ -72,11 +72,12 @@ export class TvShowsService {
             }
 
             if (results && results.length > 0) {
-                await this.redisService.set(cacheKey, results, 3600);
+                const pagedResults = results.slice(offset, offset + limit);
+                await this.redisService.set(cacheKey, pagedResults, 3600);
                 this.logger.log(`💾 Cached results for "${query}"`);
             }
 
-            return results || [];
+            return (results || []).slice(offset, offset + limit);
         } catch (error) {
             const errorMessage = error instanceof Error ? error.message : String(error);
             this.logger.error(`Search error: ${errorMessage}`);

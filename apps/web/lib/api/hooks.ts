@@ -296,15 +296,15 @@ export function useInfiniteSearchTvShows(params: SearchTvShowsParams & { pageSiz
     >({
         queryKey: ['tv-shows', 'search', 'infinite', params.query, pageSize, params.language],
         queryFn: async ({ pageParam = 1 }) => {
-            const limit = pageSize * pageParam
+            const offset = (pageParam - 1) * pageSize
             const results = await api.searchTvShows({
                 query: params.query,
-                limit,
+                limit: pageSize,
                 language: params.language,
+                offset,
             })
-            const startIndex = (pageParam - 1) * pageSize
-            const items = results.slice(startIndex)
-            const hasMore = results.length === limit
+            const items = results
+            const hasMore = results.length === pageSize
 
             return { items, hasMore, page: pageParam }
         },

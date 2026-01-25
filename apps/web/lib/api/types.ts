@@ -126,6 +126,7 @@ export interface SearchTvShowsParams {
     query: string
     limit?: number
     language?: string
+    offset?: number
 }
 
 // TV Season types

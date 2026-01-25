@@ -25,6 +25,20 @@ export class TvShowsController {
     }
 
     /**
+     * Parse and validate offset parameter
+     */
+    private parseOffset(offset: string | undefined): number {
+        if (!offset) return 0;
+
+        const parsed = parseInt(offset, 10);
+        if (isNaN(parsed) || !isFinite(parsed) || parsed < 0) {
+            return 0;
+        }
+
+        return parsed;
+    }
+
+    /**
      * GET /api/tv-shows/autocomplete?q=query&limit=10&language=en
      * Fast search for UI autocomplete
      */
@@ -64,6 +78,7 @@ export class TvShowsController {
     async searchTvShows(
         @Query('q') query: string,
         @Query('limit') limit?: string,
+        @Query('offset') offset?: string,
         @Query('language') language?: string,
     ) {
         if (!query) {
@@ -72,7 +87,8 @@ export class TvShowsController {
 
         try {
             const maxResults = this.parseLimit(limit, 10);
-            const results = await this.tvShowsService.searchTvShows(query, maxResults, language);
+            const parsedOffset = this.parseOffset(offset);
+            const results = await this.tvShowsService.searchTvShows(query, maxResults, language, parsedOffset);
 
             return {
                 success: true,

@@ -254,10 +254,11 @@ class ApiClient {
     }
 
     async searchTvShows(params: SearchTvShowsParams): Promise<TvShow[]> {
-        const { query, limit = 20, language } = params
+        const { query, limit = 20, language, offset } = params
         const langParam = language ? `&language=${language}` : ''
+        const offsetParam = offset !== undefined ? `&offset=${offset}` : ''
         const response = await this.fetch<{ success: boolean; results: TvShow[] }>(
-            `/api/tv-shows/search?q=${encodeURIComponent(query)}&limit=${limit}${langParam}`
+            `/api/tv-shows/search?q=${encodeURIComponent(query)}&limit=${limit}${langParam}${offsetParam}`
         )
         return response.results || []
     }
