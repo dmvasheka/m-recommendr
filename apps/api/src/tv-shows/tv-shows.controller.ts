@@ -74,6 +74,35 @@ export class TvShowsController {
     }
 
     /**
+     * GET /api/tv-shows/:id/seasons
+     * Get seasons for a TV show
+     */
+    @Get(':id/seasons')
+    async getTvShowSeasons(@Param('id') id: string) {
+        const tvShowId = parseInt(id, 10);
+        if (isNaN(tvShowId)) {
+            return { success: false, error: 'Invalid TV show ID' };
+        }
+
+        try {
+            const seasons = await this.tvShowsService.getTvShowSeasons(tvShowId);
+
+            return {
+                success: true,
+                count: seasons.length,
+                seasons,
+            };
+        } catch (error) {
+            const errorMessage = error instanceof Error ? error.message : String(error);
+            this.logger.error(`Get TV show seasons failed: ${errorMessage}`);
+            return {
+                success: false,
+                error: errorMessage,
+            };
+        }
+    }
+
+    /**
      * GET /api/tv-shows/:id?language=en
      * Get TV show by ID
      */
@@ -112,19 +141,20 @@ export class TvShowsController {
     }
 
     /**
-     * GET /api/tv-shows?page=1&pageSize=20
+     * GET /api/tv-shows?page=1&pageSize=20&language=en
      * Get all TV shows with pagination (sorted by popularity)
      */
     @Get()
     async getAllTvShows(
         @Query('page') page?: string,
         @Query('pageSize') pageSize?: string,
+        @Query('language') language?: string,
     ) {
         try {
             const pageNum = page ? parseInt(page, 10) : 1;
             const pageSizeNum = pageSize ? parseInt(pageSize, 10) : 20;
 
-            const { tvShows, total } = await this.tvShowsService.getAllTvShows(pageNum, pageSizeNum);
+            const { tvShows, total } = await this.tvShowsService.getAllTvShows(pageNum, pageSizeNum, language);
 
             return {
                 success: true,

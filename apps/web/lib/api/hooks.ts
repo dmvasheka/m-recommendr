@@ -175,3 +175,48 @@ export function useUpdateLanguagePreference() {
         },
     })
 }
+
+// TV Shows
+export function useTvShows(page = 1, pageSize = 20, language?: string) {
+    return useQuery({
+        queryKey: ['tv-shows', page, pageSize, language],
+        queryFn: () => api.getTvShows(page, pageSize, language),
+        staleTime: 5 * 60 * 1000,
+    })
+}
+
+export function useTvShow(id: number, language?: string) {
+    return useQuery({
+        queryKey: ['tv-show', id, language],
+        queryFn: () => api.getTvShowById(id, language),
+        enabled: !!id,
+        staleTime: 10 * 60 * 1000,
+    })
+}
+
+export function useSearchTvShows(params: { query: string; limit?: number; language?: string }) {
+    return useQuery({
+        queryKey: ['tv-shows', 'search', params.query, params.limit, params.language],
+        queryFn: () => api.searchTvShows(params),
+        enabled: params.query.length >= 2,
+        staleTime: 5 * 60 * 1000,
+    })
+}
+
+export function useAutocompleteTvShows(query: string, limit = 10, language?: string) {
+    return useQuery({
+        queryKey: ['tv-shows', 'autocomplete', query, limit, language],
+        queryFn: () => api.autocompleteTvShows(query, limit, language),
+        enabled: query.length >= 2,
+        staleTime: 60 * 1000,
+    })
+}
+
+export function useTvShowSeasons(tvShowId: number) {
+    return useQuery({
+        queryKey: ['tv-show', tvShowId, 'seasons'],
+        queryFn: () => api.getTvShowSeasons(tvShowId),
+        enabled: !!tvShowId,
+        staleTime: 30 * 60 * 1000, // Cache for 30 minutes
+    })
+}

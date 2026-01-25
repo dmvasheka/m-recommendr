@@ -9,6 +9,9 @@ import type {
     ChatMessage,
     SendChatMessageParams,
     ChatHistoryMessage,
+    TvShow,
+    TvSeason,
+    SearchTvShowsParams,
 } from './types'
 
 const API_BASE_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:3001'
@@ -186,6 +189,49 @@ class ApiClient {
             `/api/users/${userId}/language`
         )
         return response.language || 'en'
+    }
+
+    // TV Shows
+    async getTvShows(page = 1, pageSize = 20, language?: string): Promise<TvShow[]> {
+        const langParam = language ? `&language=${language}` : ''
+        const response = await this.fetch<{
+            success: boolean
+            tvShows: TvShow[]
+            total: number
+        }>(`/api/tv-shows?page=${page}&pageSize=${pageSize}${langParam}`)
+        return response.tvShows || []
+    }
+
+    async getTvShowById(id: number, language?: string): Promise<TvShow | null> {
+        const langParam = language ? `?language=${language}` : ''
+        const response = await this.fetch<{ success: boolean; tvShow: TvShow }>(
+            `/api/tv-shows/${id}${langParam}`
+        )
+        return response.tvShow || null
+    }
+
+    async searchTvShows(params: SearchTvShowsParams): Promise<TvShow[]> {
+        const { query, limit = 20, language } = params
+        const langParam = language ? `&language=${language}` : ''
+        const response = await this.fetch<{ success: boolean; results: TvShow[] }>(
+            `/api/tv-shows/search?q=${encodeURIComponent(query)}&limit=${limit}${langParam}`
+        )
+        return response.results || []
+    }
+
+    async autocompleteTvShows(query: string, limit = 10, language?: string): Promise<TvShow[]> {
+        const langParam = language ? `&language=${language}` : ''
+        const response = await this.fetch<{ success: boolean; results: TvShow[] }>(
+            `/api/tv-shows/autocomplete?q=${encodeURIComponent(query)}&limit=${limit}${langParam}`
+        )
+        return response.results || []
+    }
+
+    async getTvShowSeasons(tvShowId: number): Promise<TvSeason[]> {
+        const response = await this.fetch<{ success: boolean; seasons: TvSeason[] }>(
+            `/api/tv-shows/${tvShowId}/seasons`
+        )
+        return response.seasons || []
     }
 }
 

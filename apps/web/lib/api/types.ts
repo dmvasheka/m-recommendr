@@ -87,3 +87,43 @@ export interface ChatHistoryMessage {
     role: 'user' | 'assistant'
     content: string
 }
+
+// TV Show types
+export interface TvShow {
+    id: number
+    name: string
+    overview?: string | null
+    poster_path?: string | null
+    poster_url?: string | null
+    backdrop_path?: string | null
+    backdrop_url?: string | null
+    first_air_date: string | null
+    vote_average: number | null
+    vote_count?: number | null
+    popularity?: number | null
+    genres?: string[] | null
+    number_of_seasons?: number | null
+    number_of_episodes?: number | null
+    status?: string | null
+    original_language?: string | null
+    similarity?: number
+}
+
+export interface SearchTvShowsParams {
+    query: string
+    limit?: number
+    language?: string
+}
+
+// TV Season types
+export interface TvSeason {
+    id: number
+    tv_show_id: number
+    season_number: number
+    name: string | null
+    overview: string | null
+    poster_url: string | null
+    air_date: string | null
+    episode_count: number | null
+    vote_average: number | null
+}

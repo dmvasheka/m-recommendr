@@ -55,13 +55,14 @@ export class TvShowsService {
 
             // Apply translations if not English
             if (results && language !== 'en') {
+                this.logger.log(`Applying ${language} translations to ${results.length} search results`);
                 results = results.map((tvShow: any) => {
                     const translation = tvShow.translations?.[language];
                     if (translation) {
                         return {
                             ...tvShow,
-                            name: translation.title || tvShow.name,
-                            overview: translation.description || tvShow.overview,
+                            name: translation.name || tvShow.name,
+                            overview: translation.overview || tvShow.overview,
                             poster_url: translation.poster_url || tvShow.poster_url,
                             backdrop_url: translation.backdrop_url || tvShow.backdrop_url,
                         };
@@ -88,6 +89,8 @@ export class TvShowsService {
      */
     async getTvShowById(tvShowId: number, language = 'en') {
         try {
+            this.logger.log(`Getting TV show ID ${tvShowId} with language: ${language}`);
+
             const { data: tvShow, error } = await supabase
                 .from('tv_shows')
                 .select('*')
@@ -102,16 +105,29 @@ export class TvShowsService {
                 return null;
             }
 
+            // Log translation data for debugging
+            const translations = (tvShow as any).translations;
+            this.logger.log(`TV show ${tvShowId} has translations: ${translations ? 'YES' : 'NO'}`);
+            if (translations) {
+                this.logger.log(`Available languages: ${Object.keys(translations).join(', ')}`);
+            }
+
             // Apply translations if available and language is not English
-            if (language !== 'en' && (tvShow as any).translations && (tvShow as any).translations[language]) {
-                const translation = (tvShow as any).translations[language];
-                return {
-                    ...(tvShow as any),
-                    name: translation.title || (tvShow as any).name,
-                    overview: translation.description || (tvShow as any).overview,
-                    poster_url: translation.poster_url || (tvShow as any).poster_url,
-                    backdrop_url: translation.backdrop_url || (tvShow as any).backdrop_url,
-                };
+            if (language !== 'en' && translations) {
+                const translation = translations[language];
+
+                if (translation) {
+                    this.logger.log(`Applying ${language} translation for TV show ${tvShowId}`);
+                    return {
+                        ...(tvShow as any),
+                        name: translation.name || (tvShow as any).name,
+                        overview: translation.overview || (tvShow as any).overview,
+                        poster_url: translation.poster_url || (tvShow as any).poster_url,
+                        backdrop_url: translation.backdrop_url || (tvShow as any).backdrop_url,
+                    };
+                } else {
+                    this.logger.log(`No ${language} translation found for TV show ${tvShowId}, using original`);
+                }
             }
 
             return tvShow;
@@ -125,7 +141,7 @@ export class TvShowsService {
     /**
      * Get all TV shows with pagination
      */
-    async getAllTvShows(page = 1, pageSize = 20) {
+    async getAllTvShows(page = 1, pageSize = 20, language = 'en') {
         try {
             const from = (page - 1) * pageSize;
             const to = from + pageSize - 1;
@@ -135,10 +151,10 @@ export class TvShowsService {
                 .from('tv_shows')
                 .select('*', { count: 'exact', head: true });
 
-            // Get paginated TV shows
+            // Get paginated TV shows - include translations field
             const { data, error } = await supabase
                 .from('tv_shows')
-                .select('id, name, overview, poster_url, genres, vote_average, popularity, first_air_date')
+                .select('id, name, overview, poster_url, genres, vote_average, popularity, first_air_date, translations')
                 .order('popularity', { ascending: false })
                 .range(from, to);
 
@@ -146,14 +162,56 @@ export class TvShowsService {
                 throw error;
             }
 
+            let tvShows: any[] = data || [];
+
+            // Apply translations if not English
+            if (language !== 'en' && tvShows.length > 0) {
+                this.logger.log(`Applying ${language} translations to ${tvShows.length} TV shows in list`);
+                tvShows = tvShows.map((tvShow: any) => {
+                    const translation = tvShow.translations?.[language];
+                    if (translation) {
+                        return {
+                            ...tvShow,
+                            name: translation.name || tvShow.name,
+                            overview: translation.overview || tvShow.overview,
+                            poster_url: translation.poster_url || tvShow.poster_url,
+                        };
+                    }
+                    return tvShow;
+                });
+            }
+
             return {
-                tvShows: data || [],
+                tvShows,
                 total: count || 0,
             };
         } catch (error) {
             const errorMessage = error instanceof Error ? error.message : String(error);
             this.logger.error(`Get all TV shows error: ${errorMessage}`);
             throw error;
+        }
+    }
+
+    /**
+     * Get seasons for a TV show
+     */
+    async getTvShowSeasons(tvShowId: number) {
+        try {
+            const { data, error } = await supabase
+                .from('tv_seasons')
+                .select('*')
+                .eq('tv_show_id', tvShowId)
+                .order('season_number', { ascending: true });
+
+            if (error) {
+                throw error;
+            }
+
+            return data || [];
+        } catch (error) {
+            const errorMessage = error instanceof Error ? error.message : String(error);
+            this.logger.error(`Get TV show seasons error: ${errorMessage}`);
+            return [];
         }
     }
 
@@ -189,12 +247,13 @@ export class TvShowsService {
 
             // Apply translations if not English
             if (language !== 'en' && results.length > 0) {
+                this.logger.log(`Applying ${language} translations to ${results.length} autocomplete results`);
                 results = results.map((tvShow: any) => {
                     const translation = tvShow.translations?.[language];
                     if (translation) {
                         return {
                             ...tvShow,
-                            name: translation.title || tvShow.name,
+                            name: translation.name || tvShow.name,
                             poster_url: translation.poster_url || tvShow.poster_url,
                         };
                     }

@@ -1,6 +1,6 @@
 'use client'
 
-import { Sparkles, Bookmark } from "lucide-react"
+import { Sparkles, Bookmark, Tv } from "lucide-react"
 import { Button } from "@/components/ui/button"
 import { useAuth } from "@/lib/auth/AuthProvider"
 import { useTranslations } from 'next-intl'
@@ -24,6 +24,13 @@ export function Navigation() {
             className="text-sm sm:text-base text-[#9ca3af] hover:text-white transition-colors"
           >
             {t('discover')}
+          </Link>
+          <Link
+            href="/tv-shows"
+            className="flex items-center gap-1 text-sm sm:text-base text-[#9ca3af] hover:text-white transition-colors"
+          >
+            <Tv className="h-4 w-4" />
+            <span className="hidden sm:inline">{t('tvShows')}</span>
           </Link>
           {user && (
             <Link
