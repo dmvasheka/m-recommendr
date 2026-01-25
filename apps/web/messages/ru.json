@@ -39,6 +39,7 @@
     "loading": "Загрузка...",
     "na": "Н/Д",
     "seasons": "сезонов",
+    "tvBadge": "ТВ",
     "watchlist": {
       "add": "В список",
       "remove": "Удалить из списка",
@@ -56,6 +57,7 @@
     "noShowsAvailable": "Сериалы пока недоступны"
   },
   "TvShowDetails": {
+    "tvBadge": "ТВ",
     "overview": "Описание",
     "notFound": "Сериал не найден",
     "notFoundDesc": "Сериал, который вы ищете, не существует или был удален.",

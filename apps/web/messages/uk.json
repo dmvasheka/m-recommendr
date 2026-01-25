@@ -39,6 +39,7 @@
     "loading": "Завантаження...",
     "na": "Н/Д",
     "seasons": "сезонів",
+    "tvBadge": "ТБ",
     "watchlist": {
       "add": "До списку",
       "remove": "Видалити зі списку",
@@ -56,6 +57,7 @@
     "noShowsAvailable": "Серіали поки недоступні"
   },
   "TvShowDetails": {
+    "tvBadge": "ТБ",
     "overview": "Опис",
     "notFound": "Серіал не знайдено",
     "notFoundDesc": "Серіал, який ви шукаєте, не існує або був видалений.",
