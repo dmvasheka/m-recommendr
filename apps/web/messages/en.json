@@ -42,6 +42,7 @@
     "loading": "Loading...",
     "na": "N/A",
     "seasons": "seasons",
+    "tvBadge": "TV",
     "watchlist": {
       "add": "Add to Watchlist",
       "remove": "Remove from watchlist",
@@ -68,6 +69,7 @@
     "noShowsAvailable": "No TV shows available at the moment"
   },
   "TvShowDetails": {
+    "tvBadge": "TV",
     "overview": "Overview",
     "notFound": "TV Show Not Found",
     "notFoundDesc": "The TV show you are looking for does not exist or has been removed.",

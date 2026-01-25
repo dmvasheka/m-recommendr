@@ -108,7 +108,7 @@ export default function TvShowDetailsPage({ params }: PageProps) {
                                     {/* TV Badge */}
                                     <div className="absolute top-2 left-2 bg-[#3b82f6]/90 backdrop-blur-sm rounded-md px-2 py-1 flex items-center gap-1">
                                         <Tv className="h-3 w-3 text-white" />
-                                        <span className="text-xs font-medium text-white">TV</span>
+                                        <span className="text-xs font-medium text-white">{t('tvBadge')}</span>
                                     </div>
                                 </div>
                             </div>

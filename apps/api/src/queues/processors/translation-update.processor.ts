@@ -18,7 +18,7 @@ const TRANSLATION_LANGUAGES = ['en-US', 'ru-RU', 'uk-UA'];
 const DELAY_BETWEEN_ITEMS = 350;
 const DELAY_BETWEEN_LANGUAGES = 100;
 const MAX_RETRIES = 3;
-const RATE_LIMIT_BACKOFF_BASE_MS = 10000;
+const BASE_DELAY = 10000; // 10 seconds base delay for exponential backoff
 
 @Processor('translation-update')
 export class TranslationUpdateProcessor extends WorkerHost {
@@ -89,12 +89,12 @@ export class TranslationUpdateProcessor extends WorkerHost {
     }
 
     /**
-     * Fetch translations for movie/TV
+     * Fetch translations for movie/TV with capped retries and exponential backoff
      */
     private async fetchTranslations(
         id: number,
         type: 'movies' | 'tv',
-        retryCount = 0
+        attempt: number = 0
     ): Promise<Record<string, any> | null> {
         const translations: Record<string, any> = {};
         const endpoint = type === 'movies' ? 'movie' : 'tv';
@@ -140,14 +140,19 @@ export class TranslationUpdateProcessor extends WorkerHost {
             return translations;
         } catch (error) {
             if (axios.isAxiosError(error) && error.response?.status === 429) {
-                if (retryCount >= MAX_RETRIES) {
-                    this.logger.warn(`Rate limit for ${type} ${id}, retries exhausted (${retryCount})`);
+                if (attempt < MAX_RETRIES) {
+                    const backoff = BASE_DELAY * Math.pow(2, attempt);
+                    this.logger.warn(
+                        `Rate limit for ${type} ${id}, retry ${attempt + 1}/${MAX_RETRIES} after ${backoff}ms`
+                    );
+                    await new Promise(resolve => setTimeout(resolve, backoff));
+                    return this.fetchTranslations(id, type, attempt + 1);
+                } else {
+                    this.logger.warn(
+                        `Max retries (${MAX_RETRIES}) reached for ${type} ${id} due to rate limiting`
+                    );
                     return null;
                 }
-                const backoffMs = RATE_LIMIT_BACKOFF_BASE_MS * Math.pow(2, retryCount);
-                this.logger.warn(`Rate limit for ${type} ${id}, retry ${retryCount + 1} in ${backoffMs}ms`);
-                await new Promise(resolve => setTimeout(resolve, backoffMs));
-                return this.fetchTranslations(id, type, retryCount + 1);
             }
             return null;
         }
@@ -155,6 +160,13 @@ export class TranslationUpdateProcessor extends WorkerHost {
 
     async process(job: Job<TranslationUpdateJob>): Promise<any> {
         const { type, limit = 100, offset = 0, force = false, ids } = job.data;
+
+        // Validate TMDB API key before processing
+        if (!TMDB_API_KEY || TMDB_API_KEY.trim() === '') {
+            const errorMsg = 'TMDB_API_KEY is not configured. Cannot fetch translations.';
+            this.logger.error(errorMsg);
+            throw new Error(errorMsg);
+        }
 
         this.logger.log(`🌐 Starting ${type} translation update: limit=${limit}, offset=${offset}, force=${force}`);
 
