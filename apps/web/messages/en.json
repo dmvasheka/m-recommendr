@@ -42,7 +42,13 @@
     "watchlist": {
       "add": "Add to Watchlist",
       "remove": "Remove from watchlist",
-      "in": "In Watchlist"
+      "in": "In Watchlist",
+      "added": "Added to watchlist",
+      "removed": "Removed from watchlist",
+      "markedWatched": "Marked as watched",
+      "error": "Something went wrong",
+      "markAsWatched": "Mark as Watched",
+      "addToPlanned": "Add to Planned"
     }
   },
   "TvShows": {

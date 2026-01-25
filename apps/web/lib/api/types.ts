@@ -27,23 +27,30 @@ export interface WatchlistItem {
     id: string
     user_id: string
     movie_id: number
+    content_type?: 'movie' | 'tv_show'
+    content_id?: number
     status: 'planned' | 'watched'
     rating: number | null
     watched_at: string | null
     created_at: string
     updated_at: string
     movie?: Movie
+    tvShow?: TvShow
 }
 
 export interface AddToWatchlistParams {
     user_id: string
-    movie_id: number
+    movie_id?: number
+    content_type?: 'movie' | 'tv_show'
+    content_id?: number
     status: 'planned' | 'watched'
 }
 
 export interface MarkAsWatchedParams {
     user_id: string
-    movie_id: number
+    movie_id?: number
+    content_type?: 'movie' | 'tv_show'
+    content_id?: number
     rating: number // 1-10
 }
 

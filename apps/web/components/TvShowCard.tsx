@@ -5,6 +5,7 @@ import Image from "next/image"
 import { Star, Tv } from "lucide-react"
 import type { TvShow } from '@/lib/api/types'
 import { useTranslations } from 'next-intl'
+import { WatchlistButton } from './WatchlistButton'
 
 interface TvShowCardProps {
   tvShow: TvShow
@@ -35,6 +36,10 @@ export function TvShowCard({ tvShow }: TvShowCardProps) {
           <div className="absolute top-2 left-2 bg-[#3b82f6]/90 backdrop-blur-sm rounded-md px-2 py-1 flex items-center gap-1">
             <Tv className="h-3 w-3 text-white" />
             <span className="text-xs font-medium text-white">TV</span>
+          </div>
+          {/* Watchlist button - always visible on mobile, shown on hover on desktop */}
+          <div className="absolute top-2 right-2 md:opacity-0 md:group-hover:opacity-100 transition-opacity duration-200">
+            <WatchlistButton contentType="tv_show" contentId={tvShow.id} variant="icon" />
           </div>
         </div>
 
