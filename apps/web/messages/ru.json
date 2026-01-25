@@ -2,6 +2,7 @@
   "Navigation": {
     "home": "Главная",
     "discover": "Поиск",
+    "tvShows": "Сериалы",
     "watchlist": "Список",
     "recommendations": "Для Вас",
     "discoverMovies": "Поиск фильмов",
@@ -37,11 +38,40 @@
   "Common": {
     "loading": "Загрузка...",
     "na": "Н/Д",
+    "seasons": "сезонов",
+    "tvBadge": "ТВ",
     "watchlist": {
       "add": "В список",
       "remove": "Удалить из списка",
       "in": "В списке"
     }
+  },
+  "TvShows": {
+    "title": "Сериалы",
+    "subtitle": "Популярные телесериалы",
+    "searchPlaceholder": "Поиск сериалов...",
+    "searchResultsFor": "Результаты поиска для \"{query}\"",
+    "foundCount": "Найдено {count} {count, plural, one {сериал} few {сериала} many {сериалов} other {сериалов}}",
+    "noShowsFound": "Сериалы не найдены",
+    "noShowsFoundDesc": "Попробуйте изменить поисковый запрос",
+    "noShowsAvailable": "Сериалы пока недоступны"
+  },
+  "TvShowDetails": {
+    "tvBadge": "ТВ",
+    "overview": "Описание",
+    "notFound": "Сериал не найден",
+    "notFoundDesc": "Сериал, который вы ищете, не существует или был удален.",
+    "browseShows": "К списку сериалов",
+    "backToShows": "Назад к сериалам",
+    "votes": "голосов",
+    "seasons": "сезонов",
+    "episodes": "серий",
+    "seasonsSection": "Сезоны",
+    "seasonTitle": "Сезон {number}",
+    "episodesCount": "{count} {count, plural, one {серия} few {серии} many {серий} other {серий}}",
+    "airDate": "Вышел: {date}",
+    "noSeasons": "Информация о сезонах недоступна",
+    "specials": "Спецвыпуски"
   },
   "MovieDetails": {
     "overview": "Описание",

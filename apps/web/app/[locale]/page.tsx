@@ -1,10 +1,11 @@
 'use client'
 
-import { Search, Sparkles } from "lucide-react"
+import { Search, Sparkles, Tv } from "lucide-react"
 import { Button } from "@/components/ui/button"
 import { NewMovieCard } from "@/components/NewMovieCard"
+import { TvShowCard } from "@/components/TvShowCard"
 import { Navigation } from "@/components/Navigation"
-import { usePopularMovies } from "@/lib/api/hooks"
+import { usePopularMovies, useTvShows } from "@/lib/api/hooks"
 import { useAuth } from "@/lib/auth/AuthProvider"
 import { useState } from "react"
 import { useTranslations, useLocale } from 'next-intl'
@@ -16,9 +17,11 @@ export default function Page() {
   const [searchQuery, setSearchQuery] = useState('')
   const locale = useLocale()
   const { data: popularMovies, isLoading } = usePopularMovies(20, locale)
+  const { data: tvShows, isLoading: isLoadingTv } = useTvShows(1, 10, locale)
 
   const tHome = useTranslations('Home')
   const tNav = useTranslations('Navigation')
+  const tTv = useTranslations('TvShows')
 
   const handleSearch = (e: React.FormEvent) => {
     e.preventDefault()
@@ -106,6 +109,42 @@ export default function Page() {
         </div>
       </section>
 
+      {/* TV Shows Section */}
+      <section className="px-4 pb-16 sm:px-6 sm:pb-24">
+        <div className="mx-auto max-w-7xl">
+          <div className="flex items-center justify-between mb-6 sm:mb-8">
+            <div className="flex items-center gap-3">
+              <div className="p-2 bg-[#3b82f6]/20 rounded-lg">
+                <Tv className="h-5 w-5 text-[#3b82f6]" />
+              </div>
+              <h2 className="text-2xl sm:text-3xl font-bold text-white">{tTv('title')}</h2>
+            </div>
+            <Link
+              href="/tv-shows"
+              className="text-sm text-[#3b82f6] hover:text-[#3b82f6]/80 transition-colors"
+            >
+              {tNav('discover')} →
+            </Link>
+          </div>
+
+          {isLoadingTv ? (
+            <div className="flex justify-center items-center py-12">
+              <div className="animate-spin rounded-full h-10 w-10 border-b-2 border-[#3b82f6]"></div>
+            </div>
+          ) : tvShows && tvShows.length > 0 ? (
+            <div className="grid gap-4 sm:gap-6 grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5">
+              {tvShows.map((tvShow) => (
+                <TvShowCard key={tvShow.id} tvShow={tvShow} />
+              ))}
+            </div>
+          ) : (
+            <div className="text-center py-12">
+              <p className="text-[#9ca3af]">{tTv('noShowsAvailable')}</p>
+            </div>
+          )}
+        </div>
+      </section>
+
       {/* Footer */}
       <footer className="border-t border-white/5 px-4 py-8 sm:px-6 sm:py-12">
         <div className="mx-auto max-w-7xl">
@@ -117,6 +156,9 @@ export default function Page() {
             <div className="flex flex-wrap justify-center gap-4 sm:gap-6 text-sm text-[#9ca3af]">
               <Link href="/discover" className="transition-colors hover:text-white">
                 {tNav('discover')}
+              </Link>
+              <Link href="/tv-shows" className="transition-colors hover:text-white">
+                {tNav('tvShows')}
               </Link>
               <Link href="/recommendations" className="transition-colors hover:text-white">
                 {tNav('recommendations')}
