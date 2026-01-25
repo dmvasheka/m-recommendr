@@ -12,7 +12,6 @@ export interface TranslationUpdateJob {
     ids?: number[]; // Specific IDs to update
 }
 
-const TMDB_API_KEY = process.env.TMDB_API_KEY;
 const TMDB_BASE_URL = 'https://api.themoviedb.org/3';
 const TMDB_IMAGE_BASE_URL = 'https://image.tmdb.org/t/p';
 const TRANSLATION_LANGUAGES = ['en-US', 'ru-RU', 'uk-UA'];
@@ -22,6 +21,15 @@ const DELAY_BETWEEN_LANGUAGES = 100;
 @Processor('translation-update')
 export class TranslationUpdateProcessor extends WorkerHost {
     private readonly logger = new Logger(TranslationUpdateProcessor.name);
+    private readonly tmdbApiKey: string;
+
+    constructor() {
+        super();
+        if (!process.env.TMDB_API_KEY) {
+            throw new Error('TMDB_API_KEY is not defined in environment variables');
+        }
+        this.tmdbApiKey = process.env.TMDB_API_KEY;
+    }
 
     /**
      * Fetch localized posters using /images endpoint
@@ -36,7 +44,7 @@ export class TranslationUpdateProcessor extends WorkerHost {
         try {
             const response = await axios.get(`${TMDB_BASE_URL}/${endpoint}/${id}/images`, {
                 params: {
-                    api_key: TMDB_API_KEY,
+                    api_key: this.tmdbApiKey,
                     include_image_language: 'en,ru,uk,null',
                 },
                 timeout: 10000,
@@ -95,7 +103,7 @@ export class TranslationUpdateProcessor extends WorkerHost {
             for (const lang of TRANSLATION_LANGUAGES) {
                 const response = await axios.get(`${TMDB_BASE_URL}/${endpoint}/${id}`, {
                     params: {
-                        api_key: TMDB_API_KEY,
+                        api_key: this.tmdbApiKey,
                         language: lang,
                     },
                     timeout: 10000,
