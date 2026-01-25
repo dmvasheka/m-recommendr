@@ -290,7 +290,7 @@ export class RecommendationsService {
             }
 
             const rows = (data || []) as any[];
-            const hasMore = rows.length >= limit;
+            const hasMore = rows.length > limit;
             const pageItems = rows.slice(0, limit);
 
             const results = pageItems.map(movie => {

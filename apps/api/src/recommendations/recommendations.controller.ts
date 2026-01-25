@@ -1,7 +1,7 @@
 import { Controller, Get, Post, Query, Body, Logger } from
         '@nestjs/common';
 import { RecommendationsService } from './recommendations.service';
-import { parseCursor } from '../utils/cursor.utils';
+import { parseCursor, Cursor } from '../utils/cursor.utils';
 
 @Controller('recommendations')
 export class RecommendationsController {

@@ -222,7 +222,7 @@ export class TvShowsService {
             }
 
             const rows = (data || []) as any[];
-            const hasMore = rows.length >= limit;
+            const hasMore = rows.length > limit;
             let tvShows = rows.slice(0, limit);
 
             if (language !== 'en' && tvShows.length > 0) {

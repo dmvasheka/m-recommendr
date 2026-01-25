@@ -1,12 +1,28 @@
 import { Controller, Get, Query, Param, Logger } from '@nestjs/common';
 import { TvShowsService } from './tv-shows.service';
-import { parseCursor } from '../utils/cursor.utils';
+import { parseCursor, Cursor } from '../utils/cursor.utils';
 
 @Controller('tv-shows')
 export class TvShowsController {
     private readonly logger = new Logger(TvShowsController.name);
+    private readonly MAX_LIMIT = 100;
+    private readonly DEFAULT_LIMIT = 20;
 
     constructor(private readonly tvShowsService: TvShowsService) {}
+
+    /**
+     * Parse and validate limit parameter
+     */
+    private parseLimit(limit: string | undefined, defaultValue: number = this.DEFAULT_LIMIT): number {
+        if (!limit) return defaultValue;
+
+        const parsed = parseInt(limit, 10);
+        if (isNaN(parsed) || !isFinite(parsed) || parsed < 1) {
+            return defaultValue;
+        }
+
+        return Math.min(parsed, this.MAX_LIMIT);
+    }
 
     /**
      * GET /api/tv-shows/autocomplete?q=query&limit=10&language=en
@@ -23,7 +39,7 @@ export class TvShowsController {
         }
 
         try {
-            const maxResults = limit ? parseInt(limit, 10) : 10;
+            const maxResults = this.parseLimit(limit, 10);
             const results = await this.tvShowsService.autocomplete(query, maxResults, language);
 
             return {
@@ -55,7 +71,7 @@ export class TvShowsController {
         }
 
         try {
-            const maxResults = limit ? parseInt(limit, 10) : 10;
+            const maxResults = this.parseLimit(limit, 10);
             const results = await this.tvShowsService.searchTvShows(query, maxResults, language);
 
             return {
@@ -156,7 +172,7 @@ export class TvShowsController {
     ) {
         try {
             if (cursor || limit) {
-                const limitNum = limit ? parseInt(limit, 10) : 20;
+                const limitNum = this.parseLimit(limit);
                 const cursorValues = cursor ? parseCursor(cursor) : undefined;
                 if (cursor && !cursorValues) {
                     return { success: false, error: 'Invalid cursor' };
