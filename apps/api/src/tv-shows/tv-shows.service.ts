@@ -193,6 +193,68 @@ export class TvShowsService {
     }
 
     /**
+     * Get TV shows with cursor-based pagination
+     */
+    async getTvShowsByCursor(
+        limit = 20,
+        language = 'en',
+        cursor?: { popularity: number; id: number },
+    ): Promise<{ tvShows: any[]; nextCursor: string | null; hasMore: boolean }> {
+        try {
+            let query = supabase
+                .from('tv_shows')
+                .select('id, name, overview, poster_url, genres, vote_average, popularity, first_air_date, translations')
+                .not('popularity', 'is', null)
+                .order('popularity', { ascending: false })
+                .order('id', { ascending: false })
+                .limit(limit + 1);
+
+            if (cursor) {
+                query = query.or(
+                    `and(popularity.eq.${cursor.popularity},id.lt.${cursor.id}),popularity.lt.${cursor.popularity}`,
+                );
+            }
+
+            const { data, error } = await query;
+
+            if (error) {
+                throw error;
+            }
+
+            const rows = (data || []) as any[];
+            const hasMore = rows.length >= limit;
+            let tvShows = rows.slice(0, limit);
+
+            if (language !== 'en' && tvShows.length > 0) {
+                this.logger.log(`Applying ${language} translations to ${tvShows.length} TV shows in list`);
+                tvShows = tvShows.map((tvShow: any) => {
+                    const translation = tvShow.translations?.[language];
+                    if (translation) {
+                        return {
+                            ...tvShow,
+                            name: translation.name || tvShow.name,
+                            overview: translation.overview || tvShow.overview,
+                            poster_url: translation.poster_url || tvShow.poster_url,
+                        };
+                    }
+                    return tvShow;
+                });
+            }
+
+            const lastItem = tvShows[tvShows.length - 1];
+            const nextCursor = hasMore && lastItem && lastItem.popularity != null
+                ? `${lastItem.popularity}:${lastItem.id}`
+                : null;
+
+            return { tvShows, nextCursor, hasMore };
+        } catch (error) {
+            const errorMessage = error instanceof Error ? error.message : String(error);
+            this.logger.error(`Get TV shows by cursor error: ${errorMessage}`);
+            throw error;
+        }
+    }
+
+    /**
      * Get seasons for a TV show
      */
     async getTvShowSeasons(tvShowId: number) {

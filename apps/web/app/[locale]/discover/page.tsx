@@ -5,7 +5,8 @@ import { useSearchParams } from 'next/navigation'
 import { Navigation } from '@/components/Navigation'
 import { SearchBar } from '@/components/SearchBar'
 import { NewMovieCard } from '@/components/NewMovieCard'
-import { useSearchMovies, usePopularMovies, useSendChatMessage } from '@/lib/api/hooks'
+import { InfiniteScrollTrigger } from '@/components/InfiniteScrollTrigger'
+import { useInfiniteSearchMovies, useInfinitePopularMovies, useSendChatMessage } from '@/lib/api/hooks'
 import { useAuth } from '@/lib/auth/AuthProvider'
 import { useTranslations, useLocale } from 'next-intl'
 
@@ -51,19 +52,46 @@ function DiscoverPageContent() {
     }, [searchQuery, user])
 
     // Fetch search results when query exists
-    const { data: searchResults, isLoading: isSearchLoading } = useSearchMovies({
+    const {
+        data: searchPages,
+        isLoading: isSearchLoading,
+        isError: isSearchError,
+        error: searchError,
+        refetch: refetchSearch,
+        fetchNextPage: fetchNextSearch,
+        hasNextPage: hasNextSearch,
+        isFetchingNextPage: isFetchingNextSearch,
+    } = useInfiniteSearchMovies({
         query: searchQuery,
         limit: 20,
         language: locale,
+        pageSize: 20,
     })
 
     // Fetch popular movies as fallback
-    const { data: popularMovies, isLoading: isPopularLoading } = usePopularMovies(20, locale)
+    const {
+        data: popularPages,
+        isLoading: isPopularLoading,
+        isError: isPopularError,
+        error: popularError,
+        refetch: refetchPopular,
+        fetchNextPage: fetchNextPopular,
+        hasNextPage: hasNextPopular,
+        isFetchingNextPage: isFetchingNextPopular,
+    } = useInfinitePopularMovies(20, locale)
 
     // Decide what to display
     const showSearchResults = searchQuery.length > 0
-    const movies = showSearchResults ? searchResults : popularMovies
+    const movies = showSearchResults
+        ? (searchPages?.pages.flatMap((page) => page.items) ?? [])
+        : (popularPages?.pages.flatMap((page) => page.items) ?? [])
     const isLoading = showSearchResults ? isSearchLoading : isPopularLoading
+    const isError = showSearchResults ? isSearchError : isPopularError
+    const error = showSearchResults ? searchError : popularError
+    const refetch = showSearchResults ? refetchSearch : refetchPopular
+    const isFetchingNextPage = showSearchResults ? isFetchingNextSearch : isFetchingNextPopular
+    const hasNextPage = showSearchResults ? hasNextSearch : hasNextPopular
+    const fetchNextPage = showSearchResults ? fetchNextSearch : fetchNextPopular
 
     return (
         <div className="min-h-screen bg-gradient-to-b from-[#0a0a0f] via-[#1a1a2e] to-[#0a0a0f]">
@@ -131,7 +159,22 @@ function DiscoverPageContent() {
                     <div className="flex justify-center items-center py-20">
                         <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-[#e50914]"></div>
                     </div>
-                ) : movies && movies.length > 0 ? (
+                ) : isError ? (
+                    <div className="text-center py-20 text-[#9ca3af]">
+                        <div className="mb-2 text-red-400">{t('loadError')}</div>
+                        <button
+                            onClick={() => refetch()}
+                            className="text-sm underline text-[#e50914] hover:text-[#f87171]"
+                        >
+                            {t('retry')}
+                        </button>
+                        {error ? (
+                            <div className="mt-2 text-xs text-[#6b7280]">
+                                {error instanceof Error ? error.message : String(error)}
+                            </div>
+                        ) : null}
+                    </div>
+                ) : movies.length > 0 ? (
                     <>
                         <div className="mb-4 text-sm text-[#9ca3af]">
                             {t('foundCount', { count: movies.length })}
@@ -142,6 +185,23 @@ function DiscoverPageContent() {
                                 <NewMovieCard key={movie.id} movie={movie} />
                             ))}
                         </div>
+                        {isFetchingNextPage && (
+                            <div className="flex justify-center items-center py-10">
+                                <div className="animate-spin rounded-full h-10 w-10 border-b-2 border-[#e50914]"></div>
+                            </div>
+                        )}
+                        {hasNextPage === false && (
+                            <div className="text-center py-10 text-sm text-[#9ca3af]">
+                                {t('endOfList')}
+                            </div>
+                        )}
+                        {hasNextPage && (
+                            <InfiniteScrollTrigger
+                                hasMore={!!hasNextPage}
+                                isFetching={isFetchingNextPage}
+                                onLoadMore={() => fetchNextPage()}
+                            />
+                        )}
                     </>
                 ) : (
                     <div className="text-center py-20">

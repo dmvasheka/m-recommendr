@@ -1,5 +1,6 @@
 import { Controller, Get, Query, Param, Logger } from '@nestjs/common';
 import { TvShowsService } from './tv-shows.service';
+import { parseCursor } from '../utils/cursor.utils';
 
 @Controller('tv-shows')
 export class TvShowsController {
@@ -142,15 +143,41 @@ export class TvShowsController {
 
     /**
      * GET /api/tv-shows?page=1&pageSize=20&language=en
+     * GET /api/tv-shows?limit=20&cursor=popularity:id&language=en
      * Get all TV shows with pagination (sorted by popularity)
      */
     @Get()
     async getAllTvShows(
         @Query('page') page?: string,
         @Query('pageSize') pageSize?: string,
+        @Query('limit') limit?: string,
+        @Query('cursor') cursor?: string,
         @Query('language') language?: string,
     ) {
         try {
+            if (cursor || limit) {
+                const limitNum = limit ? parseInt(limit, 10) : 20;
+                const cursorValues = cursor ? parseCursor(cursor) : undefined;
+                if (cursor && !cursorValues) {
+                    return { success: false, error: 'Invalid cursor' };
+                }
+
+                const { tvShows, nextCursor, hasMore } =
+                    await this.tvShowsService.getTvShowsByCursor(
+                        limitNum,
+                        language,
+                        cursorValues,
+                    );
+
+                return {
+                    success: true,
+                    count: tvShows.length,
+                    tvShows,
+                    nextCursor,
+                    hasMore,
+                };
+            }
+
             const pageNum = page ? parseInt(page, 10) : 1;
             const pageSizeNum = pageSize ? parseInt(pageSize, 10) : 20;
 

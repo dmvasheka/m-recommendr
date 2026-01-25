@@ -131,6 +131,27 @@ class ApiClient {
         return response.recommendations || []
     }
 
+    async getPopularMoviesPage(
+        limit = 20,
+        language?: string,
+        cursor?: string,
+    ): Promise<{ items: Movie[]; nextCursor: string | null; hasMore: boolean }> {
+        const langParam = language ? `&language=${language}` : ''
+        const cursorParam = cursor ? `&cursor=${encodeURIComponent(cursor)}` : ''
+        const response = await this.fetch<{
+            success: boolean
+            recommendations: Movie[]
+            nextCursor?: string | null
+            hasMore?: boolean
+        }>(`/api/recommendations/popular?limit=${limit}${langParam}${cursorParam}`)
+
+        return {
+            items: response.recommendations || [],
+            nextCursor: response.nextCursor ?? null,
+            hasMore: response.hasMore ?? false,
+        }
+    }
+
     // TMDB
     async searchTMDB(query: string): Promise<any[]> {
         return this.fetch(`/api/tmdb/search?q=${encodeURIComponent(query)}`)
@@ -201,6 +222,27 @@ class ApiClient {
             total: number
         }>(`/api/tv-shows?page=${page}&pageSize=${pageSize}${langParam}`)
         return response.tvShows || []
+    }
+
+    async getTvShowsPage(
+        limit = 20,
+        language?: string,
+        cursor?: string,
+    ): Promise<{ items: TvShow[]; nextCursor: string | null; hasMore: boolean }> {
+        const langParam = language ? `&language=${language}` : ''
+        const cursorParam = cursor ? `&cursor=${encodeURIComponent(cursor)}` : ''
+        const response = await this.fetch<{
+            success: boolean
+            tvShows: TvShow[]
+            nextCursor?: string | null
+            hasMore?: boolean
+        }>(`/api/tv-shows?limit=${limit}${langParam}${cursorParam}`)
+
+        return {
+            items: response.tvShows || [],
+            nextCursor: response.nextCursor ?? null,
+            hasMore: response.hasMore ?? false,
+        }
     }
 
     async getTvShowById(id: number, language?: string): Promise<TvShow | null> {

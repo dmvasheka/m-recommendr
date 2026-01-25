@@ -1,10 +1,11 @@
-import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query'
+import { useQuery, useMutation, useQueryClient, useInfiniteQuery } from '@tanstack/react-query'
 import { api } from './client'
 import type {
     AddToWatchlistParams,
     MarkAsWatchedParams,
     RemoveFromWatchlistParams,
     SearchMoviesParams,
+    SearchTvShowsParams,
     SimilarMoviesParams,
     SendChatMessageParams,
 } from './types'
@@ -38,6 +39,30 @@ export function useSearchMovies(params: SearchMoviesParams) {
     return useQuery({
         queryKey: ['movies', 'search', params.query, params.limit, params.language],
         queryFn: () => api.searchMovies(params),
+        enabled: params.query.length > 0,
+    })
+}
+
+export function useInfiniteSearchMovies(params: SearchMoviesParams & { pageSize?: number }) {
+    const pageSize = params.pageSize ?? params.limit ?? 20
+
+    return useInfiniteQuery({
+        queryKey: ['movies', 'search', 'infinite', params.query, pageSize, params.language],
+        queryFn: async ({ pageParam = 1 }) => {
+            const limit = pageSize * pageParam
+            const results = await api.searchMovies({
+                query: params.query,
+                limit,
+                language: params.language,
+            })
+            const startIndex = (pageParam - 1) * pageSize
+            const items = results.slice(startIndex)
+            const hasMore = results.length === limit
+
+            return { items, hasMore, page: pageParam }
+        },
+        getNextPageParam: (lastPage) => (lastPage.hasMore ? lastPage.page + 1 : undefined),
+        initialPageParam: 1,
         enabled: params.query.length > 0,
     })
 }
@@ -122,6 +147,22 @@ export function usePopularMovies(limit = 10, language?: string) {
     })
 }
 
+export function useInfinitePopularMovies(pageSize = 20, language?: string) {
+    return useInfiniteQuery({
+        queryKey: ['movies', 'popular', 'infinite', pageSize, language],
+        queryFn: async ({ pageParam }) => {
+            const response = await api.getPopularMoviesPage(pageSize, language, pageParam)
+            return {
+                items: response.items,
+                hasMore: response.hasMore,
+                nextCursor: response.nextCursor,
+            }
+        },
+        getNextPageParam: (lastPage) => (lastPage.hasMore ? lastPage.nextCursor : undefined),
+        initialPageParam: undefined,
+    })
+}
+
 // Chat
 export function useChatHistory(userId: string, limit = 20) {
     return useQuery({
@@ -195,12 +236,52 @@ export function useTvShow(id: number, language?: string) {
     })
 }
 
-export function useSearchTvShows(params: { query: string; limit?: number; language?: string }) {
+export function useSearchTvShows(params: SearchTvShowsParams) {
     return useQuery({
         queryKey: ['tv-shows', 'search', params.query, params.limit, params.language],
         queryFn: () => api.searchTvShows(params),
         enabled: params.query.length >= 2,
         staleTime: 5 * 60 * 1000,
+    })
+}
+
+export function useInfiniteSearchTvShows(params: SearchTvShowsParams & { pageSize?: number }) {
+    const pageSize = params.pageSize ?? params.limit ?? 20
+
+    return useInfiniteQuery({
+        queryKey: ['tv-shows', 'search', 'infinite', params.query, pageSize, params.language],
+        queryFn: async ({ pageParam = 1 }) => {
+            const limit = pageSize * pageParam
+            const results = await api.searchTvShows({
+                query: params.query,
+                limit,
+                language: params.language,
+            })
+            const startIndex = (pageParam - 1) * pageSize
+            const items = results.slice(startIndex)
+            const hasMore = results.length === limit
+
+            return { items, hasMore, page: pageParam }
+        },
+        getNextPageParam: (lastPage) => (lastPage.hasMore ? lastPage.page + 1 : undefined),
+        initialPageParam: 1,
+        enabled: params.query.length >= 2,
+    })
+}
+
+export function useInfiniteTvShows(pageSize = 20, language?: string) {
+    return useInfiniteQuery({
+        queryKey: ['tv-shows', 'infinite', pageSize, language],
+        queryFn: async ({ pageParam }) => {
+            const response = await api.getTvShowsPage(pageSize, language, pageParam)
+            return {
+                items: response.items,
+                hasMore: response.hasMore,
+                nextCursor: response.nextCursor,
+            }
+        },
+        getNextPageParam: (lastPage) => (lastPage.hasMore ? lastPage.nextCursor : undefined),
+        initialPageParam: undefined,
     })
 }
 
