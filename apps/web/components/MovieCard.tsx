@@ -4,6 +4,7 @@ import Image from 'next/image'
 import { Link } from '@/navigation'
 import type { Movie } from '@/lib/api/types'
 import { useTranslations } from 'next-intl'
+import { WatchlistButton } from './WatchlistButton'
 
 interface MovieCardProps {
     movie: Movie
@@ -31,10 +32,14 @@ export function MovieCard({ movie, showRating = true }: MovieCardProps) {
                         sizes="(max-width: 768px) 50vw, (max-width: 1200px) 33vw, 25vw"
                     />
                     {showRating && movie.vote_average && (
-                        <div className="absolute top-2 right-2 bg-black/80 text-white px-2 py-1 rounded-md text-sm font-semibold">
+                        <div className="absolute top-2 left-2 bg-black/80 text-white px-2 py-1 rounded-md text-sm font-semibold">
                             ⭐ {movie.vote_average.toFixed(1)}
                         </div>
                     )}
+                    {/* Watchlist button - always visible on mobile, shown on hover on desktop */}
+                    <div className="absolute top-2 right-2 md:opacity-0 md:group-hover:opacity-100 transition-opacity duration-200">
+                        <WatchlistButton movieId={movie.id} variant="icon" />
+                    </div>
                 </div>
                 <div className="mt-2">
                     <h3 className="font-semibold text-sm line-clamp-2 group-hover:text-indigo-600 transition-colors">

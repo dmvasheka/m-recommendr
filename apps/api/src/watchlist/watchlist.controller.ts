@@ -10,19 +10,24 @@ export class WatchlistController {
 
     /**
      * POST /api/watchlist/add
-     * Add movie to watchlist
+     * Add movie or TV show to watchlist
      */
     @Post('add')
     async addToWatchlist(
-        @Body() body: { user_id: string; movie_id: number; status?:
-                'planned' | 'watched' },
+        @Body() body: {
+            user_id: string;
+            movie_id?: number;
+            content_type?: 'movie' | 'tv_show';
+            content_id?: number;
+            status?: 'planned' | 'watched';
+        },
     ) {
         try {
             const item = await
                 this.watchlistService.addToWatchlist(body);
             return {
                 success: true,
-                message: 'Movie added to watchlist',
+                message: 'Added to watchlist',
                 item,
             };
         } catch (error) {
@@ -44,25 +49,30 @@ export class WatchlistController {
 
     /**
      * POST /api/watchlist/watched
-     * Mark movie as watched with optional rating
+     * Mark movie or TV show as watched with optional rating
      */
     @Post('watched')
     async markAsWatched(
-        @Body() body: { user_id: string; movie_id: number; rating?:
-                number },
+        @Body() body: {
+            user_id: string;
+            movie_id?: number;
+            content_type?: 'movie' | 'tv_show';
+            content_id?: number;
+            rating?: number;
+        },
     ) {
         try {
             const item = await
                 this.watchlistService.markAsWatched(body);
             return {
                 success: true,
-                message: 'Movie marked as watched',
+                message: 'Marked as watched',
                 item,
             };
         } catch (error) {
             const errorMessage = error instanceof Error ?
                 error.message : String(error);
-            this.logger.error(`Mark as watched failed: 
+            this.logger.error(`Mark as watched failed:
   ${errorMessage}`);
             return {
                 success: false,

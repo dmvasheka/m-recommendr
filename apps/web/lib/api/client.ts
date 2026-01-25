@@ -99,8 +99,9 @@ class ApiClient {
         return response.item
     }
 
-    async removeFromWatchlist(movieId: number, userId: string): Promise<void> {
-        return this.fetch(`/api/watchlist/${movieId}?user_id=${userId}`, {
+    async removeFromWatchlist(itemId: number, userId: string, content_type?: 'movie' | 'tv_show'): Promise<void> {
+        const contentTypeParam = content_type ? `&content_type=${content_type}` : ''
+        return this.fetch(`/api/watchlist/${itemId}?user_id=${userId}${contentTypeParam}`, {
             method: 'DELETE',
         })
     }

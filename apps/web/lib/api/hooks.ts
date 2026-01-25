@@ -3,6 +3,7 @@ import { api } from './client'
 import type {
     AddToWatchlistParams,
     MarkAsWatchedParams,
+    RemoveFromWatchlistParams,
     SearchMoviesParams,
     SimilarMoviesParams,
     SendChatMessageParams,
@@ -88,8 +89,8 @@ export function useRemoveFromWatchlist() {
     const queryClient = useQueryClient()
 
     return useMutation({
-        mutationFn: ({ movieId, userId }: { movieId: number; userId: string }) =>
-            api.removeFromWatchlist(movieId, userId),
+        mutationFn: ({ itemId, userId, content_type }: RemoveFromWatchlistParams) =>
+            api.removeFromWatchlist(itemId, userId, content_type),
         onSuccess: (_, variables) => {
             queryClient.invalidateQueries({ queryKey: ['watchlist', variables.userId] })
             queryClient.invalidateQueries({ queryKey: ['recommendations', variables.userId] })

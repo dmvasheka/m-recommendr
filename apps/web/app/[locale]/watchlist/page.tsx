@@ -43,11 +43,15 @@ export default function WatchlistPage() {
         }
     }
 
-    const handleRemove = async (movieId: number) => {
+    const handleRemove = async (itemId: number, contentType?: 'movie' | 'tv_show') => {
         if (!user) return
 
         try {
-            await removeMutation.mutateAsync({ movieId, userId: user.id })
+            await removeMutation.mutateAsync({
+                itemId,
+                userId: user.id,
+                content_type: contentType,
+            })
         } catch (error) {
             console.error('Failed to remove movie:', error)
         }
@@ -104,6 +108,8 @@ export default function WatchlistPage() {
                         {filteredMovies.map((item) => {
                             const movie = item.movie
                             if (!movie) return null
+                            const contentType = item.content_type || 'movie'
+                            const contentId = item.content_id || item.movie_id || movie.id
 
                             // Handle both poster_url (full URL) and poster_path (path only)
                             const posterUrl = (movie as any).poster_url
@@ -193,7 +199,7 @@ export default function WatchlistPage() {
                                             {/* Actions */}
                                             <div className="flex gap-2">
                                                 <button
-                                                    onClick={() => handleRemove(movie.id)}
+                                                    onClick={() => handleRemove(contentId, contentType)}
                                                     className="text-sm text-red-400 hover:text-red-300 font-medium"
                                                     disabled={removeMutation.isPending}
                                                 >

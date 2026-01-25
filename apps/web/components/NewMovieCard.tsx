@@ -5,6 +5,7 @@ import Image from "next/image"
 import { Star } from "lucide-react"
 import type { Movie } from '@/lib/api/types'
 import { useTranslations } from 'next-intl'
+import { WatchlistButton } from './WatchlistButton'
 
 interface MovieCardProps {
   movie: Movie
@@ -31,6 +32,10 @@ export function NewMovieCard({ movie }: MovieCardProps) {
             className="object-cover transition-transform duration-500 group-hover:scale-110"
             sizes="(max-width: 640px) 50vw, (max-width: 768px) 33vw, (max-width: 1024px) 25vw, 20vw"
           />
+          {/* Watchlist button - always visible on mobile, shown on hover on desktop */}
+          <div className="absolute top-2 right-2 md:opacity-0 md:group-hover:opacity-100 transition-opacity duration-200 z-10">
+            <WatchlistButton movieId={movie.id} variant="icon" />
+          </div>
         </div>
 
         {/* Overlay on hover */}

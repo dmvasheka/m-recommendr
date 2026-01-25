@@ -17,13 +17,17 @@ export interface WatchlistItem extends Omit<UserWatchlist,
 
 export interface AddToWatchlistDto {
     user_id: string;
-    movie_id: number;
+    movie_id?: number;
+    content_type?: 'movie' | 'tv_show';
+    content_id?: number;
     status?: 'planned' | 'watched';
 }
 
 export interface MarkAsWatchedDto {
     user_id: string;
-    movie_id: number;
+    movie_id?: number;
+    content_type?: 'movie' | 'tv_show';
+    content_id?: number;
     rating?: number;
 }
 
@@ -32,21 +36,29 @@ export class WatchlistService {
     private readonly logger = new Logger(WatchlistService.name);
 
     /**
-     * Add movie to user's watchlist
+     * Add movie or TV show to user's watchlist
      */
     async addToWatchlist(dto: AddToWatchlistDto):
         Promise<UserWatchlist> {
         try {
-            const { user_id, movie_id, status = 'planned' } = dto;
-            this.logger.log(`Adding movie ${movie_id} to watchlist 
-  for user ${user_id}`);
+            // Support both old (movie_id) and new (content_type + content_id) formats
+            const contentType = dto.content_type || 'movie';
+            const contentId = dto.content_id || dto.movie_id;
+            const movieId = contentType === 'movie' ? contentId : dto.movie_id;
+            const { user_id, status = 'planned' } = dto;
+
+            if (!contentId) {
+                throw new Error('Either movie_id or content_id must be provided');
+            }
+
+            this.logger.log(`Adding ${contentType} ${contentId} to watchlist for user ${user_id}`);
 
             // Check if already exists
             const { data: existing } = await supabase
                 .from('user_watchlist')
                 .select('*')
                 .eq('user_id', user_id)
-                .eq('movie_id', movie_id)
+                .eq('movie_id', movieId || contentId)
                 .single();
 
             if (existing) {
@@ -59,7 +71,7 @@ export class WatchlistService {
                     .from('user_watchlist')
                     .update(updateData)
                     .eq('user_id', user_id)
-                    .eq('movie_id', movie_id)
+                    .eq('movie_id', movieId || contentId)
                     .select()
                     .single();
 
@@ -70,7 +82,7 @@ export class WatchlistService {
             // Insert new entry
             const insertData: Database['public']['Tables']['user_watchlist']['Insert'] = {
                 user_id,
-                movie_id,
+                movie_id: movieId || contentId,
                 status,
             };
             const { data, error } = await (supabase as any)
@@ -84,21 +96,29 @@ export class WatchlistService {
         } catch (error) {
             const errorMessage = error instanceof Error ?
                 error.message : String(error);
-            this.logger.error(`Add to watchlist error: 
+            this.logger.error(`Add to watchlist error:
   ${errorMessage}`);
             throw error;
         }
     }
 
     /**
-     * Mark movie as watched with optional rating
+     * Mark movie or TV show as watched with optional rating
      */
     async markAsWatched(dto: MarkAsWatchedDto):
         Promise<UserWatchlist> {
         try {
-            const { user_id, movie_id, rating } = dto;
-            this.logger.log(`Marking movie ${movie_id} as watched 
-  for user ${user_id}`);
+            // Support both old (movie_id) and new (content_type + content_id) formats
+            const contentType = dto.content_type || 'movie';
+            const contentId = dto.content_id || dto.movie_id;
+            const movieId = contentType === 'movie' ? contentId : dto.movie_id;
+            const { user_id, rating } = dto;
+
+            if (!contentId) {
+                throw new Error('Either movie_id or content_id must be provided');
+            }
+
+            this.logger.log(`Marking ${contentType} ${contentId} as watched for user ${user_id}`);
 
             // Validate rating if provided
             if (rating !== undefined && (rating < 1 || rating > 10))
@@ -108,7 +128,7 @@ export class WatchlistService {
 
             const upsertData: Database['public']['Tables']['user_watchlist']['Insert'] = {
                 user_id,
-                movie_id,
+                movie_id: movieId || contentId,
                 status: 'watched',
                 rating: rating || null,
                 watched_at: new Date().toISOString(),
@@ -122,15 +142,14 @@ export class WatchlistService {
             if (error) throw error;
 
             // Trigger user profile embedding update (SQL function with trigger)
-                // The database trigger will automatically update the    user profile
-            this.logger.log(`User profile will be updated 
-  automatically via trigger`);
+            // The database trigger will automatically update the user profile
+            this.logger.log(`User profile will be updated automatically via trigger`);
 
             return data as UserWatchlist;
         } catch (error) {
             const errorMessage = error instanceof Error ?
                 error.message : String(error);
-            this.logger.error(`Mark as watched error: 
+            this.logger.error(`Mark as watched error:
   ${errorMessage}`);
             throw error;
         }

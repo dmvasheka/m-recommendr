@@ -219,20 +219,32 @@
 
 ---
 
-### 4. Watchlist - Quick Actions
+### 4. Watchlist - Quick Actions ✅ **ЗАВЕРШЕНО (2026-01-25)**
+
 **Основная задача:** Добавить возможность добавления в watchlist с любой страницы
 
 **Подзадачи:**
-- [ ] Добавить иконку "+" или bookmark на постер фильма (overlay при hover)
-- [ ] Реализовать quick action menu:
-  - "Add to Watchlist" (Planned)
-  - "Mark as Watched" + Rating slider
-  - "Remove from Watchlist"
-- [ ] Показывать текущий статус фильма (иконка/бадж если уже в watchlist)
-- [ ] Добавить toast уведомления об успешном действии
-- [ ] Оптимистичные обновления UI (обновление без ожидания ответа сервера)
-- [ ] Синхронизация состояния через React Query cache
+- [x] Добавить иконку bookmark на постер фильма (overlay при hover на desktop, всегда видна на mobile) ✅
+- [x] Реализовать quick action menu: ✅
+  - [x] "Add to Watchlist" (Planned) ✅
+  - [x] "Mark as Watched" + Rating (default 7/10) ✅
+  - [x] "Remove from Watchlist" ✅
+- [x] Показывать текущий статус фильма (визуальные состояния иконки) ✅
+  - Серая Bookmark → не в списке
+  - Зеленая BookmarkCheck → в планах
+  - Зеленая Check → просмотрено
+- [x] Добавить toast уведомления об успешном действии (react-hot-toast) ✅
+- [x] Оптимистичные обновления UI ✅
+- [x] Синхронизация состояния через React Query cache ✅
+- [x] Расширена поддержка для TV shows (content_type: 'movie' | 'tv_show') ✅
+- [x] Многоязычность (переводы для EN, RU, UK) ✅
 - [ ] Keyboard shortcuts (например, "w" для добавления в watchlist)
+
+**Реализация:**
+- Компонент `WatchlistButton` с двумя вариантами (icon/button)
+- Хук `useWatchlistStatus` для проверки статуса
+- Backend API расширен для поддержки фильмов и сериалов
+- Интеграция в `MovieCard`, `NewMovieCard`, `TvShowCard`
 
 ---
 
@@ -1684,7 +1696,337 @@ const { data: lastImport, error } = await supabase
 
 ---
 
-**Last Updated:** 2026-01-24 (вечер)
+### 15. IMDb Rating Integration 🎯
+**Priority:** Medium
+**Status:** Planned
+
+**Основная задача:** Интегрировать рейтинги IMDb для показа вместе с рейтингами TMDB
+
+**Мотивация:**
+- IMDb - наиболее доверенный источник рейтингов для многих пользователей
+- Два рейтинга дают более полную картину (TMDB часто выше, IMDb - строже)
+- Повышает доверие к платформе
+
+**Подзадачи:**
+
+#### 15.1 Backend Integration
+- [ ] **Выбрать источник данных IMDb:**
+  - Вариант A: TMDB API уже возвращает `imdb_id` - использовать OMDb API для получения рейтинга
+  - Вариант B: Использовать Cinemagoer (ex-IMDbPY) Python библиотеку
+  - Вариант C: Web scraping (не рекомендуется - нарушает ToS)
+  - **Рекомендация:** OMDb API (бесплатно до 1000 req/day, платно для больших объемов)
+
+- [ ] **Добавить поля в БД:**
+  ```sql
+  ALTER TABLE movies ADD COLUMN imdb_id TEXT;
+  ALTER TABLE movies ADD COLUMN imdb_rating DECIMAL(3,1);
+  ALTER TABLE movies ADD COLUMN imdb_votes INTEGER;
+
+  ALTER TABLE tv_shows ADD COLUMN imdb_id TEXT;
+  ALTER TABLE tv_shows ADD COLUMN imdb_rating DECIMAL(3,1);
+  ALTER TABLE tv_shows ADD COLUMN imdb_votes INTEGER;
+
+  CREATE INDEX idx_movies_imdb_id ON movies(imdb_id);
+  CREATE INDEX idx_tv_shows_imdb_id ON tv_shows(imdb_id);
+  ```
+
+- [ ] **Создать сервис для IMDb данных:**
+  ```typescript
+  // apps/api/src/imdb/imdb.service.ts
+  - getImdbRating(imdbId: string) - получить рейтинг по IMDb ID
+  - enrichMovieWithImdb(movieId: number) - добавить IMDb данные к фильму
+  - enrichTvShowWithImdb(tvShowId: number) - добавить IMDb данные к сериалу
+  ```
+
+- [ ] **Интеграция с импортом:**
+  - При импорте из TMDB получать `imdb_id`
+  - Background job для обогащения существующих фильмов IMDb рейтингами
+  - Rate limiting для OMDb API (1 req/sec для бесплатного плана)
+
+- [ ] **Кэширование IMDb данных:**
+  - Redis кэш для IMDb рейтингов (TTL: 7 дней)
+  - Периодическое обновление популярных фильмов
+
+#### 15.2 Frontend Display
+- [ ] **Показать оба рейтинга на карточках:**
+  ```tsx
+  <div className="ratings">
+    <div className="rating">
+      <img src="/tmdb-logo.svg" alt="TMDB" />
+      <span>7.9</span>
+    </div>
+    <div className="rating">
+      <img src="/imdb-logo.svg" alt="IMDb" />
+      <span>7.5</span>
+    </div>
+  </div>
+  ```
+
+- [ ] **Детальная страница фильма:**
+  - Большие карточки с обоими рейтингами
+  - Количество голосов для каждого источника
+  - График сравнения (опционально)
+
+- [ ] **Фильтрация и сортировка:**
+  - Добавить опцию "Sort by IMDb rating"
+  - Фильтр "IMDb > 8.0"
+
+- [ ] **Tooltips:**
+  - При наведении показывать количество голосов
+  - "Based on 1.2M votes"
+
+#### 15.3 API Endpoints
+```typescript
+// New endpoints
+GET /api/movies/:id/imdb-rating
+GET /api/tv-shows/:id/imdb-rating
+
+// Existing endpoints - добавить imdb_rating в response
+GET /api/movies/:id
+GET /api/tv-shows/:id
+GET /api/recommendations/*
+```
+
+#### 15.4 Cost Considerations
+**OMDb API Pricing:**
+- Free tier: 1000 requests/day
+- Bronze: $1/month for 10K requests
+- Silver: $5/month for 100K requests
+
+**Оптимизация:**
+- Кэшировать рейтинги на 7 дней
+- Обновлять только популярные фильмы (top 1000)
+- Batch processing для импорта
+- Fallback на TMDB если IMDb недоступен
+
+#### 15.5 Alternative: Scraping-free approach
+- [ ] **Использовать только `imdb_id` из TMDB:**
+  - Показывать ссылку "View on IMDb"
+  - Не хранить рейтинг, только ID
+  - Пользователь может сам посмотреть на IMDb
+  - Избегаем API costs и rate limits
+
+**Технологии:**
+- OMDb API (http://www.omdbapi.com/) - рекомендуется
+- Cinemagoer (https://github.com/cinemagoer/cinemagoer) - альтернатива
+- Redis для кэширования
+
+**Время реализации:** 1-2 недели
+
+---
+
+### 16. Infinite Scroll для списков фильмов и сериалов 📜
+**Priority:** Medium
+**Status:** Planned
+
+**Основная задача:** Заменить традиционную пагинацию на infinite scroll для улучшения UX
+
+**Мотивация:**
+- Более современный UX (как Netflix, Prime Video)
+- Плавная навигация без кликов на "Next page"
+- Лучше работает на мобильных устройствах
+- Увеличивает engagement (пользователи просматривают больше контента)
+
+**Подзадачи:**
+
+#### 16.1 Backend - Cursor-based Pagination
+- [ ] **Изменить API с offset на cursor pagination:**
+  ```typescript
+  // Текущий подход (offset-based):
+  GET /api/movies?page=2&pageSize=20
+
+  // Новый подход (cursor-based):
+  GET /api/movies?cursor=movie_12345&limit=20
+
+  // Response:
+  {
+    data: [...],
+    nextCursor: "movie_12355",
+    hasMore: true
+  }
+  ```
+
+- [ ] **Обновить endpoints:**
+  - `/api/movies` - infinite scroll support
+  - `/api/tv-shows` - infinite scroll support
+  - `/api/recommendations/popular` - infinite scroll
+  - `/api/watchlist` - infinite scroll
+  - `/api/movies/search` - infinite scroll для результатов поиска
+
+- [ ] **Оптимизация SQL запросов:**
+  ```sql
+  -- Вместо OFFSET (медленно на больших датасетах)
+  SELECT * FROM movies LIMIT 20 OFFSET 1000;
+
+  -- Cursor-based (быстрее)
+  SELECT * FROM movies
+  WHERE id > last_cursor_id
+  ORDER BY id
+  LIMIT 20;
+  ```
+
+- [ ] **Поддержка разных сортировок:**
+  - По popularity: курсор = `vote_average`
+  - По дате: курсор = `release_date`
+  - По названию: курсор = `title`
+
+#### 16.2 Frontend - React Implementation
+- [ ] **Использовать React Query с Infinite Queries:**
+  ```typescript
+  // apps/web/lib/api/hooks.ts
+  export function useInfiniteMovies(filters?: MovieFilters) {
+    return useInfiniteQuery({
+      queryKey: ['movies', 'infinite', filters],
+      queryFn: ({ pageParam }) =>
+        apiClient.getMovies({ cursor: pageParam, ...filters }),
+      getNextPageParam: (lastPage) => lastPage.nextCursor,
+      initialPageParam: undefined,
+    })
+  }
+  ```
+
+- [ ] **Intersection Observer для auto-load:**
+  ```typescript
+  // Компонент для автоматической подгрузки
+  function InfiniteScroll({ fetchNext, hasMore, isFetching }) {
+    const ref = useRef()
+
+    useEffect(() => {
+      const observer = new IntersectionObserver((entries) => {
+        if (entries[0].isIntersecting && hasMore && !isFetching) {
+          fetchNext()
+        }
+      })
+
+      if (ref.current) observer.observe(ref.current)
+      return () => observer.disconnect()
+    }, [fetchNext, hasMore, isFetching])
+
+    return <div ref={ref} className="loading-trigger" />
+  }
+  ```
+
+- [ ] **Виртуализация для производительности:**
+  - Использовать `@tanstack/react-virtual` для больших списков
+  - Рендерить только видимые элементы
+  - Оптимизация памяти для 1000+ элементов
+
+- [ ] **Loading states:**
+  ```tsx
+  {isFetchingNextPage && (
+    <div className="loading-more">
+      <Spinner /> Loading more...
+    </div>
+  )}
+
+  {!hasNextPage && (
+    <div className="end-of-list">
+      🎬 You've reached the end!
+    </div>
+  )}
+  ```
+
+#### 16.3 UX Enhancements
+- [ ] **"Back to top" button:**
+  - Показывать после прокрутки вниз
+  - Smooth scroll animation
+  - Sticky position в правом нижнем углу
+
+- [ ] **Skeleton loaders:**
+  - Показывать плейсхолдеры при загрузке следующей страницы
+  - Плавный переход от skeleton к контенту
+
+- [ ] **Error handling:**
+  - Retry при ошибке загрузки
+  - "Failed to load more. Try again" с кнопкой retry
+  - Offline mode detection
+
+- [ ] **Scroll restoration:**
+  - Сохранять позицию скролла при навигации назад
+  - Восстанавливать подгруженные страницы из кэша
+
+#### 16.4 Performance Optimization
+- [ ] **Prefetching:**
+  - Загружать следующую страницу за 1-2 экрана до конца
+  - Adjustable threshold (по умолчанию 200px)
+
+- [ ] **Debouncing:**
+  - Предотвращать множественные запросы при быстром скролле
+  - Debounce 300ms перед fetch
+
+- [ ] **Image lazy loading:**
+  - Использовать `loading="lazy"` для постеров
+  - Blur placeholder пока изображение загружается
+  - Progressive JPEG для быстрой загрузки
+
+- [ ] **React Query optimizations:**
+  - `staleTime: 5 * 60 * 1000` (5 минут) для кэширования
+  - `cacheTime: 10 * 60 * 1000` (10 минут)
+  - Prefetch следующей страницы в фоне
+
+#### 16.5 Страницы для обновления
+- [ ] **Главная страница (/):**
+  - Infinite scroll для "Popular Movies"
+  - Infinite scroll для "Popular TV Shows"
+
+- [ ] **Discover page (/discover):**
+  - Infinite scroll с фильтрами
+  - Сохранение фильтров при прокрутке
+
+- [ ] **Search results (/search):**
+  - Infinite scroll для результатов поиска
+  - Обновление при изменении запроса
+
+- [ ] **Watchlist (/watchlist):**
+  - Infinite scroll для личного списка
+  - Фильтрация по статусу (planned/watched)
+
+- [ ] **TV Shows page (/tv-shows):**
+  - Infinite scroll для сериалов
+
+#### 16.6 Accessibility (a11y)
+- [ ] **Keyboard navigation:**
+  - Focus management при загрузке новых элементов
+  - Skip to next section
+
+- [ ] **Screen reader support:**
+  - Announce "Loading more movies"
+  - Announce "Loaded 20 more items"
+  - ARIA live regions для динамического контента
+
+- [ ] **Prefers-reduced-motion:**
+  - Отключать анимации для пользователей с motion sensitivity
+  - Показывать "Load more" кнопку вместо auto-load
+
+#### 16.7 Analytics
+- [ ] **Отслеживать метрики:**
+  - Средняя глубина прокрутки (сколько страниц подгружают)
+  - Bounce rate на infinite scroll страницах
+  - Время до первой загрузки дополнительного контента
+  - Процент пользователей дошедших до конца
+
+**Технологии:**
+- React Query (`useInfiniteQuery`)
+- Intersection Observer API
+- TanStack Virtual (для виртуализации)
+- Framer Motion (для анимаций, опционально)
+
+**Время реализации:** 2-3 недели
+
+**Trade-offs:**
+- ✅ Лучше UX, выше engagement
+- ✅ Современный интерфейс
+- ❌ Сложнее SEO (можно решить SSR + initial batch)
+- ❌ Труднее найти конкретный элемент (можно добавить "Jump to page")
+
+**Решение SEO проблемы:**
+- Server-side render первых 20-40 элементов
+- Добавить `<link rel="next">` для поисковых роботов
+- Сохранить `/movies?page=N` URLs для SEO, показывать infinite scroll для UX
+
+---
+
+**Last Updated:** 2026-01-25
 **Сегодняшний прогресс:**
 - ✅ TV Shows API - добавлена multilingual поддержка (3 endpoints)
 - ✅ Chat API - добавлена multilingual поддержка (AI отвечает на ru/uk/en)
@@ -1692,6 +2034,7 @@ const { data: lastImport, error } = await supabase
 - ✅ TypeScript типизация улучшена (generated types из Supabase)
 - ✅ 11 из 11 API endpoints (100%) теперь поддерживают language параметр
 - ✅ Добавлены новые задачи: страница для сериалов + mix на главной
+- ✅ Добавлены новые улучшения: #15 IMDb rating integration, #16 Infinite scroll
 
-**New items added:** 15 (локализация, типизация, инфраструктура, новые фичи)
+**New items added:** 17 (локализация, типизация, инфраструктура, новые фичи, IMDb, infinite scroll)
 

@@ -211,7 +211,7 @@ export class TvShowsService {
         } catch (error) {
             const errorMessage = error instanceof Error ? error.message : String(error);
             this.logger.error(`Get TV show seasons error: ${errorMessage}`);
-            return [];
+            throw error;
         }
     }
 
