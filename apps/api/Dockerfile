@@ -3,7 +3,7 @@ FROM node:20-alpine AS builder
 
 # Install pnpm
 RUN npm install -g pnpm@9
-RUN ls -la /app/packages/db/src
+
 WORKDIR /app
 
 # Copy everything
