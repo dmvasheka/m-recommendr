@@ -162,7 +162,7 @@ export class TranslationUpdateProcessor extends WorkerHost {
         const { type, limit = 100, offset = 0, force = false, ids } = job.data;
 
         // Validate TMDB API key before processing
-        if (!TMDB_API_KEY || TMDB_API_KEY.trim() === '') {
+        if (!this.tmdbApiKey || this.tmdbApiKey.trim() === '') {
             const errorMsg = 'TMDB_API_KEY is not configured. Cannot fetch translations.';
             this.logger.error(errorMsg);
             throw new Error(errorMsg);

@@ -1,4 +1,4 @@
-import { useQuery, useMutation, useQueryClient, useInfiniteQuery } from '@tanstack/react-query'
+import { useQuery, useMutation, useQueryClient, useInfiniteQuery, type InfiniteData } from '@tanstack/react-query'
 import { api } from './client'
 import type {
     AddToWatchlistParams,
@@ -8,6 +8,8 @@ import type {
     SearchTvShowsParams,
     SimilarMoviesParams,
     SendChatMessageParams,
+    Movie,
+    TvShow,
 } from './types'
 
 // Movies
@@ -43,10 +45,40 @@ export function useSearchMovies(params: SearchMoviesParams) {
     })
 }
 
+type InfiniteMoviesPage = {
+    items: Movie[]
+    hasMore: boolean
+    page: number
+}
+
+type InfinitePopularMoviesPage = {
+    items: Movie[]
+    hasMore: boolean
+    nextCursor: string | null
+}
+
+type InfiniteSearchTvShowsPage = {
+    items: TvShow[]
+    hasMore: boolean
+    page: number
+}
+
+type InfiniteTvShowsPage = {
+    items: TvShow[]
+    hasMore: boolean
+    nextCursor: string | null
+}
+
 export function useInfiniteSearchMovies(params: SearchMoviesParams & { pageSize?: number }) {
     const pageSize = params.pageSize ?? params.limit ?? 20
 
-    return useInfiniteQuery({
+    return useInfiniteQuery<
+        InfiniteMoviesPage,
+        Error,
+        InfiniteData<InfiniteMoviesPage, number>,
+        (string | number | undefined)[],
+        number
+    >({
         queryKey: ['movies', 'search', 'infinite', params.query, pageSize, params.language],
         queryFn: async ({ pageParam = 1 }) => {
             const limit = pageSize * pageParam
@@ -148,7 +180,13 @@ export function usePopularMovies(limit = 10, language?: string) {
 }
 
 export function useInfinitePopularMovies(pageSize = 20, language?: string) {
-    return useInfiniteQuery({
+    return useInfiniteQuery<
+        InfinitePopularMoviesPage,
+        Error,
+        InfiniteData<InfinitePopularMoviesPage, string | undefined>,
+        (string | number | undefined)[],
+        string | undefined
+    >({
         queryKey: ['movies', 'popular', 'infinite', pageSize, language],
         queryFn: async ({ pageParam }) => {
             const response = await api.getPopularMoviesPage(pageSize, language, pageParam)
@@ -158,7 +196,8 @@ export function useInfinitePopularMovies(pageSize = 20, language?: string) {
                 nextCursor: response.nextCursor,
             }
         },
-        getNextPageParam: (lastPage) => (lastPage.hasMore ? lastPage.nextCursor : undefined),
+        getNextPageParam: (lastPage) =>
+            (lastPage.hasMore ? lastPage.nextCursor ?? undefined : undefined),
         initialPageParam: undefined,
     })
 }
@@ -248,7 +287,13 @@ export function useSearchTvShows(params: SearchTvShowsParams) {
 export function useInfiniteSearchTvShows(params: SearchTvShowsParams & { pageSize?: number }) {
     const pageSize = params.pageSize ?? params.limit ?? 20
 
-    return useInfiniteQuery({
+    return useInfiniteQuery<
+        InfiniteSearchTvShowsPage,
+        Error,
+        InfiniteData<InfiniteSearchTvShowsPage, number>,
+        (string | number | undefined)[],
+        number
+    >({
         queryKey: ['tv-shows', 'search', 'infinite', params.query, pageSize, params.language],
         queryFn: async ({ pageParam = 1 }) => {
             const limit = pageSize * pageParam
@@ -270,7 +315,13 @@ export function useInfiniteSearchTvShows(params: SearchTvShowsParams & { pageSiz
 }
 
 export function useInfiniteTvShows(pageSize = 20, language?: string) {
-    return useInfiniteQuery({
+    return useInfiniteQuery<
+        InfiniteTvShowsPage,
+        Error,
+        InfiniteData<InfiniteTvShowsPage, string | undefined>,
+        (string | number | undefined)[],
+        string | undefined
+    >({
         queryKey: ['tv-shows', 'infinite', pageSize, language],
         queryFn: async ({ pageParam }) => {
             const response = await api.getTvShowsPage(pageSize, language, pageParam)
@@ -280,7 +331,8 @@ export function useInfiniteTvShows(pageSize = 20, language?: string) {
                 nextCursor: response.nextCursor,
             }
         },
-        getNextPageParam: (lastPage) => (lastPage.hasMore ? lastPage.nextCursor : undefined),
+        getNextPageParam: (lastPage) =>
+            (lastPage.hasMore ? lastPage.nextCursor ?? undefined : undefined),
         initialPageParam: undefined,
     })
 }
