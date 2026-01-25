@@ -11,6 +11,7 @@ import { Search, Tv } from 'lucide-react'
 export default function TvShowsPage() {
     const [searchQuery, setSearchQuery] = useState('')
     const [debouncedQuery, setDebouncedQuery] = useState('')
+    const isDev = process.env.NODE_ENV === 'development'
     const locale = useLocale()
     const t = useTranslations('TvShows')
 
@@ -115,7 +116,9 @@ export default function TvShowsPage() {
                         </button>
                         {error ? (
                             <div className="mt-2 text-xs text-[#6b7280]">
-                                {error instanceof Error ? error.message : String(error)}
+                                {isDev
+                                    ? (error instanceof Error ? error.message : String(error))
+                                    : t('loadErrorDetails')}
                             </div>
                         ) : null}
                     </div>

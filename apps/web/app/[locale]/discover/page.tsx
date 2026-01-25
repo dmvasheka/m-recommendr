@@ -16,6 +16,7 @@ function DiscoverPageContent() {
     const [searchQuery, setSearchQuery] = useState(initialQuery)
     const { user } = useAuth()
     const [aiExplanation, setAiExplanation] = useState('')
+    const isDev = process.env.NODE_ENV === 'development'
     const sendChatMessage = useSendChatMessage()
     const t = useTranslations('Discover')
     const locale = useLocale()
@@ -170,7 +171,9 @@ function DiscoverPageContent() {
                         </button>
                         {error ? (
                             <div className="mt-2 text-xs text-[#6b7280]">
-                                {error instanceof Error ? error.message : String(error)}
+                                {isDev
+                                    ? (error instanceof Error ? error.message : String(error))
+                                    : t('loadErrorDetails')}
                             </div>
                         ) : null}
                     </div>
