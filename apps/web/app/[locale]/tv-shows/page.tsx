@@ -49,7 +49,6 @@ export default function TvShowsPage() {
         isFetchingNextPage: isFetchingNextSearch,
     } = useInfiniteSearchTvShows({
         query: trimmedQuery,
-        limit: 40,
         language: locale,
         pageSize: 40,
     })

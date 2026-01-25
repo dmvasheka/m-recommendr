@@ -7,6 +7,7 @@ export class TvShowsController {
     private readonly logger = new Logger(TvShowsController.name);
     private readonly MAX_LIMIT = 100;
     private readonly DEFAULT_LIMIT = 20;
+    private readonly MAX_OFFSET = 10000;
 
     constructor(private readonly tvShowsService: TvShowsService) {}
 
@@ -35,7 +36,7 @@ export class TvShowsController {
             return 0;
         }
 
-        return parsed;
+        return Math.min(parsed, this.MAX_OFFSET);
     }
 
     /**
