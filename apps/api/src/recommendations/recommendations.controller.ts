@@ -1,6 +1,7 @@
 import { Controller, Get, Post, Query, Body, Logger } from
         '@nestjs/common';
 import { RecommendationsService } from './recommendations.service';
+import { parseCursor, Cursor } from '../utils/cursor.utils';
 
 @Controller('recommendations')
 export class RecommendationsController {
@@ -112,19 +113,29 @@ export class RecommendationsController {
     @Get('popular')
     async getPopularRecommendations(
         @Query('limit') limit?: string,
+        @Query('cursor') cursor?: string,
         @Query('language') language?: string,
     ) {
         try {
             const maxResults = this.parseLimit(limit);
-            const results = await this.recommendationsService.getPopularRecommendations(
-                maxResults,
-                language,
-            );
+            const cursorValues = cursor ? parseCursor(cursor) : undefined;
+            if (cursor && !cursorValues) {
+                return { success: false, error: 'Invalid cursor' };
+            }
+
+            const { results, nextCursor, hasMore } =
+                await this.recommendationsService.getPopularRecommendationsPage(
+                    maxResults,
+                    language,
+                    cursorValues,
+                );
 
                     return {
                         success: true,
                         count: results.length,
                         recommendations: results,
+                        nextCursor,
+                        hasMore,
                     };
                 } catch (error) {
                     const errorMessage = error instanceof Error ?

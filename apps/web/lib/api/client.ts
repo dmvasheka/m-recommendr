@@ -131,6 +131,27 @@ class ApiClient {
         return response.recommendations || []
     }
 
+    async getPopularMoviesPage(
+        limit = 20,
+        language?: string,
+        cursor?: string,
+    ): Promise<{ items: Movie[]; nextCursor: string | null; hasMore: boolean }> {
+        const langParam = language ? `&language=${language}` : ''
+        const cursorParam = cursor ? `&cursor=${encodeURIComponent(cursor)}` : ''
+        const response = await this.fetch<{
+            success: boolean
+            recommendations: Movie[]
+            nextCursor?: string | null
+            hasMore?: boolean
+        }>(`/api/recommendations/popular?limit=${limit}${langParam}${cursorParam}`)
+
+        return {
+            items: response.recommendations || [],
+            nextCursor: response.nextCursor ?? null,
+            hasMore: response.hasMore ?? false,
+        }
+    }
+
     // TMDB
     async searchTMDB(query: string): Promise<any[]> {
         return this.fetch(`/api/tmdb/search?q=${encodeURIComponent(query)}`)
@@ -203,6 +224,27 @@ class ApiClient {
         return response.tvShows || []
     }
 
+    async getTvShowsPage(
+        limit = 20,
+        language?: string,
+        cursor?: string,
+    ): Promise<{ items: TvShow[]; nextCursor: string | null; hasMore: boolean }> {
+        const langParam = language ? `&language=${language}` : ''
+        const cursorParam = cursor ? `&cursor=${encodeURIComponent(cursor)}` : ''
+        const response = await this.fetch<{
+            success: boolean
+            tvShows: TvShow[]
+            nextCursor?: string | null
+            hasMore?: boolean
+        }>(`/api/tv-shows?limit=${limit}${langParam}${cursorParam}`)
+
+        return {
+            items: response.tvShows || [],
+            nextCursor: response.nextCursor ?? null,
+            hasMore: response.hasMore ?? false,
+        }
+    }
+
     async getTvShowById(id: number, language?: string): Promise<TvShow | null> {
         const langParam = language ? `?language=${language}` : ''
         const response = await this.fetch<{ success: boolean; tvShow: TvShow }>(
@@ -212,10 +254,11 @@ class ApiClient {
     }
 
     async searchTvShows(params: SearchTvShowsParams): Promise<TvShow[]> {
-        const { query, limit = 20, language } = params
+        const { query, limit = 20, language, offset } = params
         const langParam = language ? `&language=${language}` : ''
+        const offsetParam = offset !== undefined ? `&offset=${offset}` : ''
         const response = await this.fetch<{ success: boolean; results: TvShow[] }>(
-            `/api/tv-shows/search?q=${encodeURIComponent(query)}&limit=${limit}${langParam}`
+            `/api/tv-shows/search?q=${encodeURIComponent(query)}&limit=${limit}${langParam}${offsetParam}`
         )
         return response.results || []
     }

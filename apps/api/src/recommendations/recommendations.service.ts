@@ -256,4 +256,69 @@ export class RecommendationsService {
             throw error;
         }
     }
+
+    /**
+     * Get popular movies with cursor-based pagination
+     */
+    async getPopularRecommendationsPage(
+        limit = 10,
+        language = 'en',
+        cursor?: { popularity: number; id: number },
+    ): Promise<{ results: RecommendationResult[]; nextCursor: string | null; hasMore: boolean }> {
+        try {
+            this.logger.log(`Getting popular movies page (language: ${language}, limit: ${limit})`);
+
+            let query = (supabase as any)
+                .from('movies')
+                .select('id, title, description, poster_url, backdrop_url, genres, vote_average, popularity, release_date, translations')
+                .not('embedding', 'is', null)
+                .not('popularity', 'is', null)
+                .order('popularity', { ascending: false })
+                .order('id', { ascending: false })
+                .limit(limit + 1);
+
+            if (cursor) {
+                query = query.or(
+                    `and(popularity.eq.${cursor.popularity},id.lt.${cursor.id}),popularity.lt.${cursor.popularity}`,
+                );
+            }
+
+            const { data, error } = await query;
+
+            if (error) {
+                throw error;
+            }
+
+            const rows = (data || []) as any[];
+            const hasMore = rows.length > limit;
+            const pageItems = rows.slice(0, limit);
+
+            const results = pageItems.map(movie => {
+                const translatedData = movie.translations?.[language];
+                return {
+                    id: movie.id,
+                    title: translatedData?.title || movie.title,
+                    description: translatedData?.description || movie.description,
+                    poster_url: translatedData?.poster_url || movie.poster_url,
+                    backdrop_url: translatedData?.backdrop_url || movie.backdrop_url,
+                    genres: movie.genres,
+                    vote_average: movie.vote_average,
+                    popularity: movie.popularity,
+                    similarity: 0,
+                };
+            });
+
+            const lastItem = results[results.length - 1];
+            const nextCursor = hasMore && lastItem && lastItem.popularity != null
+                ? `${lastItem.popularity}:${lastItem.id}`
+                : null;
+
+            return { results, nextCursor, hasMore };
+        } catch (error) {
+            const errorMessage = error instanceof Error ?
+                error.message : String(error);
+            this.logger.error(`Get popular recommendations page error: ${errorMessage}`);
+            throw error;
+        }
+    }
 }

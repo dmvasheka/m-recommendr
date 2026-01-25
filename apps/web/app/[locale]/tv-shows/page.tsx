@@ -1,37 +1,69 @@
 'use client'
 
-import { useState } from 'react'
+import { useState, useEffect } from 'react'
 import { Navigation } from '@/components/Navigation'
 import { TvShowCard } from '@/components/TvShowCard'
-import { useTvShows, useSearchTvShows } from '@/lib/api/hooks'
+import { InfiniteScrollTrigger } from '@/components/InfiniteScrollTrigger'
+import { useInfiniteTvShows, useInfiniteSearchTvShows } from '@/lib/api/hooks'
 import { useTranslations, useLocale } from 'next-intl'
 import { Search, Tv } from 'lucide-react'
 
 export default function TvShowsPage() {
     const [searchQuery, setSearchQuery] = useState('')
     const [debouncedQuery, setDebouncedQuery] = useState('')
+    const isDev = process.env.NODE_ENV === 'development'
     const locale = useLocale()
     const t = useTranslations('TvShows')
 
-    // Debounce search
     const handleSearchChange = (value: string) => {
         setSearchQuery(value)
-        const timeoutId = setTimeout(() => {
-            setDebouncedQuery(value)
-        }, 300)
-        return () => clearTimeout(timeoutId)
     }
 
-    const { data: tvShows, isLoading: isLoadingAll } = useTvShows(1, 40, locale)
-    const { data: searchResults, isLoading: isSearching } = useSearchTvShows({
-        query: debouncedQuery,
-        limit: 40,
+    useEffect(() => {
+        const timeoutId = setTimeout(() => {
+            setDebouncedQuery(searchQuery.trim())
+        }, 300)
+        return () => clearTimeout(timeoutId)
+    }, [searchQuery])
+
+    const trimmedQuery = debouncedQuery.trim()
+
+    const {
+        data: tvShowsPages,
+        isLoading: isLoadingAll,
+        isError: isErrorAll,
+        error: errorAll,
+        refetch: refetchAll,
+        fetchNextPage: fetchNextAll,
+        hasNextPage: hasNextAll,
+        isFetchingNextPage: isFetchingNextAll,
+    } = useInfiniteTvShows(40, locale)
+    const {
+        data: searchPages,
+        isLoading: isSearching,
+        isError: isErrorSearch,
+        error: errorSearch,
+        refetch: refetchSearch,
+        fetchNextPage: fetchNextSearch,
+        hasNextPage: hasNextSearch,
+        isFetchingNextPage: isFetchingNextSearch,
+    } = useInfiniteSearchTvShows({
+        query: trimmedQuery,
         language: locale,
+        pageSize: 40,
     })
 
-    const showSearchResults = debouncedQuery.length >= 2
-    const displayShows = showSearchResults ? searchResults : tvShows
+    const showSearchResults = trimmedQuery.length >= 2
+    const displayShows = showSearchResults
+        ? (searchPages?.pages.flatMap((page) => page.items) ?? [])
+        : (tvShowsPages?.pages.flatMap((page) => page.items) ?? [])
     const isLoading = showSearchResults ? isSearching : isLoadingAll
+    const isError = showSearchResults ? isErrorSearch : isErrorAll
+    const error = showSearchResults ? errorSearch : errorAll
+    const refetch = showSearchResults ? refetchSearch : refetchAll
+    const isFetchingNextPage = showSearchResults ? isFetchingNextSearch : isFetchingNextAll
+    const hasNextPage = showSearchResults ? hasNextSearch : hasNextAll
+    const fetchNextPage = showSearchResults ? fetchNextSearch : fetchNextAll
 
     return (
         <div className="min-h-screen bg-gradient-to-b from-[#0a0a0f] via-[#1a1a2e] to-[#0a0a0f]">
@@ -74,7 +106,24 @@ export default function TvShowsPage() {
                     <div className="flex justify-center items-center py-20">
                         <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-[#3b82f6]"></div>
                     </div>
-                ) : displayShows && displayShows.length > 0 ? (
+                ) : isError ? (
+                    <div className="text-center py-20 text-[#9ca3af]">
+                        <div className="mb-2 text-red-400">{t('loadError')}</div>
+                        <button
+                            onClick={() => refetch()}
+                            className="text-sm underline text-[#3b82f6] hover:text-[#60a5fa]"
+                        >
+                            {t('retry')}
+                        </button>
+                        {error ? (
+                            <div className="mt-2 text-xs text-[#6b7280]">
+                                {isDev
+                                    ? (error instanceof Error ? error.message : String(error))
+                                    : t('loadErrorDetails')}
+                            </div>
+                        ) : null}
+                    </div>
+                ) : displayShows.length > 0 ? (
                     <>
                         <div className="mb-4 text-sm text-[#9ca3af]">
                             {t('foundCount', { count: displayShows.length })}
@@ -84,6 +133,23 @@ export default function TvShowsPage() {
                                 <TvShowCard key={tvShow.id} tvShow={tvShow} />
                             ))}
                         </div>
+                        {isFetchingNextPage && (
+                            <div className="flex justify-center items-center py-10">
+                                <div className="animate-spin rounded-full h-10 w-10 border-b-2 border-[#3b82f6]"></div>
+                            </div>
+                        )}
+                        {hasNextPage === false && (
+                            <div className="text-center py-10 text-sm text-[#9ca3af]">
+                                {t('endOfList')}
+                            </div>
+                        )}
+                        {hasNextPage && (
+                            <InfiniteScrollTrigger
+                                hasMore={!!hasNextPage}
+                                isFetching={isFetchingNextPage}
+                                onLoadMore={() => fetchNextPage()}
+                            />
+                        )}
                     </>
                 ) : (
                     <div className="text-center py-20">

@@ -23,11 +23,11 @@ export class TvShowsService {
     /**
      * Semantic search - find TV shows by query text
      */
-    async searchTvShows(query: string, limit = 10, language = 'en'): Promise<TvShowSearchResult[]> {
+    async searchTvShows(query: string, limit = 10, language = 'en', offset = 0): Promise<TvShowSearchResult[]> {
         try {
             this.logger.log(`Searching TV shows for: "${query}" (language: ${language})`);
 
-            const cacheKey = `tv_search:${query.toLowerCase()}:${limit}:${language}`;
+            const cacheKey = `tv_search:${query.toLowerCase()}:${limit}:${offset}:${language}`;
             const cached = await this.redisService.get<TvShowSearchResult[]>(cacheKey);
 
             if (cached) {
@@ -43,7 +43,7 @@ export class TvShowsService {
             // 2. Use Supabase RPC to call match_tv_shows function
             const { data, error } = await (supabase.rpc as any)('match_tv_shows', {
                 query_embedding: JSON.stringify(queryEmbedding),
-                match_count: limit,
+                match_count: limit + offset,
             });
 
             if (error) {
@@ -72,11 +72,12 @@ export class TvShowsService {
             }
 
             if (results && results.length > 0) {
-                await this.redisService.set(cacheKey, results, 3600);
+                const pagedResults = results.slice(offset, offset + limit);
+                await this.redisService.set(cacheKey, pagedResults, 3600);
                 this.logger.log(`💾 Cached results for "${query}"`);
             }
 
-            return results || [];
+            return (results || []).slice(offset, offset + limit);
         } catch (error) {
             const errorMessage = error instanceof Error ? error.message : String(error);
             this.logger.error(`Search error: ${errorMessage}`);
@@ -188,6 +189,68 @@ export class TvShowsService {
         } catch (error) {
             const errorMessage = error instanceof Error ? error.message : String(error);
             this.logger.error(`Get all TV shows error: ${errorMessage}`);
+            throw error;
+        }
+    }
+
+    /**
+     * Get TV shows with cursor-based pagination
+     */
+    async getTvShowsByCursor(
+        limit = 20,
+        language = 'en',
+        cursor?: { popularity: number; id: number },
+    ): Promise<{ tvShows: any[]; nextCursor: string | null; hasMore: boolean }> {
+        try {
+            let query = supabase
+                .from('tv_shows')
+                .select('id, name, overview, poster_url, genres, vote_average, popularity, first_air_date, translations')
+                .not('popularity', 'is', null)
+                .order('popularity', { ascending: false })
+                .order('id', { ascending: false })
+                .limit(limit + 1);
+
+            if (cursor) {
+                query = query.or(
+                    `and(popularity.eq.${cursor.popularity},id.lt.${cursor.id}),popularity.lt.${cursor.popularity}`,
+                );
+            }
+
+            const { data, error } = await query;
+
+            if (error) {
+                throw error;
+            }
+
+            const rows = (data || []) as any[];
+            const hasMore = rows.length > limit;
+            let tvShows = rows.slice(0, limit);
+
+            if (language !== 'en' && tvShows.length > 0) {
+                this.logger.log(`Applying ${language} translations to ${tvShows.length} TV shows in list`);
+                tvShows = tvShows.map((tvShow: any) => {
+                    const translation = tvShow.translations?.[language];
+                    if (translation) {
+                        return {
+                            ...tvShow,
+                            name: translation.name || tvShow.name,
+                            overview: translation.overview || tvShow.overview,
+                            poster_url: translation.poster_url || tvShow.poster_url,
+                        };
+                    }
+                    return tvShow;
+                });
+            }
+
+            const lastItem = tvShows[tvShows.length - 1];
+            const nextCursor = hasMore && lastItem && lastItem.popularity != null
+                ? `${lastItem.popularity}:${lastItem.id}`
+                : null;
+
+            return { tvShows, nextCursor, hasMore };
+        } catch (error) {
+            const errorMessage = error instanceof Error ? error.message : String(error);
+            this.logger.error(`Get TV shows by cursor error: ${errorMessage}`);
             throw error;
         }
     }
