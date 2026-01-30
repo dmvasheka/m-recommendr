@@ -6,13 +6,17 @@
 - ✅ Production ready
 
 ## 📊 Текущий прогресс
-- ✅ **База данных:** 1675 фильмов + сериалы, 100% embeddings, BullMQ для фоновых задач
-- ✅ **Поиск:** Автодополнение с постерами (можно улучшить)
-- 🟡 **Локализация:** EN/RU работают, но с багами роутинга
-- ✅ **AI Explanations:** Backend готов, UI не реализован
-- ⏳ **UI/UX:** Базовый дизайн, требует улучшения
+- ✅ **База данных:** 7000+ фильмов + сериалы, 100% embeddings, BullMQ для фоновых задач
+- ✅ **Поиск:** Автодополнение с постерами, semantic search
+- ✅ **Локализация:** EN/RU/UK полностью работают (next-intl)
+- ✅ **AI Функционал:** Chat с RAG, рекомендации, explanations
+- ✅ **UI/UX:** Современный dark theme, responsive design
+- ✅ **Infinite Scroll:** Реализован для фильмов и сериалов
+- ✅ **IMDb Integration:** Рейтинги IMDb + TMDB на карточках
+- ✅ **Очереди:** BullMQ для импорта, embeddings, переводов
+- ✅ **Кэширование:** Redis для рекомендаций и API ответов
 
-**Last Updated:** 2026-01-17
+**Last Updated:** 2026-01-30
 
 ---
 
@@ -139,40 +143,35 @@
 
 ---
 
-### 1. UI/UX улучшения
-**Основная задача:** Сгенерировать современный тематический дизайн в Figma/v0.dev/другом сервисе
+### 1. UI/UX улучшения ✅ (90% выполнено)
+**Основная задача:** Сгенерировать современный тематический дизайн
 
 **Подзадачи:**
-- [ ] Разработать новый дизайн интерфейса (рассмотреть: v0.dev, Figma с AI, MidJourney для концептов)
-- [ ] **Добавить страницу для сериалов** 📺
-  - [ ] Создать страницу `/[locale]/tv-shows` с списком сериалов
-  - [ ] Реализовать карточки сериалов (poster, название, рейтинг, первая дата выхода)
-  - [ ] Детальная страница `/[locale]/tv-shows/[id]` с информацией о сезонах/эпизодах
-  - [ ] Добавление сериалов в watchlist (аналогично фильмам)
-  - [ ] Интеграция с TV Shows API + language support (уже готово на backend)
-  - [ ] Поиск и фильтрация сериалов
+- [x] Разработать новый дизайн интерфейса ✅ (modern dark theme с Tailwind CSS)
+- [x] **Добавить страницу для сериалов** 📺 ✅
+  - [x] Создать страницу `/[locale]/tv-shows` с списком сериалов ✅
+  - [x] Реализовать карточки сериалов (TvShowCard с poster, название, рейтинг, IMDb) ✅
+  - [x] Детальная страница `/[locale]/tv-shows/[id]` с информацией о сезонах ✅
+  - [x] Добавление сериалов в watchlist ✅
+  - [x] Интеграция с TV Shows API + language support ✅
+  - [x] Поиск сериалов с debounce ✅
 - [ ] **Сделать главную страницу mix фильмов и сериалов** 🎬📺
   - [ ] Объединить популярные фильмы и TV shows на главной
-  - [ ] Варианты реализации:
-    - Вариант A: Две отдельные секции "Популярные фильмы" + "Популярные сериалы"
-    - Вариант B: Единая лента с миксом, отсортированная по popularity
-  - [ ] Добавить визуальный индикатор типа контента (🎬 фильм / 📺 сериал)
-  - [ ] Сортировка по popularity, рейтингу или дате выхода
-  - [ ] Поддержка всех языков (ru/uk/en)
-- [ ] Улучшить главную страницу или перенести функционал `/discover` на главную
-- [ ] Улучшить карточки фильмов (hover эффекты, анимации, больше информации)
-- [ ] Добавить темную тему (dark mode)
-- [ ] Улучшить мобильную версию
+  - [x] Визуальный индикатор типа контента (TV badge на карточках) ✅
+  - [x] Поддержка всех языков (ru/uk/en) ✅
+- [x] Улучшить карточки фильмов (hover эффекты, анимации, больше информации) ✅
+- [x] Добавить темную тему (dark mode) ✅ (основная тема)
+- [x] Улучшить мобильную версию ✅ (responsive design)
 - [ ] Добавить skeleton loaders вместо обычных спиннеров
-- [ ] Добавить микроанимации и transitions
+- [x] Добавить микроанимации и transitions ✅ (hover scale, opacity transitions)
 - [ ] Улучшить навигацию (breadcrumbs, улучшенное меню)
-- [ ] Добавить onboarding для новых пользователей (tour по функционалу)
-- [ ] Создать красивую страницу "О проекте" с описанием AI возможностей
+- [ ] Добавить onboarding для новых пользователей
+- [ ] Создать красивую страницу "О проекте"
 
-**Дополнительные UX улучшения (добавятся в процессе):**
-- [ ] Infinite scroll вместо пагинации на некоторых страницах
+**Дополнительные UX улучшения:**
+- [x] Infinite scroll вместо пагинации ✅ (InfiniteScrollTrigger компонент)
 - [ ] Фильтры и сортировка (по жанрам, годам, рейтингу)
-- [ ] Быстрый предварительный просмотр фильма (модальное окно при клике)
+- [ ] Быстрый предварительный просмотр фильма (модальное окно)
 - [ ] Горячие клавиши для навигации
 - [ ] Оптимизация для доступности (a11y)
 
@@ -908,63 +907,55 @@ Bot:  Отлично! Учитывая что сейчас вечер пятни
 
 ---
 
-### 7. Локализация (i18n) 🟡 Частично (с багами)
+### 7. Локализация (i18n) ✅ Выполнено
 **Основная задача:** Добавить поддержку нескольких языков
 
-**Статус:** Базовая реализация готова, но требует исправлений и доработки
+**Статус:** Полностью реализовано (2026-01-24)
 
 **Языки:**
-- [x] Русский (ru) - частично ⚠️
-- [x] Английский (en) - частично ⚠️
-- [ ] Украинский (uk)
-- [ ] Польский (pl)
+- [x] Русский (ru) ✅
+- [x] Английский (en) ✅
+- [x] Украинский (uk) ✅
+- [ ] Польский (pl) - не планируется
 
 **Подзадачи:**
 
-#### 7.1 Frontend
-- [x] Настроить next-intl ✅ (но с багами роутинга)
-- [x] Создать файлы переводов для каждого языка (частично)
-  - [x] `/messages/ru.json` ✅
-  - [x] `/messages/en.json` ✅
-  - [ ] `/messages/uk.json`
-  - [ ] `/messages/pl.json`
-- [x] Перевести UI элементы (частично): ⚠️
-  - [x] Навигация и меню (есть баги)
-  - [x] Страницы (Discover, Watchlist, Recommendations, Chat) (не все переведено)
-  - [x] Формы (Login, Signup) (частично)
-  - [x] Кнопки и actions (частично)
-  - [ ] Сообщения об ошибках (многие не переведены)
-  - [ ] Toast уведомления (не все)
-- [x] Добавить переключатель языка в навигацию ✅ (но с багами работы)
-- [x] Локализованные URL с префиксами `/en`, `/ru` ✅ (но роутинг работает с ошибками)
-- [ ] Сохранять выбранный язык в user preferences (сейчас только cookie/URL)
-- [ ] Исправить баги роутинга и переключения языка 🔥
-- [ ] Дополнить переводы для всех компонентов
-- [ ] RTL support (если планируются арабский/иврит в будущем)
+#### 7.1 Frontend ✅
+- [x] Настроить next-intl ✅
+- [x] Создать файлы переводов для каждого языка ✅
+  - [x] `/messages/en.json` (8.7KB) ✅
+  - [x] `/messages/ru.json` (13KB) ✅
+  - [x] `/messages/uk.json` (12.8KB) ✅
+- [x] Перевести UI элементы ✅
+  - [x] Навигация и меню ✅
+  - [x] Все страницы (Discover, Watchlist, Recommendations, Chat, TV Shows) ✅
+  - [x] Формы и кнопки ✅
+  - [x] Сообщения об ошибках ✅
+- [x] Добавить переключатель языка (LanguageSwitcher) ✅
+- [x] Локализованные URL `/en`, `/ru`, `/uk` ✅
+- [x] Сохранение языка в cookies ✅
+- [x] LanguageSync компонент для синхронизации ✅
 
-#### 7.2 Backend/API
-- [ ] Локализованные ответы от AI
-  - [ ] Передавать язык пользователя в GPT промпт
-  - [ ] "Respond in Russian/Ukrainian/Polish"
-- [ ] Локализация жанров фильмов
-  - [ ] TMDB API поддерживает language parameter
-  - [ ] Кэширование переводов в Redis
-- [ ] Локализованные email уведомления (если будут)
+#### 7.2 Backend/API ✅
+- [x] Language параметр во всех API endpoints ✅
+- [x] TMDB импорт с переводами (en, ru, uk) ✅
+- [x] JSONB поле translations в БД ✅
+- [x] GIN индексы для translations ✅
+- [x] get_translated_field() SQL функция с fallback ✅
+- [ ] Локализованные ответы от AI (опционально)
 
-#### 7.3 Контент
-- [ ] Переводы описаний фильмов (через TMDB API)
-- [ ] Локализованные названия фильмов
-- [ ] Fallback на английский если перевода нет
+#### 7.3 Контент ✅
+- [x] Переводы описаний фильмов из TMDB ✅
+- [x] Локализованные названия фильмов/сериалов ✅
+- [x] Fallback на английский если перевода нет ✅
 
 #### 7.4 SEO
 - [ ] Мультиязычные meta теги
 - [ ] hreflang tags для каждого языка
-- [ ] Локализованные URL (опционально)
-  - `/ru/discover`, `/uk/discover`, `/pl/discover`
 
 **Технологии:**
-- next-intl (рекомендуется для Next.js App Router)
-- Crowdin или POEditor для управления переводами (опционально)
+- next-intl для Next.js App Router
+- JSONB translations в PostgreSQL
 
 ---
 
@@ -1156,12 +1147,12 @@ Bot:  Отлично! Учитывая что сейчас вечер пятни
 
 ---
 
-## 10. 🔐 Admin Panel & Management System
+### 10. 🔐 Admin Panel & Management System
 
 **Priority:** Medium-Low (после основных фич)
 **Status:** Future / Planned
 
-### Описание
+**Описание:**
 Полноценная административная панель с отдельным бэкендом для управления системой, пользователями и контентом.
 
 ### Основной функционал
@@ -1291,6 +1282,60 @@ Bot:  Отлично! Учитывая что сейчас вечер пятни
 - База знаний (FAQ)
 - Шаблоны ответов для частых вопросов
 
+#### 10.8 💰 Монетизация и подписки
+- **Тарифные планы (Subscription Tiers):**
+  - Free tier:
+    - Базовый поиск и просмотр
+    - Ограниченный watchlist (50 фильмов)
+    - Реклама
+  - Premium tier ($4.99/месяц):
+    - Неограниченный watchlist
+    - AI рекомендации и чат
+    - Без рекламы
+    - Приоритетная поддержка
+  - Pro tier ($9.99/месяц):
+    - Всё из Premium
+    - API доступ
+    - Расширенная аналитика просмотров
+    - Экспорт данных
+  - Family plan ($14.99/месяц):
+    - До 5 пользователей
+    - Все Pro функции
+- **Триал период:**
+  - 7/14/30 дней бесплатного Premium
+  - Автоматический downgrade после окончания
+  - Напоминания об окончании триала
+  - Конверсия триала в платную подписку
+- **Интеграция с платёжными системами:**
+  - Stripe (основной) — карты, Apple Pay, Google Pay
+  - LiqPay (Украина)
+  - PayPal (опционально)
+  - Crypto payments (опционально)
+- **Управление подписками в админке:**
+  - Просмотр всех подписок с фильтрами
+  - Ручное продление/отмена подписки
+  - Возвраты (refunds)
+  - Промокоды и скидки:
+    - Генерация промокодов
+    - Процент/фиксированная скидка
+    - Срок действия
+    - Лимит использований
+  - Gift cards / подарочные подписки
+- **Биллинг и финансы:**
+  - История транзакций
+  - Invoices / чеки
+  - Revenue dashboard (MRR, ARR, churn rate)
+  - Прогнозирование дохода
+  - Налоговая отчётность
+- **Feature flags по тарифам:**
+  - Гибкое управление доступом к функциям
+  - A/B тестирование pricing
+  - Graceful degradation при downgrade
+- **Webhook интеграции:**
+  - Stripe webhooks для событий оплаты
+  - Уведомления о failed payments
+  - Dunning management (напоминания об оплате)
+
 ### Технический стек
 
 **Backend (NestJS):**
@@ -1299,6 +1344,10 @@ Bot:  Отлично! Учитывая что сейчас вечер пятни
 - JWT authentication с refresh tokens
 - WebSockets для real-time updates (Socket.io)
 - Bull Board для визуализации очередей
+- **Payments:**
+  - Stripe SDK (@stripe/stripe-js, stripe)
+  - Webhook handlers для payment events
+  - Subscription lifecycle management
 
 **Frontend (Next.js):**
 - Отдельное приложение `apps/admin`
@@ -1374,6 +1423,20 @@ PUT    /admin/api/notifications/:id/read
 GET    /admin/api/cache/keys
 DELETE /admin/api/cache/clear
 GET    /admin/api/cache/stats
+
+// Subscriptions & Payments
+GET    /admin/api/subscriptions
+GET    /admin/api/subscriptions/:id
+PUT    /admin/api/subscriptions/:id/cancel
+PUT    /admin/api/subscriptions/:id/extend
+POST   /admin/api/subscriptions/:id/refund
+GET    /admin/api/payments/transactions
+GET    /admin/api/payments/revenue
+GET    /admin/api/payments/mrr
+POST   /admin/api/promo-codes
+GET    /admin/api/promo-codes
+PUT    /admin/api/promo-codes/:id/disable
+GET    /admin/api/billing/invoices
 ```
 
 ### Database Schema (дополнительные таблицы)
@@ -1442,6 +1505,92 @@ create table admin_notifications (
 );
 
 create index idx_notifications_unread on admin_notifications(created_at desc) where read = false;
+
+-- Subscription plans
+create table subscription_plans (
+  id uuid primary key default gen_random_uuid(),
+  name text not null unique,
+  slug text not null unique,
+  description text,
+  price_monthly decimal(10,2),
+  price_yearly decimal(10,2),
+  currency text default 'USD',
+  features jsonb, -- {"ai_chat": true, "unlimited_watchlist": true, ...}
+  limits jsonb,   -- {"watchlist_limit": 50, "api_calls_per_day": 100, ...}
+  is_active boolean default true,
+  trial_days integer default 0,
+  created_at timestamp default now()
+);
+
+-- User subscriptions
+create table user_subscriptions (
+  id uuid primary key default gen_random_uuid(),
+  user_id uuid references auth.users(id) not null,
+  plan_id uuid references subscription_plans(id) not null,
+  status text check (status in ('trialing', 'active', 'past_due', 'canceled', 'expired')),
+  stripe_subscription_id text unique,
+  stripe_customer_id text,
+  current_period_start timestamp,
+  current_period_end timestamp,
+  cancel_at_period_end boolean default false,
+  canceled_at timestamp,
+  trial_start timestamp,
+  trial_end timestamp,
+  created_at timestamp default now(),
+  updated_at timestamp default now()
+);
+
+create index idx_subscriptions_user on user_subscriptions(user_id);
+create index idx_subscriptions_status on user_subscriptions(status);
+create index idx_subscriptions_stripe on user_subscriptions(stripe_subscription_id);
+
+-- Payment transactions
+create table payment_transactions (
+  id uuid primary key default gen_random_uuid(),
+  user_id uuid references auth.users(id) not null,
+  subscription_id uuid references user_subscriptions(id),
+  stripe_payment_intent_id text unique,
+  amount decimal(10,2) not null,
+  currency text default 'USD',
+  status text check (status in ('pending', 'succeeded', 'failed', 'refunded')),
+  payment_method text,
+  description text,
+  metadata jsonb,
+  created_at timestamp default now()
+);
+
+create index idx_transactions_user on payment_transactions(user_id);
+create index idx_transactions_created on payment_transactions(created_at desc);
+
+-- Promo codes
+create table promo_codes (
+  id uuid primary key default gen_random_uuid(),
+  code text not null unique,
+  description text,
+  discount_type text check (discount_type in ('percent', 'fixed')),
+  discount_value decimal(10,2) not null,
+  max_uses integer,
+  current_uses integer default 0,
+  valid_from timestamp,
+  valid_until timestamp,
+  applicable_plans uuid[], -- array of plan IDs
+  is_active boolean default true,
+  created_by uuid references auth.users(id),
+  created_at timestamp default now()
+);
+
+create index idx_promo_codes_code on promo_codes(code);
+
+-- Promo code usage
+create table promo_code_usage (
+  id uuid primary key default gen_random_uuid(),
+  promo_code_id uuid references promo_codes(id),
+  user_id uuid references auth.users(id),
+  subscription_id uuid references user_subscriptions(id),
+  discount_applied decimal(10,2),
+  used_at timestamp default now(),
+  unique(promo_code_id, user_id) -- one use per user
+);
 ```
 
 ### Implementation Roadmap
@@ -1477,7 +1626,16 @@ create index idx_notifications_unread on admin_notifications(created_at desc) wh
 - [ ] Embeddings management
 - [ ] Bulk operations
 
-**Phase 6: Admin Frontend (2-3 недели)**
+**Phase 6: Monetization & Payments (2 недели)**
+- [ ] Stripe integration
+- [ ] Subscription plans CRUD
+- [ ] Payment processing endpoints
+- [ ] Webhooks handlers
+- [ ] Promo codes system
+- [ ] Billing & invoices
+- [ ] Revenue dashboard
+
+**Phase 7: Admin Frontend (2-3 недели)**
 - [ ] Создать `apps/admin` Next.js app
 - [ ] Authentication UI
 - [ ] Dashboard с графиками
@@ -1696,9 +1854,9 @@ const { data: lastImport, error } = await supabase
 
 ---
 
-### 15. IMDb Rating Integration 🎯
+### 15. IMDb Rating Integration ✅
 **Priority:** Medium
-**Status:** Planned
+**Status:** Completed (2026-01-30)
 
 **Основная задача:** Интегрировать рейтинги IMDb для показа вместе с рейтингами TMDB
 
@@ -1710,81 +1868,57 @@ const { data: lastImport, error } = await supabase
 **Подзадачи:**
 
 #### 15.1 Backend Integration
-- [ ] **Выбрать источник данных IMDb:**
-  - Вариант A: TMDB API уже возвращает `imdb_id` - использовать OMDb API для получения рейтинга
-  - Вариант B: Использовать Cinemagoer (ex-IMDbPY) Python библиотеку
-  - Вариант C: Web scraping (не рекомендуется - нарушает ToS)
-  - **Рекомендация:** OMDb API (бесплатно до 1000 req/day, платно для больших объемов)
+- [x] **Выбрать источник данных IMDb:**
+  - ✅ Выбран OMDb API (бесплатно до 1000 req/day)
+  - TMDB API возвращает `imdb_id` при импорте
 
-- [ ] **Добавить поля в БД:**
-  ```sql
-  ALTER TABLE movies ADD COLUMN imdb_id TEXT;
-  ALTER TABLE movies ADD COLUMN imdb_rating DECIMAL(3,1);
-  ALTER TABLE movies ADD COLUMN imdb_votes INTEGER;
+- [x] **Добавить поля в БД:**
+  - ✅ Миграция: `supabase/migrations/20260130000001_add_imdb_fields.sql`
+  - Добавлены поля `imdb_id`, `imdb_rating`, `imdb_votes` для movies и tv_shows
+  - Созданы индексы для быстрого поиска по imdb_id
 
-  ALTER TABLE tv_shows ADD COLUMN imdb_id TEXT;
-  ALTER TABLE tv_shows ADD COLUMN imdb_rating DECIMAL(3,1);
-  ALTER TABLE tv_shows ADD COLUMN imdb_votes INTEGER;
+- [x] **Создать сервис для IMDb данных:**
+  - ✅ `apps/api/src/omdb/omdb.service.ts` - OMDb API клиент
+  - ✅ `apps/api/src/omdb/imdb-enrichment.service.ts` - cron job для обогащения
+  - ✅ `apps/api/src/omdb/omdb.controller.ts` - endpoint для ручного триггера
+  - Методы: `getByImdbId()`, `searchByTitle()`
 
-  CREATE INDEX idx_movies_imdb_id ON movies(imdb_id);
-  CREATE INDEX idx_tv_shows_imdb_id ON tv_shows(imdb_id);
-  ```
+- [x] **Интеграция с импортом:**
+  - ✅ При импорте из TMDB сохраняется `imdb_id`
+  - ✅ Cron job каждые 2 часа обогащает 50 фильмов + 50 сериалов
+  - ✅ Rate limiting 1 req/sec, дневной лимит 900 запросов
 
-- [ ] **Создать сервис для IMDb данных:**
-  ```typescript
-  // apps/api/src/imdb/imdb.service.ts
-  - getImdbRating(imdbId: string) - получить рейтинг по IMDb ID
-  - enrichMovieWithImdb(movieId: number) - добавить IMDb данные к фильму
-  - enrichTvShowWithImdb(tvShowId: number) - добавить IMDb данные к сериалу
-  ```
-
-- [ ] **Интеграция с импортом:**
-  - При импорте из TMDB получать `imdb_id`
-  - Background job для обогащения существующих фильмов IMDb рейтингами
-  - Rate limiting для OMDb API (1 req/sec для бесплатного плана)
-
-- [ ] **Кэширование IMDb данных:**
-  - Redis кэш для IMDb рейтингов (TTL: 7 дней)
-  - Периодическое обновление популярных фильмов
+- [x] **Кэширование IMDb данных:**
+  - ✅ Redis кэш для OMDb ответов (TTL: 7 дней)
+  - ✅ Приоритет по popularity при обогащении
 
 #### 15.2 Frontend Display
-- [ ] **Показать оба рейтинга на карточках:**
-  ```tsx
-  <div className="ratings">
-    <div className="rating">
-      <img src="/tmdb-logo.svg" alt="TMDB" />
-      <span>7.9</span>
-    </div>
-    <div className="rating">
-      <img src="/imdb-logo.svg" alt="IMDb" />
-      <span>7.5</span>
-    </div>
-  </div>
-  ```
+- [x] **Показать оба рейтинга на карточках:**
+  - ✅ `apps/web/components/DualRating.tsx` - компонент для отображения
+  - ✅ `CompactRatingBadge` - компактный вариант для карточек
+  - ✅ Обновлены MovieCard, NewMovieCard, TvShowCard
 
-- [ ] **Детальная страница фильма:**
-  - Большие карточки с обоими рейтингами
-  - Количество голосов для каждого источника
-  - График сравнения (опционально)
+- [x] **Детальная страница фильма:**
+  - ✅ Оба рейтинга с количеством голосов
+  - ✅ Кликабельная ссылка на IMDb страницу фильма
+  - [ ] График сравнения (опционально, не реализовано)
 
 - [ ] **Фильтрация и сортировка:**
-  - Добавить опцию "Sort by IMDb rating"
-  - Фильтр "IMDb > 8.0"
+  - [ ] Добавить опцию "Sort by IMDb rating"
+  - [ ] Фильтр "IMDb > 8.0"
 
-- [ ] **Tooltips:**
-  - При наведении показывать количество голосов
-  - "Based on 1.2M votes"
+- [x] **Tooltips:**
+  - ✅ Показывается количество голосов (форматирование: 1.2M, 500K)
 
 #### 15.3 API Endpoints
 ```typescript
-// New endpoints
-GET /api/movies/:id/imdb-rating
-GET /api/tv-shows/:id/imdb-rating
+// Реализованные endpoints
+POST /api/omdb/enrich      // Ручной триггер обогащения
+GET  /api/omdb/status      // Статус: configured, dailyRequestCount, isRunning
 
-// Existing endpoints - добавить imdb_rating в response
+// Существующие endpoints автоматически возвращают imdb_id, imdb_rating, imdb_votes
 GET /api/movies/:id
 GET /api/tv-shows/:id
-GET /api/recommendations/*
 ```
 
 #### 15.4 Cost Considerations
@@ -1815,9 +1949,9 @@ GET /api/recommendations/*
 
 ---
 
-### 16. Infinite Scroll для списков фильмов и сериалов 📜
+### 16. Infinite Scroll для списков фильмов и сериалов ✅
 **Priority:** Medium
-**Status:** Planned
+**Status:** Completed (2026-01-25)
 
 **Основная задача:** Заменить традиционную пагинацию на infinite scroll для улучшения UX
 
@@ -1829,8 +1963,8 @@ GET /api/recommendations/*
 
 **Подзадачи:**
 
-#### 16.1 Backend - Cursor-based Pagination
-- [ ] **Изменить API с offset на cursor pagination:**
+#### 16.1 Backend - Cursor-based Pagination ✅
+- [x] **Cursor-based pagination реализован:**
   ```typescript
   // Текущий подход (offset-based):
   GET /api/movies?page=2&pageSize=20
@@ -1846,14 +1980,13 @@ GET /api/recommendations/*
   }
   ```
 
-- [ ] **Обновить endpoints:**
-  - `/api/movies` - infinite scroll support
-  - `/api/tv-shows` - infinite scroll support
-  - `/api/recommendations/popular` - infinite scroll
-  - `/api/watchlist` - infinite scroll
-  - `/api/movies/search` - infinite scroll для результатов поиска
+- [x] **Обновлены endpoints:** ✅
+  - [x] `/api/movies` - cursor pagination ✅
+  - [x] `/api/tv-shows` - cursor pagination ✅
+  - [x] `/api/movies/search` - infinite scroll ✅
+  - [x] `/api/tv-shows/search` - infinite scroll ✅
 
-- [ ] **Оптимизация SQL запросов:**
+- [x] **Оптимизация SQL запросов:** ✅
   ```sql
   -- Вместо OFFSET (медленно на больших датасетах)
   SELECT * FROM movies LIMIT 20 OFFSET 1000;
@@ -1865,13 +1998,11 @@ GET /api/recommendations/*
   LIMIT 20;
   ```
 
-- [ ] **Поддержка разных сортировок:**
-  - По popularity: курсор = `vote_average`
-  - По дате: курсор = `release_date`
-  - По названию: курсор = `title`
+- [x] **Поддержка сортировки по popularity** ✅
+  - DB индексы: `idx_movies_popularity_id`, `idx_tv_shows_popularity_id`
 
-#### 16.2 Frontend - React Implementation
-- [ ] **Использовать React Query с Infinite Queries:**
+#### 16.2 Frontend - React Implementation ✅
+- [x] **React Query с Infinite Queries:** ✅
   ```typescript
   // apps/web/lib/api/hooks.ts
   export function useInfiniteMovies(filters?: MovieFilters) {
@@ -1885,7 +2016,7 @@ GET /api/recommendations/*
   }
   ```
 
-- [ ] **Intersection Observer для auto-load:**
+- [x] **Intersection Observer для auto-load:** ✅ (InfiniteScrollTrigger компонент)
   ```typescript
   // Компонент для автоматической подгрузки
   function InfiniteScroll({ fetchNext, hasMore, isFetching }) {
@@ -1906,12 +2037,10 @@ GET /api/recommendations/*
   }
   ```
 
-- [ ] **Виртуализация для производительности:**
+- [ ] **Виртуализация для производительности:** (опционально)
   - Использовать `@tanstack/react-virtual` для больших списков
-  - Рендерить только видимые элементы
-  - Оптимизация памяти для 1000+ элементов
 
-- [ ] **Loading states:**
+- [x] **Loading states:** ✅
   ```tsx
   {isFetchingNextPage && (
     <div className="loading-more">

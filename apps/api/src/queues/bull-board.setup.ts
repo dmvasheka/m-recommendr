@@ -9,7 +9,7 @@ export function setupBullBoard(queues: Queue[]) {
 
     createBullBoard({
         queues: queues.map(queue => new BullMQAdapter(queue)),
-        serverAdapter,
+        serverAdapter: serverAdapter as any,
     });
 
     return serverAdapter;

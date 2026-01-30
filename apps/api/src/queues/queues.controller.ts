@@ -155,11 +155,12 @@ export class QueuesController {
     @Get('stats')
     async getStats() {
         try {
-            const [movieImportStats, tvImportStats, embeddingStats, translationStats] = await Promise.all([
+            const [movieImportStats, tvImportStats, embeddingStats, translationStats, imdbUpdateStats] = await Promise.all([
                 this.queuesService.getMovieImportStats(),
                 this.queuesService.getTvImportStats(),
                 this.queuesService.getEmbeddingStats(),
                 this.queuesService.getTranslationUpdateStats(),
+                this.queuesService.getImdbUpdateStats(),
             ]);
 
             return {
@@ -169,6 +170,7 @@ export class QueuesController {
                     tvImport: tvImportStats,
                     embeddings: embeddingStats,
                     translations: translationStats,
+                    imdbUpdate: imdbUpdateStats,
                 },
             };
         } catch (error) {
@@ -481,6 +483,69 @@ export class QueuesController {
             return {
                 success: true,
                 message: 'Old jobs cleaned successfully',
+            };
+        } catch (error) {
+            const errorMessage = error instanceof Error ? error.message : String(error);
+            return {
+                success: false,
+                error: errorMessage,
+            };
+        }
+    }
+
+    /**
+     * POST /api/queues/update-imdb-ids
+     * Обновить imdb_id для фильмов/сериалов из TMDB
+     * Одна задача обрабатывает все записи автоматически
+     */
+    @Post('update-imdb-ids')
+    async updateImdbIds(
+        @Body() body: { type: 'movies' | 'tv_shows'; batchSize?: number }
+    ) {
+        try {
+            const type = body.type || 'movies';
+            const batchSize = body.batchSize || 50;
+
+            if (type !== 'movies' && type !== 'tv_shows') {
+                return {
+                    success: false,
+                    error: 'Invalid type. Use "movies" or "tv_shows"',
+                };
+            }
+
+            const job = await this.queuesService.addImdbUpdateJob({
+                type,
+                batchSize,
+            });
+
+            return {
+                success: true,
+                message: `IMDb ID update job added for ${type}`,
+                jobId: job.id,
+                type,
+                batchSize,
+            };
+        } catch (error) {
+            const errorMessage = error instanceof Error ? error.message : String(error);
+            return {
+                success: false,
+                error: errorMessage,
+            };
+        }
+    }
+
+    /**
+     * GET /api/queues/imdb-update-stats
+     * Получить статистику очереди обновления IMDb ID
+     */
+    @Get('imdb-update-stats')
+    async getImdbUpdateStats() {
+        try {
+            const stats = await this.queuesService.getImdbUpdateStats();
+
+            return {
+                success: true,
+                stats,
             };
         } catch (error) {
             const errorMessage = error instanceof Error ? error.message : String(error);

@@ -53,6 +53,9 @@ export interface Database {
                     crew: Json | null
                     production_companies: string[] | null
                     translations: Json | null
+                    imdb_id: string | null
+                    imdb_rating: number | null
+                    imdb_votes: number | null
                     created_at: string
                     updated_at: string
                 }
@@ -76,6 +79,9 @@ export interface Database {
                     crew?: Json | null
                     production_companies?: string[] | null
                     translations?: Json | null
+                    imdb_id?: string | null
+                    imdb_rating?: number | null
+                    imdb_votes?: number | null
                     created_at?: string
                     updated_at?: string
                 }
@@ -99,6 +105,9 @@ export interface Database {
                     crew?: Json | null
                     production_companies?: string[] | null
                     translations?: Json | null
+                    imdb_id?: string | null
+                    imdb_rating?: number | null
+                    imdb_votes?: number | null
                     created_at?: string
                     updated_at?: string
                 }
@@ -128,6 +137,9 @@ export interface Database {
                     production_companies: string[] | null
                     embedding: number[] | null
                     translations: Json | null
+                    imdb_id: string | null
+                    imdb_rating: number | null
+                    imdb_votes: number | null
                     created_at: string
                     updated_at: string
                 }
@@ -155,6 +167,9 @@ export interface Database {
                     production_companies?: string[] | null
                     embedding?: number[] | null
                     translations?: Json | null
+                    imdb_id?: string | null
+                    imdb_rating?: number | null
+                    imdb_votes?: number | null
                     created_at?: string
                     updated_at?: string
                 }
@@ -182,6 +197,9 @@ export interface Database {
                     production_companies?: string[] | null
                     embedding?: number[] | null
                     translations?: Json | null
+                    imdb_id?: string | null
+                    imdb_rating?: number | null
+                    imdb_votes?: number | null
                     created_at?: string
                     updated_at?: string
                 }

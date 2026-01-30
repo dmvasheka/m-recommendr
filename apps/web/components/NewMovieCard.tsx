@@ -19,6 +19,7 @@ export function NewMovieCard({ movie }: MovieCardProps) {
     || '/placeholder.svg'
 
   const rating = movie.vote_average ? (movie.vote_average / 2).toFixed(1) : '0.0'
+  const imdbRating = movie.imdb_rating ? movie.imdb_rating.toFixed(1) : null
   const year = movie.release_date ? new Date(movie.release_date).getFullYear() : t('na')
 
   return (
@@ -46,9 +47,16 @@ export function NewMovieCard({ movie }: MovieCardProps) {
             </h3>
             <div className="flex items-center justify-between">
               <span className="text-sm text-[#9ca3af]">{year}</span>
-              <div className="flex items-center gap-1">
-                <Star className="h-4 w-4 fill-[#f59e0b] text-[#f59e0b]" />
-                <span className="text-sm font-medium text-white">{rating}</span>
+              <div className="flex items-center gap-2">
+                <div className="flex items-center gap-1">
+                  <Star className="h-4 w-4 fill-[#f59e0b] text-[#f59e0b]" />
+                  <span className="text-sm font-medium text-white">{rating}</span>
+                </div>
+                {imdbRating && (
+                  <span className="text-sm font-semibold text-[#f5c518]" title="IMDb">
+                    {imdbRating}
+                  </span>
+                )}
               </div>
             </div>
           </div>

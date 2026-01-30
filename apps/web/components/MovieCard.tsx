@@ -5,6 +5,7 @@ import { Link } from '@/navigation'
 import type { Movie } from '@/lib/api/types'
 import { useTranslations } from 'next-intl'
 import { WatchlistButton } from './WatchlistButton'
+import { CompactRatingBadge } from './DualRating'
 
 interface MovieCardProps {
     movie: Movie
@@ -31,9 +32,13 @@ export function MovieCard({ movie, showRating = true }: MovieCardProps) {
                         className="object-cover transition-transform duration-300 group-hover:scale-105"
                         sizes="(max-width: 768px) 50vw, (max-width: 1200px) 33vw, 25vw"
                     />
-                    {showRating && movie.vote_average && (
-                        <div className="absolute top-2 left-2 bg-black/80 text-white px-2 py-1 rounded-md text-sm font-semibold">
-                            ⭐ {movie.vote_average.toFixed(1)}
+                    {showRating && (movie.vote_average || movie.imdb_rating) && (
+                        <div className="absolute top-2 left-2">
+                            <CompactRatingBadge
+                                tmdbRating={movie.vote_average}
+                                imdbRating={movie.imdb_rating}
+                                imdbId={movie.imdb_id}
+                            />
                         </div>
                     )}
                     {/* Watchlist button - always visible on mobile, shown on hover on desktop */}
