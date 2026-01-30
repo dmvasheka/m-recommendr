@@ -1147,12 +1147,12 @@ Bot:  Отлично! Учитывая что сейчас вечер пятни
 
 ---
 
-## 10. 🔐 Admin Panel & Management System
+### 10. 🔐 Admin Panel & Management System
 
 **Priority:** Medium-Low (после основных фич)
 **Status:** Future / Planned
 
-### Описание
+**Описание:**
 Полноценная административная панель с отдельным бэкендом для управления системой, пользователями и контентом.
 
 ### Основной функционал
@@ -1282,6 +1282,60 @@ Bot:  Отлично! Учитывая что сейчас вечер пятни
 - База знаний (FAQ)
 - Шаблоны ответов для частых вопросов
 
+#### 10.8 💰 Монетизация и подписки
+- **Тарифные планы (Subscription Tiers):**
+  - Free tier:
+    - Базовый поиск и просмотр
+    - Ограниченный watchlist (50 фильмов)
+    - Реклама
+  - Premium tier ($4.99/месяц):
+    - Неограниченный watchlist
+    - AI рекомендации и чат
+    - Без рекламы
+    - Приоритетная поддержка
+  - Pro tier ($9.99/месяц):
+    - Всё из Premium
+    - API доступ
+    - Расширенная аналитика просмотров
+    - Экспорт данных
+  - Family plan ($14.99/месяц):
+    - До 5 пользователей
+    - Все Pro функции
+- **Триал период:**
+  - 7/14/30 дней бесплатного Premium
+  - Автоматический downgrade после окончания
+  - Напоминания об окончании триала
+  - Конверсия триала в платную подписку
+- **Интеграция с платёжными системами:**
+  - Stripe (основной) — карты, Apple Pay, Google Pay
+  - LiqPay (Украина)
+  - PayPal (опционально)
+  - Crypto payments (опционально)
+- **Управление подписками в админке:**
+  - Просмотр всех подписок с фильтрами
+  - Ручное продление/отмена подписки
+  - Возвраты (refunds)
+  - Промокоды и скидки:
+    - Генерация промокодов
+    - Процент/фиксированная скидка
+    - Срок действия
+    - Лимит использований
+  - Gift cards / подарочные подписки
+- **Биллинг и финансы:**
+  - История транзакций
+  - Invoices / чеки
+  - Revenue dashboard (MRR, ARR, churn rate)
+  - Прогнозирование дохода
+  - Налоговая отчётность
+- **Feature flags по тарифам:**
+  - Гибкое управление доступом к функциям
+  - A/B тестирование pricing
+  - Graceful degradation при downgrade
+- **Webhook интеграции:**
+  - Stripe webhooks для событий оплаты
+  - Уведомления о failed payments
+  - Dunning management (напоминания об оплате)
+
 ### Технический стек
 
 **Backend (NestJS):**
@@ -1290,6 +1344,10 @@ Bot:  Отлично! Учитывая что сейчас вечер пятни
 - JWT authentication с refresh tokens
 - WebSockets для real-time updates (Socket.io)
 - Bull Board для визуализации очередей
+- **Payments:**
+  - Stripe SDK (@stripe/stripe-js, stripe)
+  - Webhook handlers для payment events
+  - Subscription lifecycle management
 
 **Frontend (Next.js):**
 - Отдельное приложение `apps/admin`
@@ -1365,6 +1423,20 @@ PUT    /admin/api/notifications/:id/read
 GET    /admin/api/cache/keys
 DELETE /admin/api/cache/clear
 GET    /admin/api/cache/stats
+
+// Subscriptions & Payments
+GET    /admin/api/subscriptions
+GET    /admin/api/subscriptions/:id
+PUT    /admin/api/subscriptions/:id/cancel
+PUT    /admin/api/subscriptions/:id/extend
+POST   /admin/api/subscriptions/:id/refund
+GET    /admin/api/payments/transactions
+GET    /admin/api/payments/revenue
+GET    /admin/api/payments/mrr
+POST   /admin/api/promo-codes
+GET    /admin/api/promo-codes
+PUT    /admin/api/promo-codes/:id/disable
+GET    /admin/api/billing/invoices
 ```
 
 ### Database Schema (дополнительные таблицы)
@@ -1433,6 +1505,92 @@ create table admin_notifications (
 );
 
 create index idx_notifications_unread on admin_notifications(created_at desc) where read = false;
+
+-- Subscription plans
+create table subscription_plans (
+  id uuid primary key default gen_random_uuid(),
+  name text not null unique,
+  slug text not null unique,
+  description text,
+  price_monthly decimal(10,2),
+  price_yearly decimal(10,2),
+  currency text default 'USD',
+  features jsonb, -- {"ai_chat": true, "unlimited_watchlist": true, ...}
+  limits jsonb,   -- {"watchlist_limit": 50, "api_calls_per_day": 100, ...}
+  is_active boolean default true,
+  trial_days integer default 0,
+  created_at timestamp default now()
+);
+
+-- User subscriptions
+create table user_subscriptions (
+  id uuid primary key default gen_random_uuid(),
+  user_id uuid references auth.users(id) not null,
+  plan_id uuid references subscription_plans(id) not null,
+  status text check (status in ('trialing', 'active', 'past_due', 'canceled', 'expired')),
+  stripe_subscription_id text unique,
+  stripe_customer_id text,
+  current_period_start timestamp,
+  current_period_end timestamp,
+  cancel_at_period_end boolean default false,
+  canceled_at timestamp,
+  trial_start timestamp,
+  trial_end timestamp,
+  created_at timestamp default now(),
+  updated_at timestamp default now()
+);
+
+create index idx_subscriptions_user on user_subscriptions(user_id);
+create index idx_subscriptions_status on user_subscriptions(status);
+create index idx_subscriptions_stripe on user_subscriptions(stripe_subscription_id);
+
+-- Payment transactions
+create table payment_transactions (
+  id uuid primary key default gen_random_uuid(),
+  user_id uuid references auth.users(id) not null,
+  subscription_id uuid references user_subscriptions(id),
+  stripe_payment_intent_id text unique,
+  amount decimal(10,2) not null,
+  currency text default 'USD',
+  status text check (status in ('pending', 'succeeded', 'failed', 'refunded')),
+  payment_method text,
+  description text,
+  metadata jsonb,
+  created_at timestamp default now()
+);
+
+create index idx_transactions_user on payment_transactions(user_id);
+create index idx_transactions_created on payment_transactions(created_at desc);
+
+-- Promo codes
+create table promo_codes (
+  id uuid primary key default gen_random_uuid(),
+  code text not null unique,
+  description text,
+  discount_type text check (discount_type in ('percent', 'fixed')),
+  discount_value decimal(10,2) not null,
+  max_uses integer,
+  current_uses integer default 0,
+  valid_from timestamp,
+  valid_until timestamp,
+  applicable_plans uuid[], -- array of plan IDs
+  is_active boolean default true,
+  created_by uuid references auth.users(id),
+  created_at timestamp default now()
+);
+
+create index idx_promo_codes_code on promo_codes(code);
+
+-- Promo code usage
+create table promo_code_usage (
+  id uuid primary key default gen_random_uuid(),
+  promo_code_id uuid references promo_codes(id),
+  user_id uuid references auth.users(id),
+  subscription_id uuid references user_subscriptions(id),
+  discount_applied decimal(10,2),
+  used_at timestamp default now(),
+  unique(promo_code_id, user_id) -- one use per user
+);
 ```
 
 ### Implementation Roadmap
@@ -1468,7 +1626,16 @@ create index idx_notifications_unread on admin_notifications(created_at desc) wh
 - [ ] Embeddings management
 - [ ] Bulk operations
 
-**Phase 6: Admin Frontend (2-3 недели)**
+**Phase 6: Monetization & Payments (2 недели)**
+- [ ] Stripe integration
+- [ ] Subscription plans CRUD
+- [ ] Payment processing endpoints
+- [ ] Webhooks handlers
+- [ ] Promo codes system
+- [ ] Billing & invoices
+- [ ] Revenue dashboard
+
+**Phase 7: Admin Frontend (2-3 недели)**
 - [ ] Создать `apps/admin` Next.js app
 - [ ] Authentication UI
 - [ ] Dashboard с графиками
