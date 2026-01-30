@@ -4,6 +4,7 @@ import Image from 'next/image'
 import { Navigation } from '@/components/Navigation'
 import { MovieCard } from '@/components/MovieCard'
 import { WatchlistButton } from '@/components/WatchlistButton'
+import { DualRating } from '@/components/DualRating'
 import { useMovie, useSimilarMovies } from '@/lib/api/hooks'
 import { useTranslations, useLocale } from 'next-intl'
 import { Link } from '@/navigation'
@@ -106,9 +107,15 @@ export default function MovieDetailsPage({ params }: PageProps) {
                                     {movie.title}
                                 </h1>
                                 <div className="flex flex-wrap items-center gap-4 text-sm mb-4 text-[#9ca3af]">
-                                      <span className="flex items-center gap-1">
-                                          ⭐ <strong className="text-white">{rating}</strong> ({movie.vote_count} {t('votes')})
-                                      </span>
+                                    <DualRating
+                                        tmdbRating={movie.vote_average}
+                                        tmdbVotes={movie.vote_count}
+                                        imdbRating={movie.imdb_rating}
+                                        imdbVotes={movie.imdb_votes}
+                                        imdbId={movie.imdb_id}
+                                        size="md"
+                                        showVotes
+                                    />
                                     <span>📅 {year}</span>
                                     <span>⏱️ {runtime}</span>
                                     {movie.original_language && (

@@ -20,6 +20,10 @@ export interface Movie {
     created_at?: string
     updated_at?: string
     similarity?: number // For recommendation responses
+    // IMDb data
+    imdb_id?: string | null
+    imdb_rating?: number | null
+    imdb_votes?: number | null
 }
 
 // Watchlist types
@@ -120,6 +124,10 @@ export interface TvShow {
     status?: string | null
     original_language?: string | null
     similarity?: number
+    // IMDb data
+    imdb_id?: string | null
+    imdb_rating?: number | null
+    imdb_votes?: number | null
 }
 
 export interface SearchTvShowsParams {

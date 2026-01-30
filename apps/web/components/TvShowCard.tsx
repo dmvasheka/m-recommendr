@@ -19,6 +19,7 @@ export function TvShowCard({ tvShow }: TvShowCardProps) {
     || '/placeholder.svg'
 
   const rating = tvShow.vote_average ? (tvShow.vote_average / 2).toFixed(1) : '0.0'
+  const imdbRating = tvShow.imdb_rating ? tvShow.imdb_rating.toFixed(1) : null
   const year = tvShow.first_air_date ? new Date(tvShow.first_air_date).getFullYear() : t('na')
 
   return (
@@ -48,9 +49,16 @@ export function TvShowCard({ tvShow }: TvShowCardProps) {
               </h3>
               <div className="flex items-center justify-between">
                 <span className="text-sm text-[#9ca3af]">{year}</span>
-                <div className="flex items-center gap-1">
-                  <Star className="h-4 w-4 fill-[#f59e0b] text-[#f59e0b]" />
-                  <span className="text-sm font-medium text-white">{rating}</span>
+                <div className="flex items-center gap-2">
+                  <div className="flex items-center gap-1">
+                    <Star className="h-4 w-4 fill-[#f59e0b] text-[#f59e0b]" />
+                    <span className="text-sm font-medium text-white">{rating}</span>
+                  </div>
+                  {imdbRating && (
+                    <span className="text-sm font-semibold text-[#f5c518]" title="IMDb">
+                      {imdbRating}
+                    </span>
+                  )}
                 </div>
               </div>
               {tvShow.number_of_seasons && (

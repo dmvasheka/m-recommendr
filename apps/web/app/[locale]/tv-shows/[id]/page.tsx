@@ -2,6 +2,7 @@
 
 import Image from 'next/image'
 import { Navigation } from '@/components/Navigation'
+import { DualRating } from '@/components/DualRating'
 import { useTvShow, useTvShowSeasons } from '@/lib/api/hooks'
 import { useTranslations, useLocale } from 'next-intl'
 import { Link } from '@/navigation'
@@ -118,11 +119,15 @@ export default function TvShowDetailsPage({ params }: PageProps) {
                                     {tvShow.name}
                                 </h1>
                                 <div className="flex flex-wrap items-center gap-4 text-sm mb-4 text-[#9ca3af]">
-                                    <span className="flex items-center gap-1">
-                                        <Star className="h-4 w-4 fill-[#f59e0b] text-[#f59e0b]" />
-                                        <strong className="text-white">{rating}</strong>
-                                        {tvShow.vote_count && ` (${tvShow.vote_count} ${t('votes')})`}
-                                    </span>
+                                    <DualRating
+                                        tmdbRating={tvShow.vote_average}
+                                        tmdbVotes={tvShow.vote_count}
+                                        imdbRating={tvShow.imdb_rating}
+                                        imdbVotes={tvShow.imdb_votes}
+                                        imdbId={tvShow.imdb_id}
+                                        size="md"
+                                        showVotes
+                                    />
                                     <span className="flex items-center gap-1">
                                         <Calendar className="h-4 w-4" />
                                         {year}

@@ -25,6 +25,7 @@ export interface TmdbMovieDetails extends TmdbMovie {
     genres: { id: number; name: string }[];
     tagline?: string | null;
     production_companies?: { id: number; name: string }[];
+    imdb_id?: string | null;
 }
 
 export interface TmdbTvShow {
@@ -50,6 +51,10 @@ export interface TmdbTvDetails extends TmdbTvShow {
     production_companies?: { id: number; name: string }[];
     status: string;
     last_air_date: string;
+    external_ids?: {
+        imdb_id?: string | null;
+        tvdb_id?: number | null;
+    };
 }
 
 export interface TmdbSeasonDetails {
@@ -165,7 +170,7 @@ export class TmdbService {
     }
 
     /**
-     * Get movie details
+     * Get movie details (includes imdb_id via append_to_response)
      */
     async getMovieDetails(id: number): Promise<TmdbMovieDetails> {
         try {
@@ -188,7 +193,7 @@ export class TmdbService {
     }
 
     /**
-     * Get TV details
+     * Get TV details with external IDs (for imdb_id)
      */
     async getTVDetails(id: number): Promise<TmdbTvDetails> {
         try {
@@ -198,6 +203,7 @@ export class TmdbService {
                     params: {
                         api_key: this.apiKey,
                         language: this.primaryLanguage,
+                        append_to_response: 'external_ids',
                     },
                     timeout: 10000,
                 }
@@ -681,6 +687,7 @@ export class TmdbService {
                 production_companies: tmdbTv.production_companies?.map((c: any) => c.name) || null,
                 embedding: null,
                 translations: translations as any, // 🆕 Store translations for multiple languages
+                imdb_id: tmdbTv.external_ids?.imdb_id || null, // 🆕 Store IMDb ID from TMDB external_ids
             };
 
             const { data, error } = await supabase
@@ -834,6 +841,7 @@ export class TmdbService {
                 crew: credits.crew.length > 0 ? JSON.stringify(credits.crew) : null,
                 production_companies: tmdbMovie.production_companies?.map((c: any) => c.name) || null,
                 translations: translations as any, // 🆕 Store translations for multiple languages
+                imdb_id: tmdbMovie.imdb_id || null, // 🆕 Store IMDb ID from TMDB
             };
 
             // 3. Insert or update in database
