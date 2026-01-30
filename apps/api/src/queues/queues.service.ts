@@ -31,6 +31,11 @@ export interface TranslationUpdateJob {
     ids?: number[];
 }
 
+export interface ImdbUpdateJob {
+    type: 'movies' | 'tv_shows';
+    batchSize?: number;
+}
+
 @Injectable()
 export class QueuesService {
     private readonly logger = new Logger(QueuesService.name);
@@ -40,6 +45,7 @@ export class QueuesService {
         @InjectQueue('tv-import') private tvImportQueue: Queue,
         @InjectQueue('embedding-generation') private embeddingQueue: Queue,
         @InjectQueue('translation-update') private translationQueue: Queue,
+        @InjectQueue('imdb-update') private imdbUpdateQueue: Queue,
         private readonly categoryRotationService: CategoryRotationService,
         private readonly tmdbService: TmdbService,
     ) {}
@@ -292,6 +298,33 @@ export class QueuesService {
         await this.tvImportQueue.clean(24 * 3600 * 1000, 100, 'completed');
         await this.embeddingQueue.clean(24 * 3600 * 1000, 100, 'completed');
         await this.translationQueue.clean(24 * 3600 * 1000, 100, 'completed');
+        await this.imdbUpdateQueue.clean(24 * 3600 * 1000, 100, 'completed');
         this.logger.log('🧹 Old jobs cleaned');
+    }
+
+    // IMDb Update Queue
+    async addImdbUpdateJob(data: ImdbUpdateJob) {
+        const job = await this.imdbUpdateQueue.add('update-imdb-ids', data, {
+            attempts: 3,
+            backoff: {
+                type: 'exponential',
+                delay: 10000,
+            },
+        });
+        this.logger.log(`🎯 IMDb update job added: ${job.id} (type=${data.type})`);
+        return job;
+    }
+
+    async getImdbUpdateStats() {
+        return {
+            waiting: await this.imdbUpdateQueue.getWaitingCount(),
+            active: await this.imdbUpdateQueue.getActiveCount(),
+            completed: await this.imdbUpdateQueue.getCompletedCount(),
+            failed: await this.imdbUpdateQueue.getFailedCount(),
+        };
+    }
+
+    async getImdbUpdateQueue() {
+        return this.imdbUpdateQueue;
     }
 }

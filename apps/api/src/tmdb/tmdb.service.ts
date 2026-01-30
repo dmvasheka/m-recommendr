@@ -1282,4 +1282,157 @@ export class TmdbService {
             throw error;
         }
     }
+
+    /**
+     * Update imdb_id for existing movies that don't have it
+     * Fetches movie details from TMDB which includes imdb_id
+     */
+    async updateMoviesImdbIds(batchSize: number = 50): Promise<{ updated: number; failed: number; remaining: number }> {
+        try {
+            // Get movies without imdb_id
+            const { data: movies, error } = await (supabase
+                .from('movies') as any)
+                .select('id, title')
+                .is('imdb_id', null)
+                .order('popularity', { ascending: false })
+                .limit(batchSize) as { data: any[] | null; error: any };
+
+            if (error) {
+                throw new Error(`Failed to fetch movies: ${error.message}`);
+            }
+
+            if (!movies || movies.length === 0) {
+                this.logger.log('No movies without imdb_id found');
+                return { updated: 0, failed: 0, remaining: 0 };
+            }
+
+            this.logger.log(`Updating imdb_id for ${movies.length} movies...`);
+
+            let updated = 0;
+            let failed = 0;
+
+            for (const movie of movies) {
+                try {
+                    // Fetch movie details from TMDB (includes imdb_id)
+                    const tmdbMovie = await this.getMovieDetails(movie.id);
+
+                    if (tmdbMovie.imdb_id) {
+                        const { error: updateError } = await (supabase
+                            .from('movies') as any)
+                            .update({ imdb_id: tmdbMovie.imdb_id })
+                            .eq('id', movie.id);
+
+                        if (updateError) {
+                            this.logger.warn(`Failed to update movie ${movie.id}: ${updateError.message}`);
+                            failed++;
+                        } else {
+                            updated++;
+                            this.logger.debug(`Updated ${movie.title}: ${tmdbMovie.imdb_id}`);
+                        }
+                    } else {
+                        this.logger.debug(`No imdb_id for ${movie.title}`);
+                        failed++;
+                    }
+
+                    // Rate limiting
+                    await new Promise(resolve => setTimeout(resolve, 100));
+                } catch (error) {
+                    failed++;
+                    const errorMessage = error instanceof Error ? error.message : String(error);
+                    this.logger.warn(`Error updating ${movie.title}: ${errorMessage}`);
+                }
+            }
+
+            // Count remaining
+            const { count } = await supabase
+                .from('movies')
+                .select('id', { count: 'exact', head: true })
+                .is('imdb_id', null);
+
+            this.logger.log(`Updated ${updated} movies, ${failed} failed, ${count || 0} remaining`);
+
+            return { updated, failed, remaining: count || 0 };
+        } catch (error) {
+            const errorMessage = error instanceof Error ? error.message : String(error);
+            this.logger.error(`updateMoviesImdbIds error: ${errorMessage}`);
+            throw error;
+        }
+    }
+
+    /**
+     * Update imdb_id for existing TV shows that don't have it
+     */
+    async updateTvShowsImdbIds(batchSize: number = 50): Promise<{ updated: number; failed: number; remaining: number }> {
+        try {
+            // Get TV shows without imdb_id
+            const { data: tvShows, error } = await (supabase
+                .from('tv_shows') as any)
+                .select('id, name')
+                .is('imdb_id', null)
+                .order('popularity', { ascending: false })
+                .limit(batchSize) as { data: any[] | null; error: any };
+
+            if (error) {
+                throw new Error(`Failed to fetch TV shows: ${error.message}`);
+            }
+
+            if (!tvShows || tvShows.length === 0) {
+                this.logger.log('No TV shows without imdb_id found');
+                return { updated: 0, failed: 0, remaining: 0 };
+            }
+
+            this.logger.log(`Updating imdb_id for ${tvShows.length} TV shows...`);
+
+            let updated = 0;
+            let failed = 0;
+
+            for (const tvShow of tvShows) {
+                try {
+                    // Fetch TV show details from TMDB (includes external_ids with imdb_id)
+                    const tmdbTv = await this.getTVDetails(tvShow.id);
+
+                    const imdbId = tmdbTv.external_ids?.imdb_id;
+                    if (imdbId) {
+                        const { error: updateError } = await (supabase
+                            .from('tv_shows') as any)
+                            .update({ imdb_id: imdbId })
+                            .eq('id', tvShow.id);
+
+                        if (updateError) {
+                            this.logger.warn(`Failed to update TV show ${tvShow.id}: ${updateError.message}`);
+                            failed++;
+                        } else {
+                            updated++;
+                            this.logger.debug(`Updated ${tvShow.name}: ${imdbId}`);
+                        }
+                    } else {
+                        this.logger.debug(`No imdb_id for ${tvShow.name}`);
+                        failed++;
+                    }
+
+                    // Rate limiting
+                    await new Promise(resolve => setTimeout(resolve, 100));
+                } catch (error) {
+                    failed++;
+                    const errorMessage = error instanceof Error ? error.message : String(error);
+                    this.logger.warn(`Error updating ${tvShow.name}: ${errorMessage}`);
+                }
+            }
+
+            // Count remaining
+            const { count } = await supabase
+                .from('tv_shows')
+                .select('id', { count: 'exact', head: true })
+                .is('imdb_id', null);
+
+            this.logger.log(`Updated ${updated} TV shows, ${failed} failed, ${count || 0} remaining`);
+
+            return { updated, failed, remaining: count || 0 };
+        } catch (error) {
+            const errorMessage = error instanceof Error ? error.message : String(error);
+            this.logger.error(`updateTvShowsImdbIds error: ${errorMessage}`);
+            throw error;
+        }
+    }
+
 }
