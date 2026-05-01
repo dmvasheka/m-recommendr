@@ -724,7 +724,7 @@ export interface FilterFragments {
 
 const FIELDS = {
     movie:   { castColumn: 'movie_cast',    crewColumn: 'crew', yearColumn: 'release_date' },
-    tv_show: { castColumn: 'cast_members',  crewColumn: 'crew', yearColumn: 'first_air_date' },  // VERIFY
+    tv_show: { castColumn: 'tv_cast',       crewColumn: 'crew', yearColumn: 'first_air_date' },
 };
 
 function quote(v: unknown): string {
@@ -2181,7 +2181,11 @@ git status   # should be clean
 - Spec "Migration & rollout" → Tasks 1, 2, 11, 12, 13, 14, 15 ordered to match deploy steps.
 - Spec "Success criteria" → Task 15 step 2 (manual smoke); p95 latency check is a manual observation in the same step.
 
+**Resolved schema/route facts (no need to re-discover):**
+- `tv_shows.tv_cast` (JSONB array) and `tv_shows.crew` (JSONB array) — confirmed in `20260111000001_add_tv_shows.sql`. `FIELDS.tv_show.castColumn = 'tv_cast'`.
+- Existing routes (both GET): `/api/movies/search?q=...&limit=...&language=...` and `/api/tv-shows/search?q=...&limit=...&offset=...&language=...`. Mirror the GET shape in the new handlers; the response body is what changes.
+- `MoviesController` has `MAX_LIMIT = 50` and `parseLimit` helper. New handler should reuse them.
+- Movie autocomplete + tv-shows autocomplete remain untouched (per spec).
+
 **Open implementation flags (resolve during execution, not blocking):**
-- TV_FIELDS column names (cast/crew) — verify against `supabase/migrations/20260111000001_add_tv_shows.sql` and any later additions. Default assumption: `cast_members` and `crew`. Update Task 5 / Task 9 step 3 if wrong.
 - `exec_sql_admin` RPC for the integration test seeder — Task 10 assumes one exists or skips. If missing, replace the seed call with a direct SQL execution via the Supabase admin API or a separate connection. Not blocking unit tests.
-- Existing `/api/movies/search` route signature — Task 11 step 1 has a grep step to find the exact existing handler; update the replacement to match (GET vs POST, query params vs body).
