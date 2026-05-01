@@ -10,6 +10,13 @@ import { ChatModule } from './chat/chat.module';
 import { TvShowsModule } from './tv-shows/tv-shows.module';
 import { UsersModule } from './users/users.module';
 
+// Master kill switch for ALL BullMQ queues. When QUEUES_ENABLED=false,
+// QueuesModule is not imported at all: no Queue objects, no workers,
+// no scheduler, no event listeners — zero BullMQ Redis traffic.
+// RedisService stays loaded (caching continues to work).
+const queuesEnabled = process.env.QUEUES_ENABLED !== 'false';
+const optionalModules = queuesEnabled ? [QueuesModule] : [];
+
 @Module({
     imports: [
         TmdbModule,
@@ -18,7 +25,7 @@ import { UsersModule } from './users/users.module';
         WatchlistModule,
         RecommendationsModule,
         RedisModule,
-        QueuesModule,
+        ...optionalModules,
         ChatModule,
         TvShowsModule,
         UsersModule,
