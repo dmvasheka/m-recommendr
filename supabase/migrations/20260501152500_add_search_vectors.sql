@@ -119,3 +119,29 @@ AS $$
   ORDER BY t.embedding <=> query_embedding
   LIMIT match_count;
 $$;
+
+-- ============================================================
+-- D) Backfill helper RPC
+-- Re-writes a column to itself for given IDs to fire the BEFORE UPDATE
+-- trigger that populates tsvector columns. Allowlists table/column to
+-- prevent injection.
+-- ============================================================
+
+CREATE OR REPLACE FUNCTION public.touch_rows_for_tsvector(
+    p_table text,
+    p_column text,
+    p_ids bigint[]
+) RETURNS void
+LANGUAGE plpgsql
+SECURITY DEFINER
+AS $$
+BEGIN
+    IF p_table NOT IN ('movies', 'tv_shows') THEN
+        RAISE EXCEPTION 'invalid table: %', p_table;
+    END IF;
+    IF p_column NOT IN ('title', 'name') THEN
+        RAISE EXCEPTION 'invalid column: %', p_column;
+    END IF;
+    EXECUTE format('UPDATE public.%I SET %I = %I WHERE id = ANY($1::bigint[])', p_table, p_column, p_column) USING p_ids;
+END $$;
+REVOKE ALL ON FUNCTION public.touch_rows_for_tsvector(text, text, bigint[]) FROM PUBLIC;
