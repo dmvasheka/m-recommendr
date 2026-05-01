@@ -10,6 +10,11 @@ import { TmdbModule } from '../tmdb/tmdb.module';
 import { EmbeddingsModule } from '../embeddings/embeddings.module';
 import { QueuesController } from './queues.controller';
 
+const importQueuesEnabled = process.env.IMPORT_QUEUES_ENABLED !== 'false';
+const importProcessors = importQueuesEnabled
+    ? [MovieImportProcessor, TvImportProcessor]
+    : [];
+
 @Module({
     imports: [
         TmdbModule,
@@ -28,7 +33,7 @@ import { QueuesController } from './queues.controller';
         ),
     ],
     controllers: [QueuesController],
-    providers: [QueuesService, MovieImportProcessor, TvImportProcessor, EmbeddingProcessor, TranslationUpdateProcessor],
+    providers: [QueuesService, ...importProcessors, EmbeddingProcessor, TranslationUpdateProcessor],
     exports: [QueuesService],
 })
 export class QueuesModule {}

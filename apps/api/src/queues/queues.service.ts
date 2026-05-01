@@ -1,4 +1,4 @@
-import { Injectable, Logger } from '@nestjs/common';
+import { Injectable, Logger, OnModuleInit } from '@nestjs/common';
 import { InjectQueue } from '@nestjs/bullmq';
 import { Queue } from 'bullmq';
 import { CategoryRotationService } from '../tmdb/category-rotation.service';
@@ -32,7 +32,7 @@ export interface TranslationUpdateJob {
 }
 
 @Injectable()
-export class QueuesService {
+export class QueuesService implements OnModuleInit {
     private readonly logger = new Logger(QueuesService.name);
 
     constructor(
@@ -43,6 +43,35 @@ export class QueuesService {
         private readonly categoryRotationService: CategoryRotationService,
         private readonly tmdbService: TmdbService,
     ) {}
+
+    async onModuleInit() {
+        if (process.env.IMPORT_QUEUES_ENABLED === 'false') {
+            await this.disableImportQueues();
+        }
+    }
+
+    private async disableImportQueues() {
+        const queues: Array<{ name: string; queue: Queue }> = [
+            { name: 'movie-import', queue: this.movieImportQueue },
+            { name: 'tv-import', queue: this.tvImportQueue },
+        ];
+
+        for (const { name, queue } of queues) {
+            try {
+                const repeatable = await queue.getRepeatableJobs();
+                for (const job of repeatable) {
+                    await queue.removeRepeatableByKey(job.key);
+                }
+                await queue.pause();
+                this.logger.warn(
+                    `🚫 Queue "${name}" disabled (paused, removed ${repeatable.length} repeatable jobs). Set IMPORT_QUEUES_ENABLED=true to re-enable.`,
+                );
+            } catch (error) {
+                const errorMessage = error instanceof Error ? error.message : String(error);
+                this.logger.error(`Failed to disable queue "${name}": ${errorMessage}`);
+            }
+        }
+    }
 
     // Movie Import Queue
     async addMovieImportJob(data: MovieImportJob) {
