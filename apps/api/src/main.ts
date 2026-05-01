@@ -1,15 +1,9 @@
+import './dotenv-loader';
 import { NestFactory } from '@nestjs/core';
 import { AppModule } from './app.module';
 import { Logger } from '@nestjs/common';
 // import { setupBullBoard } from './queues/bull-board.setup'; // DISABLED: QueuesModule is disabled
 // import { Queue } from 'bullmq'; // DISABLED: QueuesModule is disabled
-
-// Load .env from root of monorepo (only in development)
-if (process.env.NODE_ENV !== 'production') {
-    const dotenv = require('dotenv');
-    const path = require('path');
-    dotenv.config({ path: path.join(__dirname, '../../../.env') });
-}
 
 async function bootstrap() {
     const app = await NestFactory.create(AppModule);

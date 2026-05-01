@@ -44,8 +44,31 @@ export class QueuesService implements OnModuleInit {
         private readonly tmdbService: TmdbService,
     ) {}
 
+    private get isImportQueuesEnabled(): boolean {
+        return process.env.IMPORT_QUEUES_ENABLED !== 'false';
+    }
+
+    private ensureImportEnabled(action: string): void {
+        if (!this.isImportQueuesEnabled) {
+            throw new Error(
+                `Import queues are disabled (IMPORT_QUEUES_ENABLED=false). Cannot ${action}. Set IMPORT_QUEUES_ENABLED=true and restart the API to re-enable; cron schedules must then be re-created via /api/queues/schedule-rotational-* endpoints.`,
+            );
+        }
+    }
+
     async onModuleInit() {
-        if (process.env.IMPORT_QUEUES_ENABLED === 'false') {
+        if (this.isImportQueuesEnabled) {
+            // Resume in case queues were paused by a previous disabled run.
+            // resume() on a non-paused queue is a no-op.
+            await Promise.all([
+                this.movieImportQueue.resume().catch((err) => {
+                    this.logger.warn(`Failed to resume movie-import queue: ${err instanceof Error ? err.message : String(err)}`);
+                }),
+                this.tvImportQueue.resume().catch((err) => {
+                    this.logger.warn(`Failed to resume tv-import queue: ${err instanceof Error ? err.message : String(err)}`);
+                }),
+            ]);
+        } else {
             await this.disableImportQueues();
         }
     }
@@ -64,7 +87,9 @@ export class QueuesService implements OnModuleInit {
                 }
                 await queue.pause();
                 this.logger.warn(
-                    `🚫 Queue "${name}" disabled (paused, removed ${repeatable.length} repeatable jobs). Set IMPORT_QUEUES_ENABLED=true to re-enable.`,
+                    `🚫 Queue "${name}" disabled: paused and removed ${repeatable.length} repeatable cron jobs. ` +
+                    `To re-enable: set IMPORT_QUEUES_ENABLED=true and restart (queue will auto-resume), ` +
+                    `then re-create cron schedules via POST /api/queues/schedule-rotational-${name === 'movie-import' ? 'movie' : 'tv'}-import.`,
                 );
             } catch (error) {
                 const errorMessage = error instanceof Error ? error.message : String(error);
@@ -75,6 +100,7 @@ export class QueuesService implements OnModuleInit {
 
     // Movie Import Queue
     async addMovieImportJob(data: MovieImportJob) {
+        this.ensureImportEnabled('add movie import job');
         const job = await this.movieImportQueue.add('import-movies', data, {
             attempts: 3,
             backoff: {
@@ -87,6 +113,7 @@ export class QueuesService implements OnModuleInit {
     }
 
     async scheduleMovieImport(cronExpression: string, count: number) {
+        this.ensureImportEnabled('schedule movie import');
         await this.movieImportQueue.add(
             'import-movies',
             { count },
@@ -101,6 +128,7 @@ export class QueuesService implements OnModuleInit {
 
     // TV Show Import Queue
     async addTvImportJob(data: TvImportJob) {
+        this.ensureImportEnabled('add TV import job');
         const job = await this.tvImportQueue.add('import-tv-shows', data, {
             attempts: 3,
             backoff: {
@@ -113,6 +141,7 @@ export class QueuesService implements OnModuleInit {
     }
 
     async scheduleTvImport(cronExpression: string, year: number, count: number) {
+        this.ensureImportEnabled('schedule TV import');
         await this.tvImportQueue.add(
             'import-tv-shows',
             { year, count },
@@ -127,6 +156,7 @@ export class QueuesService implements OnModuleInit {
 
     // Batch Import - Movies by Year Range
     async addBatchMovieImportJobs(startYear: number, endYear: number, countPerYear: number) {
+        this.ensureImportEnabled('add batch movie import jobs');
         const jobs = [];
         for (let year = startYear; year <= endYear; year++) {
             const job = await this.addMovieImportJob({
@@ -141,6 +171,7 @@ export class QueuesService implements OnModuleInit {
 
     // Batch Import - TV Shows by Year Range
     async addBatchTvImportJobs(startYear: number, endYear: number, countPerYear: number) {
+        this.ensureImportEnabled('add batch TV import jobs');
         const jobs = [];
         for (let year = startYear; year <= endYear; year++) {
             const job = await this.addTvImportJob({
@@ -196,6 +227,7 @@ export class QueuesService implements OnModuleInit {
 
     // Rotational Import - Movies
     async addRotationalMovieImportJob(count: number = 50) {
+        this.ensureImportEnabled('add rotational movie import job');
         try {
             // Get next category from rotation
             const category = await this.categoryRotationService.getNextCategory('movies');
@@ -220,6 +252,7 @@ export class QueuesService implements OnModuleInit {
 
     // Rotational Import - TV Shows
     async addRotationalTvImportJob(count: number = 50) {
+        this.ensureImportEnabled('add rotational TV import job');
         try {
             // Get next category from rotation
             const category = await this.categoryRotationService.getNextCategory('tv_shows');
@@ -244,6 +277,7 @@ export class QueuesService implements OnModuleInit {
 
     // Schedule rotational movie import
     async scheduleRotationalMovieImport(cronExpression: string, count: number) {
+        this.ensureImportEnabled('schedule rotational movie import');
         // Get next category from rotation
         const category = await this.categoryRotationService.getNextCategory('movies');
 
@@ -259,6 +293,7 @@ export class QueuesService implements OnModuleInit {
 
     // Schedule rotational TV import
     async scheduleRotationalTvImport(cronExpression: string, count: number) {
+        this.ensureImportEnabled('schedule rotational TV import');
         // Get next category from rotation
         const category = await this.categoryRotationService.getNextCategory('tv_shows');
 
