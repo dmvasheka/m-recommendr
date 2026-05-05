@@ -24,8 +24,7 @@ returns table (
   vote_average float,
   popularity float,
   release_date date,
-  similarity float,
-  translations jsonb
+  similarity float
 )
 language sql
 stable
@@ -40,8 +39,7 @@ as $$
     m.vote_average,
     m.popularity,
     m.release_date,
-    1 - (m.embedding <=> query_embedding) as similarity,
-    m.translations
+    1 - (m.embedding <=> query_embedding) as similarity
   from public.movies m
   where
     m.embedding is not null
@@ -67,8 +65,7 @@ returns table (
   vote_average float,
   popularity float,
   release_date date,
-  similarity float,
-  translations jsonb
+  similarity float
 )
 language sql
 stable
@@ -83,8 +80,7 @@ as $$
     m.vote_average,
     m.popularity,
     m.release_date,
-    1 - (m.embedding <=> up.prefs_embedding) as similarity,
-    m.translations
+    1 - (m.embedding <=> up.prefs_embedding) as similarity
   from public.movies m
   cross join public.user_profiles up
   where
@@ -119,8 +115,7 @@ returns table (
   vote_average float,
   popularity float,
   release_date date,
-  similarity float,
-  translations jsonb
+  similarity float
 )
 language sql
 stable
@@ -135,8 +130,7 @@ as $$
     m.vote_average,
     m.popularity,
     m.release_date,
-    1 - (m.embedding <=> ref.embedding) as similarity,
-    m.translations
+    1 - (m.embedding <=> ref.embedding) as similarity
   from public.movies m
   cross join public.movies ref
   where
