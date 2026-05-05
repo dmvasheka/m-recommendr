@@ -11,21 +11,24 @@ ALTER TABLE public.movies
   ADD COLUMN IF NOT EXISTS search_vector_ru tsvector,
   ADD COLUMN IF NOT EXISTS search_vector_uk tsvector;
 
+-- Movies translations payload uses keys {title, description} per the column
+-- COMMENT in supabase/migrations/20260117000002_add_translations.sql.
+-- (TV shows translations use {name, overview} — see section B below.)
 CREATE OR REPLACE FUNCTION public.movies_search_vector_update() RETURNS trigger AS $$
 BEGIN
   NEW.search_vector_en := to_tsvector('english',
     coalesce(NEW.title, '') || ' ' ||
     coalesce(NEW.description, '') || ' ' ||
     coalesce(NEW.translations->'en'->>'title', '') || ' ' ||
-    coalesce(NEW.translations->'en'->>'overview', '')
+    coalesce(NEW.translations->'en'->>'description', '')
   );
   NEW.search_vector_ru := to_tsvector('russian',
     coalesce(NEW.translations->'ru'->>'title', '') || ' ' ||
-    coalesce(NEW.translations->'ru'->>'overview', '')
+    coalesce(NEW.translations->'ru'->>'description', '')
   );
   NEW.search_vector_uk := to_tsvector('simple',
     coalesce(NEW.translations->'uk'->>'title', '') || ' ' ||
-    coalesce(NEW.translations->'uk'->>'overview', '')
+    coalesce(NEW.translations->'uk'->>'description', '')
   );
   RETURN NEW;
 END $$ LANGUAGE plpgsql;
@@ -134,6 +137,7 @@ CREATE OR REPLACE FUNCTION public.touch_rows_for_tsvector(
 ) RETURNS void
 LANGUAGE plpgsql
 SECURITY DEFINER
+SET search_path = public, pg_temp
 AS $$
 BEGIN
     IF p_table NOT IN ('movies', 'tv_shows') THEN
@@ -145,3 +149,7 @@ BEGIN
     EXECUTE format('UPDATE public.%I SET %I = %I WHERE id = ANY($1::bigint[])', p_table, p_column, p_column) USING p_ids;
 END $$;
 REVOKE ALL ON FUNCTION public.touch_rows_for_tsvector(text, text, bigint[]) FROM PUBLIC;
+-- Backfill is a server-side admin operation invoked with SUPABASE_SERVICE_KEY.
+-- service_role needs explicit EXECUTE; regular `authenticated` users must NOT
+-- be able to fire trigger-cascading UPDATEs across the catalogue.
+GRANT EXECUTE ON FUNCTION public.touch_rows_for_tsvector(text, text, bigint[]) TO service_role;

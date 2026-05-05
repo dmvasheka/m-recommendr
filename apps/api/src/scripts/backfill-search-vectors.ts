@@ -36,12 +36,19 @@ async function backfill(table: 'movies' | 'tv_shows', batchSize = 1000, pauseMs 
 }
 
 async function main() {
-    const target = process.argv[2] as 'movies' | 'tv_shows' | undefined;
-    if (target === 'movies' || target === 'tv_shows') {
-        await backfill(target);
-    } else {
+    const target = process.argv[2];
+    if (target === undefined) {
         await backfill('movies');
         await backfill('tv_shows');
+    } else if (target === 'movies' || target === 'tv_shows') {
+        await backfill(target);
+    } else {
+        console.error(
+            `❌ Unknown target: "${target}".\n` +
+            `   Usage: backfill-search-vectors [movies|tv_shows]\n` +
+            `   Pass no argument to backfill both tables.`,
+        );
+        process.exit(1);
     }
 }
 

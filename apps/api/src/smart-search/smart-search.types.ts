@@ -1,19 +1,47 @@
 import { z } from 'zod';
 
-export const ExtractedFiltersSchema = z.object({
-    genres: z.array(z.string()).optional(),
-    year_min: z.number().int().nullable().optional(),
-    year_max: z.number().int().nullable().optional(),
-    cast: z.array(z.string()).optional(),
-    directors: z.array(z.string()).optional(),
-    vote_average_min: z.number().min(0).max(10).nullable().optional(),
-    runtime_min: z.number().int().nullable().optional(),
-    runtime_max: z.number().int().nullable().optional(),
-    themes: z.array(z.string()).optional(),
-    mood: z.array(z.string()).optional(),
-    exclusions: z.array(z.string()).optional(),
-    semantic_remainder: z.string(),
-});
+export const ExtractedFiltersSchema = z
+    .object({
+        genres: z.array(z.string()).optional(),
+        year_min: z.number().int().nullable().optional(),
+        year_max: z.number().int().nullable().optional(),
+        cast: z.array(z.string()).optional(),
+        directors: z.array(z.string()).optional(),
+        vote_average_min: z.number().min(0).max(10).nullable().optional(),
+        runtime_min: z.number().int().nullable().optional(),
+        runtime_max: z.number().int().nullable().optional(),
+        themes: z.array(z.string()).optional(),
+        mood: z.array(z.string()).optional(),
+        exclusions: z.array(z.string()).optional(),
+        semantic_remainder: z.string(),
+    })
+    .superRefine((val, ctx) => {
+        // Reject contradictory ranges from the LLM (e.g. year_min=2010, year_max=1990).
+        // On failure the extractor falls back to pure hybrid search instead of running
+        // a guaranteed-empty BETWEEN clause.
+        if (
+            val.year_min != null &&
+            val.year_max != null &&
+            val.year_min > val.year_max
+        ) {
+            ctx.addIssue({
+                code: z.ZodIssueCode.custom,
+                path: ['year_max'],
+                message: `year_min (${val.year_min}) must be <= year_max (${val.year_max})`,
+            });
+        }
+        if (
+            val.runtime_min != null &&
+            val.runtime_max != null &&
+            val.runtime_min > val.runtime_max
+        ) {
+            ctx.addIssue({
+                code: z.ZodIssueCode.custom,
+                path: ['runtime_max'],
+                message: `runtime_min (${val.runtime_min}) must be <= runtime_max (${val.runtime_max})`,
+            });
+        }
+    });
 
 export type ExtractedFilters = z.infer<typeof ExtractedFiltersSchema>;
 
