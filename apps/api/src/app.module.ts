@@ -6,6 +6,7 @@ import { WatchlistModule } from './watchlist/watchlist.module';
 import { RecommendationsModule } from './recommendations/recommendations.module';
 import { RedisModule } from './redis/redis.module';
 import { QueuesModule } from './queues/queues.module';
+import { SmartSearchModule } from './smart-search/smart-search.module';
 import { ChatModule } from './chat/chat.module';
 import { TvShowsModule } from './tv-shows/tv-shows.module';
 import { UsersModule } from './users/users.module';
@@ -26,6 +27,7 @@ const optionalModules = queuesEnabled ? [QueuesModule] : [];
         RecommendationsModule,
         RedisModule,
         ...optionalModules,
+        SmartSearchModule,
         ChatModule,
         TvShowsModule,
         UsersModule,
