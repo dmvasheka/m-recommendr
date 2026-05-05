@@ -188,15 +188,15 @@ with `k = 60` (standard). Documents that appear in multiple lists get additive b
 
 ## API contract
 
-`POST /api/movies/search` and `POST /api/tv-shows/search` both accept:
+`GET /api/movies/search` and `GET /api/tv-shows/search` (matching the existing controller routes — no method change). Query parameters:
 
-```ts
-{
-  query: string;
-  language: 'en' | 'ru' | 'uk';      // required (no inference here)
-  limit?: number;                     // default 20
-}
 ```
+q=<query string>
+language=en|ru|uk        // required
+limit=<number>           // default 20, capped at MAX_LIMIT=50 by MoviesController
+```
+
+GET is preserved for symmetry with the existing autocomplete and details endpoints. Total URL length stays well under typical browser/proxy limits (8 KB) — `q` is bounded by user-typed input, the other params are tiny.
 
 and return:
 

@@ -715,6 +715,19 @@ Expected: FAIL with "Cannot find module '../filter-builder'".
 
 ```ts
 // apps/api/src/smart-search/filter-builder.ts
+//
+// SECURITY-CRITICAL: this module produces SQL strings with literal values
+// embedded (not parameterized). The output is forwarded to the
+// `exec_filter_query` Postgres RPC which executes it via dynamic EXECUTE.
+// Do NOT add new value types or string interpolation paths without reviewing
+// the security invariants documented in the migration file
+// (search for "exec_filter_query — filter pre-step RPC").
+//
+// In short: every value passes through `quote()`, which only accepts numbers
+// and string-arrays sourced from ExtractedFilters (Zod-validated). Single
+// quotes inside strings are doubled (Postgres standard escape). Postgres
+// must run with standard_conforming_strings=on (default since 9.1).
+
 import type { ExtractedFilters, AppliedFilters } from './smart-search.types';
 
 export interface FilterFragments {
@@ -727,6 +740,15 @@ const FIELDS = {
     tv_show: { castColumn: 'tv_cast',       crewColumn: 'crew', yearColumn: 'first_air_date' },
 };
 
+/**
+ * Format a Zod-validated value as a Postgres SQL literal. Accepted shapes
+ * (matching ExtractedFilters): finite numbers, booleans, string arrays
+ * (recursively), and strings. Strings are wrapped in single quotes with
+ * embedded single-quotes doubled. Anything else returns 'NULL'.
+ *
+ * NEVER pass user-provided strings here without going through the Zod schema
+ * first. NEVER weaken this function to accept richer types.
+ */
 function quote(v: unknown): string {
     if (v === null || v === undefined) return 'NULL';
     if (typeof v === 'number') return Number.isFinite(v) ? String(v) : 'NULL';
@@ -1670,10 +1692,39 @@ export class SmartSearchService {
 Append to `supabase/migrations/<TIMESTAMP>_add_search_vectors.sql`:
 
 ```sql
--- Filter-query RPC: takes a literal-embedded SQL string built by filter-builder.
--- Strict allowlist: only id-fetch from movies/tv_shows. The values inside the SQL
--- are produced by the typed `quote()` helper in filter-builder, which only formats
--- numbers and string-arrays from the Zod-validated ExtractedFilters schema.
+-- exec_filter_query — filter pre-step RPC for SmartSearchService.
+--
+-- SECURITY MODEL — DO NOT MODIFY WITHOUT REVIEWING THE INVARIANTS BELOW.
+-- This RPC takes a SQL string with literal values already embedded, NOT
+-- parameter placeholders. It is safe ONLY because of these invariants enforced
+-- in the application layer (`apps/api/src/smart-search/filter-builder.ts`):
+--
+--   (1) The SQL string is produced exclusively by `buildFilterFragments()`,
+--       which is the sole caller of this RPC.
+--   (2) Every value embedded in the string passes through the typed `quote()`
+--       helper in filter-builder.ts:
+--         - numbers are stringified via String(v) (NaN/Infinity → 'NULL')
+--         - string arrays are formatted as ARRAY[…] with single-quoted
+--           elements; single quotes inside strings are doubled (PG-standard)
+--         - no other types are accepted
+--   (3) The values themselves come from `ExtractedFilters`, validated by the
+--       Zod schema `ExtractedFiltersSchema` (smart-search.types.ts) — only
+--       arrays of strings and bounded numbers are possible.
+--   (4) Postgres `standard_conforming_strings` MUST stay ON (default since 9.1)
+--       — backslash escapes are not interpreted, so the doubled-quote escape
+--       in `quote()` is the sole and complete escape mechanism.
+--   (5) The regex below is a defense-in-depth check, not the primary guard:
+--       it ensures the RPC only ever sees SELECTs against the two allowed
+--       tables. It does NOT validate the WHERE body itself; that responsibility
+--       sits with `quote()` + Zod.
+--
+-- If invariant (1) ever changes (i.e. a new caller appears), or (2)/(3) is
+-- weakened (e.g. arbitrary string interpolation added to filter-builder), or
+-- (4) is disabled, the security model breaks. In that case this RPC must be
+-- replaced with a parameterized variant: accept structured (column, op, value)
+-- triples, build the WHERE server-side using format('%I', col) for identifiers
+-- and EXECUTE … USING $1,$2,… for values.
+
 CREATE OR REPLACE FUNCTION public.exec_filter_query(p_sql text)
 RETURNS TABLE (id bigint)
 LANGUAGE plpgsql
@@ -1780,28 +1831,37 @@ VALUES
 
 - [ ] **Step 2: Write integration tests**
 
+The test seeds fixtures via a direct Postgres connection (using the `pg`
+library, which is already a transitive dep of `@supabase/supabase-js`). This
+avoids creating a `SECURITY DEFINER` "exec arbitrary SQL" RPC just for tests.
+Set `INTEGRATION_TEST_DATABASE_URL` to a writable Postgres URL when running.
+
 ```ts
 // apps/api/src/smart-search/__tests__/smart-search.service.spec.ts
 import { Test } from '@nestjs/testing';
 import * as fs from 'fs';
 import * as path from 'path';
-import { supabase } from '@repo/db';
+import { Client } from 'pg';
 import { SmartSearchModule } from '../smart-search.module';
 import { SmartSearchService } from '../smart-search.service';
 
 const FIXTURE_SQL = fs.readFileSync(path.join(__dirname, 'fixtures/seed.sql'), 'utf8');
+const TEST_DB_URL = process.env.INTEGRATION_TEST_DATABASE_URL;
 
 describe('SmartSearchService (integration)', () => {
     let svc: SmartSearchService;
+    let pgClient: Client | null = null;
 
     beforeAll(async () => {
-        // Seed via raw RPC. Requires `exec_sql_admin`-style call OR direct PG conn.
-        // For this test, skip if SUPABASE_TEST_DB env var is not set.
-        if (!process.env.SUPABASE_TEST_DB) {
-            console.warn('SUPABASE_TEST_DB not set — skipping integration tests');
+        // Skip if no test DB is configured. Direct PG connection so we don't
+        // need a SECURITY DEFINER "exec arbitrary SQL" RPC in production code.
+        if (!TEST_DB_URL) {
+            console.warn('INTEGRATION_TEST_DATABASE_URL not set — skipping integration tests');
             return;
         }
-        await (supabase.rpc as any)('exec_sql_admin', { sql: FIXTURE_SQL });
+        pgClient = new Client({ connectionString: TEST_DB_URL });
+        await pgClient.connect();
+        await pgClient.query(FIXTURE_SQL);
 
         const moduleRef = await Test.createTestingModule({
             imports: [SmartSearchModule],
@@ -1810,7 +1870,16 @@ describe('SmartSearchService (integration)', () => {
         svc = moduleRef.get(SmartSearchService);
     });
 
-    const itIfDb = process.env.SUPABASE_TEST_DB ? it : it.skip;
+    afterAll(async () => {
+        if (pgClient) {
+            // Best-effort cleanup of just the rows we inserted (IDs 9000+ in the fixture).
+            await pgClient.query("DELETE FROM public.movies WHERE id >= 9000");
+            await pgClient.query("DELETE FROM public.tv_shows WHERE id >= 9000");
+            await pgClient.end();
+        }
+    });
+
+    const itIfDb = TEST_DB_URL ? it : it.skip;
 
     itIfDb('pure structural query: "комедии 90-х с Биллом Мюрреем"', async () => {
         const r = await svc.search({
@@ -2188,4 +2257,4 @@ git status   # should be clean
 - Movie autocomplete + tv-shows autocomplete remain untouched (per spec).
 
 **Open implementation flags (resolve during execution, not blocking):**
-- `exec_sql_admin` RPC for the integration test seeder — Task 10 assumes one exists or skips. If missing, replace the seed call with a direct SQL execution via the Supabase admin API or a separate connection. Not blocking unit tests.
+- Task 10 integration test uses a direct `pg` Client against `INTEGRATION_TEST_DATABASE_URL` for fixture seeding — no `SECURITY DEFINER` "exec arbitrary SQL" RPC is added to production migrations. The test gracefully skips if the env var is not set.
